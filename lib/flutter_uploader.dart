@@ -168,6 +168,7 @@ class FlutterUploader {
     List<FileItem> files,
     Map<String, String> headers,
     Map<String, String> data,
+    int requestTimeout = 3600,
     bool showNotification = false,
   }) async {
     assert(method != null);
@@ -184,6 +185,7 @@ class FlutterUploader {
         'headers': headers,
         'data': data,
         'show_notification': showNotification,
+        'requestTimeout': requestTimeout
       });
       print('Uplaod task is enqueued with id($taskId)');
       return taskId;

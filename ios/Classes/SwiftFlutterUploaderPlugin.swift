@@ -131,7 +131,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             tout = timeoutSetting as! NSNumber
         }
         else {
-            tout = NSNumber(value: 3600 * 5)
+            tout = NSNumber(value: 3600)
         }
         
         timeout = tout.doubleValue
@@ -151,7 +151,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         let sessionConfiguration = URLSessionConfiguration.background(withIdentifier: KEY_BACKGROUND_SESSION_IDENTIFIER)
         sessionConfiguration.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
         sessionConfiguration.timeoutIntervalForRequest = timeout!
-        sessionConfiguration.timeoutIntervalForResource = timeout!
         self.session = URLSession(configuration: sessionConfiguration, delegate: self, delegateQueue: queue)
         NSLog("init NSURLSession with id: %@",session.configuration.identifier!);
         let boundaryId = UUID().uuidString.replacingOccurrences(of: "-", with: "")
@@ -165,7 +164,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         let headers = args["headers"] as? Dictionary<String,Any?>
         let data = args["data"] as? Dictionary<String,Any?>
         let files = args["files"] as? Array<Any>
-       
+        let reqTimeout = args["requestTimeout"] as! Int
         
         if files == nil || files!.count <= 0 {
             result(FlutterError(code: "invalid_files", message: "There are no items to upload", details: nil))
@@ -173,7 +172,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         }
         
         if let url = URL(string: urlString) {
-            uploadTaskWithURLWithCompletion(url:url, files:files!, method:method, headers: headers, parameters: data, completion: { [unowned self] (task, error) in
+            uploadTaskWithURLWithCompletion(url:url, files:files!, method:method, headers: headers, parameters: data, timeout:reqTimeout, completion: { [unowned self] (task, error) in
                 
                 if(error != nil) {
                     result(error!)
@@ -244,6 +243,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                                    method:String,
                                    headers:Dictionary<String, Any?>?,
                                    parameters data:Dictionary<String, Any?>?,
+                                   timeout:Int,
                                    completion completionHandler:@escaping (URLSessionUploadTask?, FlutterError?) -> Void) {
         
         
@@ -301,7 +301,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                     return
                 }
                 
-                self?.makeRequest(path!, url, method, headers, boundary, completion: {
+                self?.makeRequest(path!, url, method, headers, boundary, timeout, completion: {
                     (task, error) in
                     completionHandler(task, error)
                 })
@@ -419,7 +419,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         }
     }
     
-    private func makeRequest(_ path:String,  _ url:URL, _ method:String, _ headers:Dictionary<String,Any?>?, _ boundary:String, completion completionHandler:(URLSessionUploadTask?, FlutterError?) -> Void) {
+    private func makeRequest(_ path:String,  _ url:URL, _ method:String, _ headers:Dictionary<String,Any?>?, _ boundary:String, _ timeout:Int, completion completionHandler:(URLSessionUploadTask?, FlutterError?) -> Void) {
         
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = method
@@ -434,9 +434,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             }
         }
         
-        if self.timeout != nil {
-            request.timeoutInterval = self.timeout!
-        }
+        request.timeoutInterval = Double(timeout)
         
         let fm = FileManager.default
         
