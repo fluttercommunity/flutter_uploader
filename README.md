@@ -12,40 +12,6 @@ This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownload
 
 ### Optional configuration:
 
-- **Support HTTP request:** if you want to download file with HTTP request, you need to disable Apple Transport Security (ATS) feature. There're two options:
-
-1. Disable ATS for a specific domain only: (add following codes to your `Info.plist` file)
-
-```xml
-<key>NSAppTransportSecurity</key>
-<dict>
-  <key>NSExceptionDomains</key>
-  <dict>
-    <key>www.yourserver.com</key>
-    <dict>
-      <!-- add this key to enable subdomains such as sub.yourserver.com -->
-      <key>NSIncludesSubdomains</key>
-      <true/>
-      <!-- add this key to allow standard HTTP requests, thus negating the ATS -->
-      <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
-      <true/>
-      <!-- add this key to specify the minimum TLS version to accept -->
-      <key>NSTemporaryExceptionMinimumTLSVersion</key>
-      <string>TLSv1.1</string>
-    </dict>
-  </dict>
-</dict>
-```
-
-2. Completely disable ATS: (add following codes to your `Info.plist` file)
-
-```xml
-<key>NSAppTransportSecurity</key>
-<dict>
-    <key>NSAllowsArbitraryLoads</key><true/>
-</dict>
-```
-
 - **Configure maximum number of concurrent connection:** the plugin allows 3 simultaneous http connection per host running at a moment by default. You can change this number by adding following codes to your `Info.plist` file.
 
 ```xml
@@ -85,8 +51,8 @@ This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownload
 
 ```xml
 <provider
-    android:name="vn.hunghd.flutterdownloader.DownloadedFileProvider"
-    android:authorities="${applicationId}.flutter_downloader.provider"
+    android:name="flutteruploader.UploaderFileProvider"
+    android:authorities="${applicationId}.flutter_uploader.provider"
     android:exported="false"
     android:grantUriPermissions="true">
     <meta-data
@@ -112,12 +78,12 @@ This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownload
      android:exported="false" />
 
  <provider
-     android:name="vn.hunghd.flutterdownloader.FlutterDownloaderInitializer"
-     android:authorities="${applicationId}.flutter-downloader-init"
+     android:name="flutteruploader.FlutterUploaderInitializer"
+     android:authorities="${applicationId}.flutter-upload-init"
      android:exported="false">
      <!-- changes this number to configure the maximum number of concurrent tasks -->
      <meta-data
-         android:name="vn.hunghd.flutterdownloader.MAX_CONCURRENT_TASKS"
+         android:name="vn.hunghd.flutterupload.MAX_CONCURRENT_TASKS"
          android:value="5" />
  </provider>
 ```
@@ -125,12 +91,12 @@ This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownload
 - **Localize notification messages:** you can localize notification messages of download progress by localizing following messages. (you can find the detail of string localization in Android in this [link][4])
 
 ```xml
-<string name="flutter_downloader_notification_started">Download started</string>
-<string name="flutter_downloader_notification_in_progress">Download in progress</string>
-<string name="flutter_downloader_notification_canceled">Download canceled</string>
-<string name="flutter_downloader_notification_failed">Download failed</string>
-<string name="flutter_downloader_notification_complete">Download complete</string>
-<string name="flutter_downloader_notification_paused">Download paused</string>
+<string name="flutter_downloader_notification_started">Upload started</string>
+<string name="flutter_downloader_notification_in_progress">Upload in progress</string>
+<string name="flutter_downloader_notification_canceled">Upload canceled</string>
+<string name="flutter_downloader_notification_failed">Upload failed</string>
+<string name="flutter_downloader_notification_complete">Upload complete</string>
+<string name="flutter_downloader_notification_paused">Upload paused</string>
 ```
 
 - **Firebase integration:** there's a conflict problem between `WorkManager` and `Firebase` library (related to `Guava` library). The problem is expected to be resolved in new version of `Guava` and `Gradle` build tools. For now, you can work around it by adding some codes to your `build.gradle` (in `android` folder).
@@ -162,7 +128,7 @@ allprojects {
 import 'package:flutter_downloader/flutter_uploader.dart';
 ```
 
-#### Create new download task:
+#### Create new upload task:
 
 ```dart
 final uploader = FlutterUploader();
@@ -174,7 +140,11 @@ final taskId = await uploader.enqueue(
 );
 ```
 
-### register callbacks
+### Register callbacks
+
+- **progressCallback** will report upload progress
+- **successCallback** will called when upload has been successful
+- **failedCallback** will called when upload has been failed or cancelled
 
 ```dart
   uploader.registerCallback(progressCallback: (id, status, progress) {
@@ -201,3 +171,5 @@ uploader.cancelAll();
 
 [1]: https://developer.android.com/topic/libraries/architecture/workmanager
 [2]: https://developer.apple.com/documentation/foundation/nsurlsessiondownloadtask?language=objc
+[3]: https://medium.com/@guerrix/info-plist-localization-ad5daaea732a
+[4]: https://developer.android.com/training/basics/supporting-devices/languages
