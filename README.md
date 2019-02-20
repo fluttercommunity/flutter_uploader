@@ -2,7 +2,7 @@
 
 A plugin for creating and managing download tasks. Supports iOS and Android.
 
-This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownloadTask`][2] in iOS to run download task in background mode.
+This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownloadTask`][2] in iOS to run upload task in background mode.
 
 ## iOS integration
 
