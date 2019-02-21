@@ -148,7 +148,7 @@ final taskId = await uploader.enqueue(
 
 ```dart
   final subscription = uploader.progress.listen((progress) {
-      //do whatever with progress
+      //... code to handle progress
   });
 ```
 
@@ -156,7 +156,7 @@ final taskId = await uploader.enqueue(
 
 ```dart
   final subscription = uploader.result.listen((result) {
-      //do whatever with progress
+      //... code to handle result
   });
 ```
 
