@@ -130,6 +130,14 @@ allprojects {
 import 'package:flutter_downloader/flutter_uploader.dart';
 ```
 
+#### Initialize uploader:
+
+- This is a singleton object
+
+```dart
+final uploader = FlutterUploader();
+```
+
 #### Create new upload task:
 
 ```dart
