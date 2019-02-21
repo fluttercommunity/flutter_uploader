@@ -127,7 +127,7 @@ allprojects {
 #### Import package:
 
 ```dart
-import 'package:flutter_downloader/flutter_uploader.dart';
+import 'package:flutter_uploader/flutter_uploader.dart';
 ```
 
 #### Initialize uploader:
