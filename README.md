@@ -4,6 +4,8 @@ A plugin for creating and managing download tasks. Supports iOS and Android.
 
 This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownloadTask`][2] in iOS to run upload task in background mode.
 
+This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Flutter Community for great plugins and inspiration.
+
 ## iOS integration
 
 - Enable background mode.
@@ -133,28 +135,29 @@ import 'package:flutter_downloader/flutter_uploader.dart';
 ```dart
 final uploader = FlutterUploader();
 final taskId = await uploader.enqueue(
-  url: 'your download link',
-  savedDir: 'the path of directory where you want to save downloaded files',
-  showNotification: true, // show download progress in status bar (for Android)
-  openFileFromNotification: true, // click on notification to open downloaded file (for Android)
+  url: "your upload link",
+  data: {"name": "john"}, // any data you want to send with upload
+  files: [FileItem(filename: filename, savedDir: savedDir)], // list of files that you want to send
+  method: UplaodMethod.POST, // HTTP method you want to use either POST or Patch
+  headers: {"apikey": "api_123456", "userkey": "userkey_123456"}); // headers to be send in upload request,
+
 );
 ```
 
-### Register callbacks
-
-- **progressCallback** will report upload progress
-- **successCallback** will called when upload has been successful
-- **failedCallback** will called when upload has been failed or cancelled
+### listen for upload progress
 
 ```dart
-  uploader.registerCallback(progressCallback: (id, status, progress) {
-      print("id: $id, status: $status, progress: $progress");
-    }, successCallback: (id, status, response) {
-      print("id: $id, status: $status, response: ${response.message}");
-    }, failedCallback: (id, status, ex) {
-      print(
-          "id: $id, status: $status, code:${ex.code}, message: ${ex.message}");
-    });
+  final subscription = uploader.progress.listen((progress) {
+      //do whatever with progress
+  });
+```
+
+### listen for upload result
+
+```dart
+  final subscription = uploader.result.listen((result) {
+      //do whatever with progress
+  });
 ```
 
 #### Cancel a task:
@@ -173,3 +176,4 @@ uploader.cancelAll();
 [2]: https://developer.apple.com/documentation/foundation/nsurlsessiondownloadtask?language=objc
 [3]: https://medium.com/@guerrix/info-plist-localization-ad5daaea732a
 [4]: https://developer.android.com/training/basics/supporting-devices/languages
+[5]: https://pub.dartlang.org/packages/flutter_downloader

@@ -316,8 +316,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         self.channel.invokeMethod("updateProgress", arguments: [KEY_TASK_ID: taskId, KEY_STATUS: NSNumber(integerLiteral: status.rawValue), KEY_PROGRESS: NSNumber(integerLiteral: progress)])
     }
     
-    private func sendUploadFailedForTaskId(_ taskId:String, inStatus status:UploadTaskStatus, error:FlutterError) {
-        self.channel.invokeMethod("uploadFailed", arguments: [KEY_TASK_ID: taskId, KEY_STATUS: NSNumber(integerLiteral: status.rawValue), "code": error.code, "message":error.message, "details":error.details])
+    private func sendUploadFailedForTaskId(_ taskId:String, inStatus status:UploadTaskStatus, statusCode:Int, error:FlutterError) {
+        self.channel.invokeMethod("uploadFailed", arguments: [KEY_TASK_ID: taskId, KEY_STATUS: NSNumber(integerLiteral: status.rawValue), "code": error.code, "message":error.message, "details":error.details, "statusCode":NSNumber(integerLiteral: statusCode)])
     }
     
     private func sendUploadSuccessForTaskId(_ taskId:String, inStatus status:UploadTaskStatus, message:String?, statusCode:Int, headers:[String:String]?) {
@@ -471,7 +471,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                 break;
             }
 
-            self.sendUploadFailedForTaskId(taskId, inStatus: uploadStatus, error: FlutterError(code: "upload_error", message: "upload failed", details: error?.localizedDescription))
+            self.sendUploadFailedForTaskId(taskId, inStatus: uploadStatus, statusCode: 500, error: FlutterError(code: "upload_error", message: "upload failed", details: error?.localizedDescription))
             self.runningTaskById.removeValue(forKey: taskId)
             self.uploadedData.removeValue(forKey: taskId)
             return
@@ -479,12 +479,14 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
 
         var hasResponseError = false
         var response:HTTPURLResponse?
+        var statusCode = 500;
         
         if task.response is HTTPURLResponse {
             response = task.response as? HTTPURLResponse
 
             if response != nil {
                 NSLog("URLSessionDidCompleteWithError: \(taskId) with response: \(response!) and status: \(response!.statusCode)")
+                statusCode = response!.statusCode;
                 hasResponseError = response!.statusCode != 200 && response!.statusCode != 201
             }
         }
@@ -535,11 +537,11 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         }
         else if hasResponseError {
             NSLog("URLSessionDidCompleteWithError: task: \(getTaskStatusText(uploadTask.state)) statusCode: \(response?.statusCode), error:\(message), response:\(response)")
-            self.sendUploadFailedForTaskId(taskId, inStatus: .failed, error: FlutterError(code: "upload_error", message: message, details: response?.statusCode))
+            self.sendUploadFailedForTaskId(taskId, inStatus: .failed, statusCode: statusCode, error: FlutterError(code: "upload_error", message: message, details: response?.statusCode))
         }
         else {
             NSLog("URLSessionDidCompleteWithError: task: \(getTaskStatusText(uploadTask.state)) statusCode: \(response?.statusCode), error:\(error?.localizedDescription)")
-            self.sendUploadFailedForTaskId(taskId, inStatus: .failed, error: FlutterError(code: "upload_error", message: "upload failed", details: error?.localizedDescription))
+            self.sendUploadFailedForTaskId(taskId, inStatus: .failed, statusCode: statusCode, error: FlutterError(code: "upload_error", message: "upload failed", details: error?.localizedDescription))
         }
     }
     

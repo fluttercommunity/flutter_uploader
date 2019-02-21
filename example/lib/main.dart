@@ -24,17 +24,24 @@ class _MyAppState extends State<MyApp> {
   String _taskId;
   VideoPlayerController _videoPlayerController;
   ChewieController _controller;
+  StreamSubscription _progressSubscription;
+  StreamSubscription _resultSubscription;
 
   @override
   void initState() {
     super.initState();
-    uploader.registerCallback(progressCallback: (id, status, progress) {
-      print("id: $id, status: $status, progress: $progress");
-    }, successCallback: (id, status, response) {
-      print("id: $id, status: $status, response: ${response.message}");
-    }, failedCallback: (id, status, ex) {
+    _progressSubscription = uploader.progress.listen((progress) {
       print(
-          "id: $id, status: $status, code:${ex.code}, message: ${ex.message}");
+          "id: ${progress.taskId}, status: ${progress.status}, progress: ${progress.progress}");
+    });
+    _resultSubscription = uploader.result.listen((result) {
+      if (result.isSuccess) {
+        print(
+            "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}");
+      } else {
+        print(
+            "id: ${result.taskId}, status: ${result.status}, expcetion: ${result.exception}, statusCode: ${result.statusCode}");
+      }
     });
   }
 
@@ -43,6 +50,8 @@ class _MyAppState extends State<MyApp> {
     super.dispose();
     _videoPlayerController?.dispose();
     _controller?.dispose();
+    _progressSubscription?.cancel();
+    _resultSubscription?.cancel();
   }
 
   @override

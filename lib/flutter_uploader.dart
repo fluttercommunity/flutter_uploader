@@ -6,33 +6,6 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-class UploadResponse {
-  final Map<String, String> headers;
-  final int statusCode;
-  final String message;
-
-  UploadResponse({
-    this.headers,
-    this.statusCode,
-    this.message,
-  });
-}
-
-///
-/// A signature function for upload progress updating callback
-///
-/// * `id`: unique identifier of a download task
-/// * `status`: current status of a download task
-/// * `progress`: current progress value of a download task, the value is in
-/// range of 0 and 100
-///
-typedef Future<dynamic> UploadProgressCallback(
-    String id, UploadTaskStatus status, int progress);
-typedef Future<dynamic> UploadFailCallback(
-    String id, UploadTaskStatus status, PlatformException exception);
-typedef Future<dynamic> UploadSuccessCallback(
-    String id, UploadTaskStatus status, UploadResponse response);
-
 ///
 /// A class defines a set of possible statuses of a download task
 ///
@@ -128,20 +101,74 @@ class FileItem {
   }
 }
 
+class UploadException extends PlatformException {
+  UploadException({String code, String message, dynamic details})
+      : super(code: code, message: message, details: details);
+
+  @override
+  String toString() =>
+      "code:$code, message:$message, details:${details != null ? details : "na"}";
+}
+
+class UploadTaskResponse {
+  final String taskId;
+  final UploadException exception;
+  final bool isSuccess;
+  final String response;
+  final int statusCode;
+  final UploadTaskStatus status;
+  final Map<String, String> headers;
+
+  UploadTaskResponse(
+      {@required this.taskId,
+      @required this.isSuccess,
+      this.response,
+      this.statusCode,
+      this.status,
+      this.exception,
+      this.headers});
+}
+
+class UploadTaskProgress {
+  final String taskId;
+  final int progress;
+  final UploadTaskStatus status;
+
+  UploadTaskProgress(this.taskId, this.progress, this.status);
+}
+
 class FlutterUploader {
   final MethodChannel _platform;
-
-  UploadProgressCallback _progressCallback;
-  UploadSuccessCallback _successCallback;
-  UploadFailCallback _failedCallback;
+  final StreamController<UploadTaskProgress> _progressController =
+      StreamController<UploadTaskProgress>.broadcast();
+  final StreamController<UploadTaskResponse> _responseController =
+      StreamController<UploadTaskResponse>.broadcast();
 
   factory FlutterUploader() => _instance;
 
   @visibleForTesting
-  FlutterUploader.private(MethodChannel channel) : _platform = channel;
+  FlutterUploader.private(MethodChannel channel) : _platform = channel {
+    _platform.setMethodCallHandler(_handleMethod);
+  }
 
   static final FlutterUploader _instance =
       FlutterUploader.private(const MethodChannel('flutter_uploader'));
+
+  ///
+  /// stream to listen on upload progress
+  ///
+  Stream<UploadTaskProgress> get progress => _progressController.stream;
+
+  ///
+  /// stream to listen on upload result
+  ///
+  Stream<UploadTaskResponse> get result => _responseController.stream;
+
+  void dispose() {
+    _platform.setMethodCallHandler(null);
+    _progressController?.close();
+    _progressController?.close();
+  }
 
   ///
   /// Create a new upload task
@@ -221,69 +248,53 @@ class FlutterUploader {
     }
   }
 
-  ///
-  /// Register a callback to track status and progress of upload task
-  ///
-  /// **parameters:**
-  ///
-  /// * `callback`: a function of [UploadCallback] type which is called whenever
-  /// the status or progress value of a download task has been changed.
-  ///
-  /// **Note:**
-  ///
-  /// set `callback` as `null` to remove listener. You should clean up callback
-  /// to prevent from leaking references.
-  ///
-  registerCallback(
-      {UploadProgressCallback progressCallback,
-      UploadSuccessCallback successCallback,
-      UploadFailCallback failedCallback}) {
-    _progressCallback = progressCallback;
-    _successCallback = successCallback;
-    _failedCallback = failedCallback;
-    _platform.setMethodCallHandler(_handleMethod);
-  }
-
   Future<Null> _handleMethod(MethodCall call) async {
     switch (call.method) {
       case "updateProgress":
         String id = call.arguments['task_id'];
         int status = call.arguments['status'];
-        int process = call.arguments['progress'];
+        int uploadProgress = call.arguments['progress'];
 
-        if (_progressCallback != null) {
-          return _progressCallback(id, UploadTaskStatus.from(status), process);
-        }
+        _progressController?.sink?.add(UploadTaskProgress(
+          id,
+          uploadProgress,
+          UploadTaskStatus.from(status),
+        ));
+
         break;
       case "uploadFailed":
         String id = call.arguments['task_id'];
         String message = call.arguments['message'];
         String code = call.arguments['code'];
         int status = call.arguments["status"];
+        int statusCode = call.arguments["statusCode"];
+
         dynamic details = call.arguments['details'];
 
-        if (_failedCallback != null) {
-          _failedCallback(
-              id,
-              UploadTaskStatus.from(status),
-              PlatformException(
-                  code: code, message: message, details: details));
-        }
+        _responseController?.sink?.add(UploadTaskResponse(
+          taskId: id,
+          isSuccess: false,
+          statusCode: statusCode,
+          exception:
+              UploadException(code: code, details: details, message: message),
+          status: UploadTaskStatus.from(status),
+        ));
         break;
       case "uploadCompleted":
         String id = call.arguments['task_id'];
         Map<String, String> headers = call.arguments["headers"];
-        int statusCode = call.arguments["statusCode"];
         String message = call.arguments["message"];
         int status = call.arguments["status"];
+        int statusCode = call.arguments["statusCode"];
 
-        if (_successCallback != null) {
-          _successCallback(
-              id,
-              UploadTaskStatus.from(status),
-              UploadResponse(
-                  headers: headers, message: message, statusCode: statusCode));
-        }
+        _responseController?.sink?.add(UploadTaskResponse(
+          taskId: id,
+          isSuccess: true,
+          status: UploadTaskStatus.from(status),
+          statusCode: statusCode,
+          headers: headers,
+          response: message,
+        ));
         break;
       default:
         throw UnsupportedError("Unrecognized JSON message");
