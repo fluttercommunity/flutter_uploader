@@ -191,7 +191,6 @@ class FlutterUploader {
   Future<String> enqueue({
     @required String url,
     UplaodMethod method = UplaodMethod.POST,
-    String tag,
     List<FileItem> files,
     Map<String, String> headers,
     Map<String, String> data,
