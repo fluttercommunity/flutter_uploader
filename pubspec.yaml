@@ -1,7 +1,7 @@
 name: flutter_uploader
 description: background upload plugin for flutter
 version: 1.0.0
-author: onikiri
+author: onikiri <onikiri2007@gmail.com>
 homepage: https://github.com/BlueChilli/flutter_uploader
 
 environment:

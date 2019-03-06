@@ -23,7 +23,7 @@ packages:
     source: hosted
     version: "1.1.2"
   chewie:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: chewie
       url: "https://pub.dartlang.org"
@@ -61,7 +61,7 @@ packages:
     source: path
     version: "1.0.0"
   image_picker:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: image_picker
       url: "https://pub.dartlang.org"
@@ -96,7 +96,7 @@ packages:
     source: hosted
     version: "1.6.2"
   path_provider:
-    dependency: "direct main"
+    dependency: "direct dev"
     description:
       name: path_provider
       url: "https://pub.dartlang.org"
