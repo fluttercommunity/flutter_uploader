@@ -14,7 +14,7 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 
 ### Optional configuration:
 
-- **Configure maximum number of concurrent connection:** the plugin allows 3 simultaneous http connection per host running at a moment by default. You can change this number by adding following codes to your `Info.plist` file.
+- **Configure maximum number of connection per host ** the plugin allows 3 simultaneous http connection per host running at a moment by default. You can change this number by adding following codes to your `Info.plist` file.
 
 ```xml
 <!-- changes this number to configure the maximum number of concurrent tasks -->
@@ -22,12 +22,12 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 <integer>3</integer>
 ```
 
-- **Configure maximum number of concurrent operation:** the plugin allows 2 simultaneous upload operation running at a moment by default. You can change this number by adding following codes to your `Info.plist` file.
+- **Configure maximum number of concurrent upload operation:** the plugin allows 3 simultaneous upload operation running at a moment by default. You can change this number by adding following codes to your `Info.plist` file.
 
 ```xml
 <!-- changes this number to configure the maximum number of concurrent tasks -->
 <key>FUMaximumUploadOperation</key>
-<integer>2</integer>
+<integer>3</integer>
 ```
 
 - **Configure request timeout:** controls how long (in seconds) a task should wait for additional data to arrive before giving up `Info.plist` file.
@@ -38,7 +38,7 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 <integer>3600</integer>
 ```
 
-- **Localize notification messages:** the plugin will send a notification message to notify user in case all files are downloaded while your application is not running in foreground. This message is English by default. You can localize this message by adding and localizing following message in `Info.plist` file. (you can find the detail of `Info.plist` localization in this [link][3])
+- **Localize notification messages:** the plugin will send a notification message to notify user when all files are uploaded while your application is not running in foreground. This message is English by default. You can localize this message by adding and localizing following message in `Info.plist` file. (you can find the detail of `Info.plist` localization in this [link][3])
 
 ```xml
 <key>FUAllFilesUploadedMessage</key>
@@ -66,6 +66,8 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
      <meta-data
          android:name="com.bluechilli.flutterupload.MAX_CONCURRENT_TASKS"
          android:value="3" />
+
+     <!-- changes this number to configure connection timeout for the upload http request -->
      <meta-data android:name="com.bluechilli.flutteruploader.UPLOAD_CONNECTION_TIMEOUT_IN_SECONDS" android:value="3600" />
  </provider>
 ```
@@ -146,9 +148,11 @@ final taskId = await uploader.enqueue(
   final subscription = uploader.result.listen((result) {
       //... code to handle result
   }, onError: (ex, stacktrace) {
-
+      // ... code to handle error
   });
 ```
+
+note: when tasks are cancelled, it will send on onError handler as exception with status = cancelled
 
 #### Cancel a task:
 
