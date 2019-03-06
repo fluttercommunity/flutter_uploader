@@ -1,1 +1,3 @@
 rootProject.name = 'flutter_uploader'
+android.enableJetifier=true
+android.useAndroidX=true

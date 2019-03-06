@@ -102,18 +102,26 @@ class FileItem {
 }
 
 class UploadException extends PlatformException {
-  UploadException({String code, String message, dynamic details})
+  final String taskId;
+  final int statusCode;
+  final UploadTaskStatus status;
+
+  UploadException(
+      {String code,
+      String message,
+      dynamic details,
+      this.taskId,
+      this.statusCode,
+      this.status})
       : super(code: code, message: message, details: details);
 
   @override
   String toString() =>
-      "code:$code, message:$message, details:${details != null ? details : "na"}";
+      "taskId: $taskId, status:$status, statusCode:$statusCode, code:$code, message:$message, details:${details != null ? details : "na"}";
 }
 
 class UploadTaskResponse {
   final String taskId;
-  final UploadException exception;
-  final bool isSuccess;
   final String response;
   final int statusCode;
   final UploadTaskStatus status;
@@ -121,11 +129,9 @@ class UploadTaskResponse {
 
   UploadTaskResponse(
       {@required this.taskId,
-      @required this.isSuccess,
       this.response,
       this.statusCode,
       this.status,
-      this.exception,
       this.headers});
 }
 
@@ -182,6 +188,7 @@ class FlutterUploader {
   /// * `data`: additional data to be uploaded together with file
   /// * `boundary`: custom part boundary
   /// * `showNotification`: sets `true` to show a notification displaying the
+  /// * `tag`: name of the upload request (only used on Android)
   /// download progress (only Android), otherwise, `false` value will disable
   /// this feature. The default value is `true`
   /// **return:**
@@ -190,12 +197,12 @@ class FlutterUploader {
   ///
   Future<String> enqueue({
     @required String url,
+    @required List<FileItem> files,
     UplaodMethod method = UplaodMethod.POST,
-    List<FileItem> files,
     Map<String, String> headers,
     Map<String, String> data,
-    int requestTimeout = 3600,
     bool showNotification = false,
+    String tag,
   }) async {
     assert(method != null);
 
@@ -211,7 +218,7 @@ class FlutterUploader {
         'headers': headers,
         'data': data,
         'show_notification': showNotification,
-        'requestTimeout': requestTimeout
+        'tag': tag
       });
       print('Uplaod task is enqueued with id($taskId)');
       return taskId;
@@ -270,12 +277,12 @@ class FlutterUploader {
 
         dynamic details = call.arguments['details'];
 
-        _responseController?.sink?.add(UploadTaskResponse(
+        _responseController?.sink?.addError(UploadException(
+          code: code,
+          message: message,
+          details: details,
           taskId: id,
-          isSuccess: false,
           statusCode: statusCode,
-          exception:
-              UploadException(code: code, details: details, message: message),
           status: UploadTaskStatus.from(status),
         ));
         break;
@@ -288,7 +295,6 @@ class FlutterUploader {
 
         _responseController?.sink?.add(UploadTaskResponse(
           taskId: id,
-          isSuccess: true,
           status: UploadTaskStatus.from(status),
           statusCode: statusCode,
           headers: headers,

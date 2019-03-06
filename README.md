@@ -33,7 +33,7 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 - **Configure request timeout:** controls how long (in seconds) a task should wait for additional data to arrive before giving up `Info.plist` file.
 
 ```xml
-<!-- changes this number to configure the maximum number of concurrent tasks -->
+<!-- changes this number to configure the request timeout -->
 <key>FUTimeoutInSeconds</key>
 <integer>3600</integer>
 ```
@@ -47,27 +47,6 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 
 ## Android integration
 
-### Required configuration:
-
-- In order to handle click action on notification to open the downloaded file on Android, you need to add some additional configurations. Add the following codes to your `AndroidManifest.xml`:
-
-```xml
-<provider
-    android:name="flutteruploader.UploaderFileProvider"
-    android:authorities="${applicationId}.flutter_uploader.provider"
-    android:exported="false"
-    android:grantUriPermissions="true">
-    <meta-data
-        android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/provider_paths"/>
-</provider>
-```
-
-**Note:**
-
-- You have to save your downloaded files in external storage (where the other applications have permission to read your files)
-- The downloaded files are only able to be opened if your device has at least an application that can read these file types (mp3, pdf, etc)
-
 ### Optional configuration:
 
 - **Configure maximum number of concurrent tasks:** the plugin depends on `WorkManager` library and `WorkManager` depends on the number of available processor to configure the maximum number of tasks running at a moment. You can setup a fixed number for this configuration by adding following codes to your `AndroidManifest.xml`:
@@ -80,25 +59,25 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
      android:exported="false" />
 
  <provider
-     android:name="flutteruploader.FlutterUploaderInitializer"
+     android:name="com.bluechilli.flutteruploader.FlutterUploaderInitializer"
      android:authorities="${applicationId}.flutter-upload-init"
      android:exported="false">
      <!-- changes this number to configure the maximum number of concurrent tasks -->
      <meta-data
-         android:name="vn.hunghd.flutterupload.MAX_CONCURRENT_TASKS"
-         android:value="5" />
+         android:name="com.bluechilli.flutterupload.MAX_CONCURRENT_TASKS"
+         android:value="3" />
+     <meta-data android:name="com.bluechilli.flutteruploader.UPLOAD_CONNECTION_TIMEOUT_IN_SECONDS" android:value="3600" />
  </provider>
 ```
 
 - **Localize notification messages:** you can localize notification messages of download progress by localizing following messages. (you can find the detail of string localization in Android in this [link][4])
 
 ```xml
-<string name="flutter_downloader_notification_started">Upload started</string>
-<string name="flutter_downloader_notification_in_progress">Upload in progress</string>
-<string name="flutter_downloader_notification_canceled">Upload canceled</string>
-<string name="flutter_downloader_notification_failed">Upload failed</string>
-<string name="flutter_downloader_notification_complete">Upload complete</string>
-<string name="flutter_downloader_notification_paused">Upload paused</string>
+<string name="flutter_uploader_notification_started">Upload started</string>
+<string name="flutter_uploader_notification_in_progress">Upload in progress</string>
+<string name="flutter_uploader_notification_canceled">Upload canceled</string>
+<string name="flutter_uploader_notification_failed">Upload failed</string>
+<string name="flutter_uploader_notification_complete">Upload complete</string>
 ```
 
 - **Firebase integration:** there's a conflict problem between `WorkManager` and `Firebase` library (related to `Guava` library). The problem is expected to be resolved in new version of `Guava` and `Gradle` build tools. For now, you can work around it by adding some codes to your `build.gradle` (in `android` folder).
@@ -143,12 +122,13 @@ final uploader = FlutterUploader();
 ```dart
 final uploader = FlutterUploader();
 final taskId = await uploader.enqueue(
-  url: "your upload link",
-  data: {"name": "john"}, // any data you want to send with upload
-  files: [FileItem(filename: filename, savedDir: savedDir, fieldname:"file")], // list of files that you want to send
+  url: "your upload link", //required: url to upload the files to
+  files: [FileItem(filename: filename, savedDir: savedDir, fieldname:"file")], // required: list of files that you want to send
   method: UplaodMethod.POST, // HTTP method you want to use either POST or Patch
-  headers: {"apikey": "api_123456", "userkey": "userkey_123456"}); // headers to be send in upload request,
-
+  headers: {"apikey": "api_123456", "userkey": "userkey_123456"},
+  data: {"name": "john"}, // any data you want to send with upload
+  showNotification: false, // send local notification (android only) for upload status
+  tag: "upload 1"); // headers to be send in upload request,
 );
 ```
 
@@ -165,6 +145,8 @@ final taskId = await uploader.enqueue(
 ```dart
   final subscription = uploader.result.listen((result) {
       //... code to handle result
+  }, onError: (ex, stacktrace) {
+
   });
 ```
 

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="flutter_uploader_notification_started">Upload started</string>
+    <string name="flutter_uploader_notification_in_progress">Upload in progress</string>
+    <string name="flutter_uploader_notification_canceled">Upload canceled</string>
+    <string name="flutter_uploader_notification_failed">Upload failed</string>
+    <string name="flutter_uploader_notification_complete">Upload complete</string>
+</resources>

@@ -164,7 +164,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         let headers = args["headers"] as? Dictionary<String,Any?>
         let data = args["data"] as? Dictionary<String,Any?>
         let files = args["files"] as? Array<Any>
-        let reqTimeout = args["requestTimeout"] as! Int
         
         if files == nil || files!.count <= 0 {
             result(FlutterError(code: "invalid_files", message: "There are no items to upload", details: nil))
@@ -172,7 +171,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         }
         
         if let url = URL(string: urlString) {
-            uploadTaskWithURLWithCompletion(url:url, files:files!, method:method, headers: headers, parameters: data, timeout:reqTimeout, completion: { [unowned self] (task, error) in
+            uploadTaskWithURLWithCompletion(url:url, files:files!, method:method, headers: headers, parameters: data, completion: { [unowned self] (task, error) in
                 
                 if(error != nil) {
                     result(error!)
@@ -243,7 +242,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                                    method:String,
                                    headers:Dictionary<String, Any?>?,
                                    parameters data:Dictionary<String, Any?>?,
-                                   timeout:Int,
                                    completion completionHandler:@escaping (URLSessionUploadTask?, FlutterError?) -> Void) {
         
         
@@ -288,6 +286,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                 }
             }
         }
+
+        let tout:Int = Int(self.timeout!);
         
         if flutterError != nil {
            completionHandler(nil, flutterError!)
@@ -301,7 +301,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                     return
                 }
                 
-                self?.makeRequest(path!, url, method, headers, boundary, timeout, completion: {
+                self?.makeRequest(path!, url, method, headers, boundary, tout, completion: {
                     (task, error) in
                     completionHandler(task, error)
                 })

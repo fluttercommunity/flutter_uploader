@@ -35,13 +35,11 @@ class _MyAppState extends State<MyApp> {
           "id: ${progress.taskId}, status: ${progress.status}, progress: ${progress.progress}");
     });
     _resultSubscription = uploader.result.listen((result) {
-      if (result.isSuccess) {
-        print(
-            "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}");
-      } else {
-        print(
-            "id: ${result.taskId}, status: ${result.status}, expcetion: ${result.exception}, statusCode: ${result.statusCode}");
-      }
+      print(
+          "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}");
+    }, onError: (ex, stacktrace) {
+      print(ex);
+      print(stacktrace ?? "no stacktrace");
     });
   }
 

@@ -1,4 +1,4 @@
-package com.example.flutteruploaderexample;
+package com.bluechilli.flutteruploaderexample;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;
