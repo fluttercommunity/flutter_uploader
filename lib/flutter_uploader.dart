@@ -35,6 +35,7 @@ class UploadTaskStatus {
 
 enum UplaodMethod {
   POST,
+  PUT,
   PATCH,
 }
 
@@ -189,7 +190,7 @@ class FlutterUploader {
   ///
   /// * `url`: upload link
   /// * `files`: files to be uploaded
-  /// * `method`: HTTP method to use for upload
+  /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
   /// * `headers`: HTTP headers
   /// * `data`: additional data to be uploaded together with file
   /// * `boundary`: custom part boundary

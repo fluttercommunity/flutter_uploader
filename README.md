@@ -126,7 +126,7 @@ final uploader = FlutterUploader();
 final taskId = await uploader.enqueue(
   url: "your upload link", //required: url to upload the files to
   files: [FileItem(filename: filename, savedDir: savedDir, fieldname:"file")], // required: list of files that you want to send
-  method: UplaodMethod.POST, // HTTP method you want to use either POST or Patch
+  method: UplaodMethod.POST, // HTTP method  (POST or PUT or PATCH)
   headers: {"apikey": "api_123456", "userkey": "userkey_123456"},
   data: {"name": "john"}, // any data you want to send with upload
   showNotification: false, // send local notification (android only) for upload status

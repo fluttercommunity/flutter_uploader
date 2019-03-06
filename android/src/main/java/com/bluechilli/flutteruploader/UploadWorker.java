@@ -99,7 +99,6 @@ public class UploadWorker extends Worker implements CountProgressListener {
         }
 
         int statusCode = 200;
-        if(method == null) method = "POST";
         Resources res = getApplicationContext().getResources();
         msgStarted = res.getString(R.string.flutter_uploader_notification_started);
         msgInProgress = res.getString(R.string.flutter_uploader_notification_in_progress);

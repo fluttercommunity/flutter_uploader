@@ -181,6 +181,16 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
     boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
 
+
+    if(method == null) {
+      method = "POST";
+    }
+
+    if(method != null && (method.toUpperCase() != "POST" || method.toUpperCase() != "PUT" || method.toUpperCase() != "PATCH" )) {
+      result.error("invalid_method", "Method must be either POST | PUT | PATCH", null);
+      return;
+    }
+
     List<FileItem> items = new ArrayList<>();
 
     for(Map<String, String> file : files) {

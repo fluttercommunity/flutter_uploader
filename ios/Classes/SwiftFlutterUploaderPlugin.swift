@@ -168,6 +168,11 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         let files = args["files"] as? Array<Any>
         let tag = args["tag"] as? String
         
+        if(method != "POST" || method != "PUT" || method != "POST") {
+            result(FlutterError(code: "invalid_method", message: "Method must be either POST | PUT | PATCH", details: nil))
+            return
+        }
+        
         if files == nil || files!.count <= 0 {
             result(FlutterError(code: "invalid_files", message: "There are no items to upload", details: nil))
             return
