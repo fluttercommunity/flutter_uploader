@@ -154,13 +154,13 @@ final taskId = await uploader.enqueue(
 
 note: when tasks are cancelled, it will send on onError handler as exception with status = cancelled
 
-#### Cancel a task:
+#### Cancel an upload task:
 
 ```dart
 uploader.cancel(taskId: taskId);
 ```
 
-#### Cancel all tasks:
+#### Cancel all upload tasks:
 
 ```dart
 uploader.cancelAll();
