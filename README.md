@@ -2,7 +2,7 @@
 
 A plugin for creating and managing download tasks. Supports iOS and Android.
 
-This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionDownloadTask`][2] in iOS to run upload task in background mode.
+This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionUploadTask`][2] in iOS to run upload task in background mode.
 
 This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Flutter Community for great plugins and inspiration.
 
@@ -167,7 +167,7 @@ uploader.cancelAll();
 ```
 
 [1]: https://developer.android.com/topic/libraries/architecture/workmanager
-[2]: https://developer.apple.com/documentation/foundation/nsurlsessiondownloadtask?language=objc
+[2]: https://developer.apple.com/documentation/foundation/nsurlsessionuploadtask?language=objc
 [3]: https://medium.com/@guerrix/info-plist-localization-ad5daaea732a
 [4]: https://developer.android.com/training/basics/supporting-devices/languages
 [5]: https://pub.dartlang.org/packages/flutter_downloader
