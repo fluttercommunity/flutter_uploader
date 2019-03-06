@@ -1,3 +1,4 @@
-## 0.0.1
+## 1.0.0
 
-* TODO: Describe initial release.
+- initial release
+- feature constists of: enqueue, cancel, cancelAll

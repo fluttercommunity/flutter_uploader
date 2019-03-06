@@ -193,11 +193,10 @@ class FlutterUploader {
   /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
   /// * `headers`: HTTP headers
   /// * `data`: additional data to be uploaded together with file
-  /// * `boundary`: custom part boundary
-  /// * `showNotification`: sets `true` to show a notification displaying the
+  /// * `showNotification`: sets `true` to show a notification displaying
+  /// upload progress and success or failure of upload task (Android only), otherwise will disable
+  /// this feature. The default value is `false`
   /// * `tag`: name of the upload request (only used on Android)
-  /// download progress (only Android), otherwise, `false` value will disable
-  /// this feature. The default value is `true`
   /// **return:**
   ///
   /// an unique identifier of the new upload task
