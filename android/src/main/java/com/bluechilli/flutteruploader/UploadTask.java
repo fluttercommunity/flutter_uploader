@@ -17,11 +17,13 @@ public class UploadTask {
     private int _requestTimeoutInSeconds = 3600;
     private boolean _showNotification = false;
     private String _tag;
+    private int _id;
 
-    public UploadTask(String url, String method, List<FileItem> files,
+    public UploadTask(int id, String url, String method, List<FileItem> files,
                       Map<String, String> headers, Map<String, String> data,
                       int requestTimeoutInSeconds,
                       boolean showNotification, String tag) {
+       _id = id;
        _url = url;
        _method = method;
        _files = files;
@@ -63,4 +65,6 @@ public class UploadTask {
     }
 
     public String getTag() { return _tag; }
+
+    public int getId() { return _id; }
 }

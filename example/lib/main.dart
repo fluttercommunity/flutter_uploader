@@ -32,11 +32,11 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     _progressSubscription = uploader.progress.listen((progress) {
       print(
-          "id: ${progress.taskId}, status: ${progress.status}, progress: ${progress.progress}");
+          "id: ${progress.taskId}, status: ${progress.status}, progress: ${progress.progress}, tag: ${progress.tag}");
     });
     _resultSubscription = uploader.result.listen((result) {
       print(
-          "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}");
+          "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}, tag: ${result.tag}, headers: ${result.headers}");
     }, onError: (ex, stacktrace) {
       print(ex);
       print(stacktrace ?? "no stacktrace");
@@ -118,11 +118,14 @@ class _MyAppState extends State<MyApp> {
       final File newImage = await image.copy('$savedDir/$filename');
 
       var taskId = await uploader.enqueue(
-          url: "https://flutterapi.free.beeceptor.com/upload",
-          data: {"name": "john"},
-          files: [FileItem(filename: filename, savedDir: savedDir)],
-          method: UplaodMethod.POST,
-          headers: {"apikey": "api_123456", "userkey": "userkey_123456"});
+        url: "https://flutterapi.free.beeceptor.com/upload",
+        data: {"name": "john"},
+        files: [FileItem(filename: filename, savedDir: savedDir)],
+        method: UplaodMethod.POST,
+        headers: {"apikey": "api_123456", "userkey": "userkey_123456"},
+        tag: "image upload 1",
+        showNotification: true,
+      );
 
       setState(() {
         _image = newImage;
@@ -140,11 +143,17 @@ class _MyAppState extends State<MyApp> {
       final File newVideo = await video.copy('$savedDir/$filename');
 
       var taskId = await uploader.enqueue(
-          url: "https://flutterapi.free.beeceptor.com/upload",
-          data: {"name": "john"},
-          files: [FileItem(filename: filename, savedDir: savedDir)],
-          method: UplaodMethod.POST,
-          headers: {"apikey": "api_123456", "userkey": "userkey_123456"});
+        url: "https://flutterapi.free.beeceptor.com/upload",
+        data: {"name": "john"},
+        files: [FileItem(filename: filename, savedDir: savedDir)],
+        method: UplaodMethod.POST,
+        headers: {
+          "apikey": "api_123456",
+          "userkey": "userkey_123456",
+        },
+        tag: "video upload 1",
+        showNotification: true,
+      );
 
       setState(() {
         _controller?.dispose();

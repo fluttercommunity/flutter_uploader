@@ -7,9 +7,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -45,7 +48,8 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
   private int connectionTimeout = 3600;
   private Map<String, Boolean> completedTasks = new HashMap<>();
   private Map<String, String> tasks = new HashMap<>();
-
+  private Gson gson = new Gson();
+  private int taskIdKey = 0;
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), CHANNEL_NAME);
     final FlutterUploaderPlugin plugin = new FlutterUploaderPlugin(registrar, channel);
@@ -84,15 +88,22 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
                   int statusCode = info.getOutputData().getInt(UploadWorker.EXTRA_STATUS_CODE, 200);
                   String code = info.getOutputData().getString(UploadWorker.EXTRA_ERROR_CODE);
                   String errorMessage = info.getOutputData().getString(UploadWorker.EXTRA_ERROR_MESSAGE);
-                  String details = info.getOutputData().getString(UploadWorker.EXTRA_ERROR_DETAILS);
+                  String[] details = info.getOutputData().getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
                   sendFailed(id, status, statusCode, code, errorMessage, details);
                 break;
               case CANCELLED:
                   sendFailed(id, UploadStatus.CANCELED, 500, "flutter_upload_cancelled", "upload has been cancelled", null);
               break;
               default:
-                  String response = info.getOutputData().getString(UploadWorker.EXTRA_RESPONSE);
-                  sendCompleted(id, status, response);
+                Map<String, String> headers = null;
+                Type type = new TypeToken<Map<String, String>>(){}.getType();
+                String headerJson = info.getOutputData().getString(UploadWorker.EXTRA_HEADERS);
+                if(headerJson != null) {
+                  headers = gson.fromJson(headerJson, type);
+                }
+
+                String response = info.getOutputData().getString(UploadWorker.EXTRA_RESPONSE);
+                sendCompleted(id, status, response, headers);
                 break;
             }
 
@@ -161,6 +172,7 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
   }
 
   private void enqueue(MethodCall call, MethodChannel.Result result) {
+    taskIdKey++;
     String url = call.argument("url");
     String method = call.argument("method");
     List<Map<String, String>> files = call.argument("files");
@@ -175,7 +187,7 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
       items.add(FileItem.fromJson(file));
     }
 
-    WorkRequest request = buildRequest(new UploadTask(url, method, items, headers, parameters, connectionTimeout, showNotification, tag));
+    WorkRequest request = buildRequest(new UploadTask(taskIdKey, url, method, items, headers, parameters, connectionTimeout, showNotification, tag));
     WorkManager.getInstance().enqueue(request);
     String taskId = request.getId().toString();
     if(!tasks.containsKey(taskId)) {
@@ -205,7 +217,8 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
             .putString(UploadWorker.ARG_METHOD, task.getMethod())
             .putInt(UploadWorker.ARG_REQUEST_TIMEOUT, task.getTimeout())
             .putBoolean(UploadWorker.ARG_SHOW_NOTIFICATION, task.canShowNotification())
-            .putString(UploadWorker.ARG_UPLOAD_REQUEST_TAG, task.getTag());
+            .putString(UploadWorker.ARG_UPLOAD_REQUEST_TAG, task.getTag())
+            .putInt(UploadWorker.ARG_ID, task.getId());
 
     List<FileItem> files = task.getFiles();
 
@@ -246,7 +259,7 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
     channel.invokeMethod("updateProgress", args);
   }
 
-  private void sendFailed(String id, int status, int statusCode, String code, String message, String details) {
+  private void sendFailed(String id, int status, int statusCode, String code, String message, String[] details) {
     String tag = tasks.get(id);
     Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
@@ -259,14 +272,14 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
     channel.invokeMethod("uploadFailed", args);
   }
 
-  private void sendCompleted(String id, int status, String response) {
+  private void sendCompleted(String id, int status, String response, Map headers) {
     String tag = tasks.get(id);
     Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
     args.put("status", status);
     args.put("statusCode", 200);
     args.put("message", response);
-    args.put("headers", new HashMap<String, String>());
+    args.put("headers", headers);
     args.put("tag", tag);
     channel.invokeMethod("uploadCompleted", args);
   }

@@ -101,23 +101,26 @@ class FileItem {
   }
 }
 
-class UploadException extends PlatformException {
+class UploadException implements Exception {
   final String taskId;
   final int statusCode;
   final UploadTaskStatus status;
+  final String tag;
+  final String message;
+  final String code;
 
-  UploadException(
-      {String code,
-      String message,
-      dynamic details,
-      this.taskId,
-      this.statusCode,
-      this.status})
-      : super(code: code, message: message, details: details);
+  UploadException({
+    this.code,
+    this.message,
+    this.taskId,
+    this.statusCode,
+    this.status,
+    this.tag,
+  });
 
   @override
   String toString() =>
-      "taskId: $taskId, status:$status, statusCode:$statusCode, code:$code, message:$message, details:${details != null ? details : "na"}";
+      "taskId: $taskId, status:$status, statusCode:$statusCode, code:$code, message:$message}, tag:$tag";
 }
 
 class UploadTaskResponse {
@@ -126,21 +129,24 @@ class UploadTaskResponse {
   final int statusCode;
   final UploadTaskStatus status;
   final Map<String, String> headers;
+  final String tag;
 
   UploadTaskResponse(
       {@required this.taskId,
       this.response,
       this.statusCode,
       this.status,
-      this.headers});
+      this.headers,
+      this.tag});
 }
 
 class UploadTaskProgress {
   final String taskId;
   final int progress;
   final UploadTaskStatus status;
+  final String tag;
 
-  UploadTaskProgress(this.taskId, this.progress, this.status);
+  UploadTaskProgress(this.taskId, this.progress, this.status, this.tag);
 }
 
 class FlutterUploader {
@@ -260,12 +266,10 @@ class FlutterUploader {
         String id = call.arguments['task_id'];
         int status = call.arguments['status'];
         int uploadProgress = call.arguments['progress'];
+        String tag = call.arguments["tag"];
 
         _progressController?.sink?.add(UploadTaskProgress(
-          id,
-          uploadProgress,
-          UploadTaskStatus.from(status),
-        ));
+            id, uploadProgress, UploadTaskStatus.from(status), tag));
 
         break;
       case "uploadFailed":
@@ -274,31 +278,45 @@ class FlutterUploader {
         String code = call.arguments['code'];
         int status = call.arguments["status"];
         int statusCode = call.arguments["statusCode"];
+        String tag = call.arguments["tag"];
 
         dynamic details = call.arguments['details'];
+        StackTrace stackTrace;
 
-        _responseController?.sink?.addError(UploadException(
-          code: code,
-          message: message,
-          details: details,
-          taskId: id,
-          statusCode: statusCode,
-          status: UploadTaskStatus.from(status),
-        ));
+        if (details != null && details.length > 0) {
+          stackTrace =
+              StackTrace.fromString(details.reduce((s, r) => "$r\n$s"));
+        }
+
+        _responseController?.sink?.addError(
+          UploadException(
+            code: code,
+            message: message,
+            taskId: id,
+            statusCode: statusCode,
+            status: UploadTaskStatus.from(status),
+            tag: tag,
+          ),
+          stackTrace,
+        );
         break;
       case "uploadCompleted":
         String id = call.arguments['task_id'];
-        Map<String, String> headers = call.arguments["headers"];
+        Map headers = call.arguments["headers"];
         String message = call.arguments["message"];
         int status = call.arguments["status"];
         int statusCode = call.arguments["statusCode"];
+        String tag = call.arguments["tag"];
+        Map<String, String> h = headers?.map(
+            (key, value) => MapEntry<String, String>(key, value as String));
 
         _responseController?.sink?.add(UploadTaskResponse(
           taskId: id,
           status: UploadTaskStatus.from(status),
           statusCode: statusCode,
-          headers: headers,
+          headers: h,
           response: message,
+          tag: tag,
         ));
         break;
       default:
