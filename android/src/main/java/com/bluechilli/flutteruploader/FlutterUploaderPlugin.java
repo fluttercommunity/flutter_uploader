@@ -12,8 +12,10 @@ import android.util.Log;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +52,8 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
   private Map<String, String> tasks = new HashMap<>();
   private Gson gson = new Gson();
   private int taskIdKey = 0;
+  private final String[] validHttpMethods = new String[] {"POST", "PUT", "PATCH"};
+
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), CHANNEL_NAME);
     final FlutterUploaderPlugin plugin = new FlutterUploaderPlugin(registrar, channel);
@@ -61,7 +65,6 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
     this.channel = channel;
     this.register = registrar;
     this.connectionTimeout =  FlutterUploaderInitializer.getConnectionTimeout(registrar.context());
-
   }
 
   private final BroadcastReceiver updateProcessEventReceiver = new BroadcastReceiver() {
@@ -171,6 +174,7 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
   public void onActivityDestroyed(Activity activity) {
   }
 
+
   private void enqueue(MethodCall call, MethodChannel.Result result) {
     taskIdKey++;
     String url = call.argument("url");
@@ -181,12 +185,13 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
     boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
 
+    List<String> methods = Arrays.asList(validHttpMethods);
 
     if(method == null) {
       method = "POST";
     }
 
-    if(method != null && (method.toUpperCase() != "POST" || method.toUpperCase() != "PUT" || method.toUpperCase() != "PATCH" )) {
+    if(!methods.contains(method.toUpperCase())) {
       result.error("invalid_method", "Method must be either POST | PUT | PATCH", null);
       return;
     }

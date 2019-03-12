@@ -22,6 +22,24 @@ class UploadTaskStatus {
 
   toString() => 'UploadTaskStatus($_value)';
 
+  String get description {
+    if (value == null) return "Undefined";
+    switch (value) {
+      case 1:
+        return "Enqueued";
+      case 2:
+        return "Running";
+      case 3:
+        return "Completed";
+      case 4:
+        return "Failed";
+      case 5:
+        return "Cancelled";
+      default:
+        return "Undefined";
+    }
+  }
+
   static UploadTaskStatus from(int value) => UploadTaskStatus._internal(value);
 
   static const undefined = const UploadTaskStatus._internal(0);
@@ -61,7 +79,7 @@ class UploadTask {
   UploadTask({
     this.taskId,
     this.status = UploadTaskStatus.undefined,
-    this.progress,
+    this.progress = 0,
     this.url,
     this.files,
     this.data,
@@ -180,7 +198,7 @@ class FlutterUploader {
   void dispose() {
     _platform.setMethodCallHandler(null);
     _progressController?.close();
-    _progressController?.close();
+    _responseController?.close();
   }
 
   ///

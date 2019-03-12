@@ -168,7 +168,10 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         let files = args["files"] as? Array<Any>
         let tag = args["tag"] as? String
         
-        if(method != "POST" || method != "PUT" || method != "POST") {
+        let validHttpMethods = ["POST", "PUT", "PATCH"]
+        let httpMethod = method.uppercased()
+        
+        if(!validHttpMethods.contains(httpMethod)) {
             result(FlutterError(code: "invalid_method", message: "Method must be either POST | PUT | PATCH", details: nil))
             return
         }
@@ -289,6 +292,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                     try fm.copyItem(at: URL(fileURLWithPath: info.path), to: tempPath!)
                     let fileInfo = UploadFileInfo(fieldname: info.fieldname, filename: info.filename, savedDir: info.savedDir, temporalFilePath: tempPath)
                     itemsToUpload.append(fileInfo)
+                    NSLog("File: \(fileInfo.temporalFilePath) with mimeType: \(fileInfo.mimeType)")
                 }
                 catch {
                     NSLog("Failed to copy the file: \(info.path) to tempFile: \(tempPath!)")
