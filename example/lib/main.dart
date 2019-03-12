@@ -259,7 +259,6 @@ class UploadItemView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("progressing => ${item.progress}");
     final progress = item.progress.toDouble() / 100;
     final widget = item.status == UploadTaskStatus.running
         ? LinearProgressIndicator(value: progress)
