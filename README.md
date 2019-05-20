@@ -8,6 +8,8 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 
 ## iOS integration
 
+### Note: This is written in swift when you create the flutter project use -i swift option
+
 - Enable background mode.
 
 <img width="512" src="https://github.com/hnvn/flutter_downloader/blob/master/screenshot/enable_background_mode.png?raw=true"/>
