@@ -58,7 +58,10 @@ public class FlutterUploaderPlugin implements MethodCallHandler, Application.Act
     final MethodChannel channel = new MethodChannel(registrar.messenger(), CHANNEL_NAME);
     final FlutterUploaderPlugin plugin = new FlutterUploaderPlugin(registrar, channel);
     channel.setMethodCallHandler(plugin);
-    registrar.activity().getApplication().registerActivityLifecycleCallbacks(plugin);
+
+    if (registrar.activity() != null) {
+      registrar.activity().getApplication().registerActivityLifecycleCallbacks(plugin);
+    }
   }
 
   private FlutterUploaderPlugin(Registrar registrar, MethodChannel channel) {
