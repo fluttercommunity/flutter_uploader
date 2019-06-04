@@ -17,5 +17,6 @@ A new flutter plugin project.
   s.static_framework = true
   s.dependency 'Flutter'
   s.ios.deployment_target = '8.0'
+  s.swift_version = '5.0'
 end
 
