@@ -4,15 +4,16 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
+import android.webkit.URLUtil;
+
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -38,11 +39,6 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class UploadWorker extends Worker implements CountProgressListener {
-  public static final String UPDATE_PROCESS_EVENT =
-      "com.bluechilli.flutteruploader.UPDATE_PROCESS_EVENT";
-  public static final String COMPLETED_EVENT = "com.bluechilli.flutteruploader.COMPLETED_EVENT";
-  public static final String FAILURE_EVENT = "com.bluechilli.flutteruploader.FAILURE_EVENT";
-
   public static final String ARG_URL = "url";
   public static final String ARG_METHOD = "method";
   public static final String ARG_HEADERS = "headers";
@@ -58,12 +54,12 @@ public class UploadWorker extends Worker implements CountProgressListener {
   public static final String EXTRA_ERROR_CODE = "errorCode";
   public static final String EXTRA_ERROR_DETAILS = "errorDetails";
   public static final String EXTRA_RESPONSE = "response";
-  public static final String EXTRA_PROGRESS = "progress";
   public static final String EXTRA_ID = "id";
   public static final String EXTRA_HEADERS = "headers";
   private static final String TAG = UploadWorker.class.getSimpleName();
   private static final String CHANNEL_ID = "FLUTTER_UPLOADER_NOTIFICATION";
   private static final int UPDATE_STEP = 0;
+  private static final int DEFAULT_ERROR_STATUS_CODE = 500;
 
   private NotificationCompat.Builder builder;
   private boolean showNotification;
@@ -131,7 +127,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
         File file = new File(item.getPath());
         Log.d(TAG, "attaching file: " + item.getPath());
 
-        if (file.exists()) {
+        if (file.exists() && file.isFile()) {
           fileExistsCount++;
           RequestBody fileBody =
               RequestBody.create(MediaType.parse(GetMimeType(item.getPath())), file);
@@ -141,13 +137,13 @@ public class UploadWorker extends Worker implements CountProgressListener {
         }
       }
 
-      if (fileExistsCount == 0) {
+      if (fileExistsCount <= 0) {
         return Result.failure(
             createOutputErrorData(
                 UploadStatus.FAILED,
-                statusCode,
-                "flutter_upload_error",
-                "there are not files to upload",
+                    DEFAULT_ERROR_STATUS_CODE,
+                "invalid_files",
+                "There are no items to upload",
                 null));
       }
 
@@ -167,9 +163,17 @@ public class UploadWorker extends Worker implements CountProgressListener {
         }
       }
 
+      if(!URLUtil.isValidUrl(url)) {
+        return Result.failure(
+                createOutputErrorData(
+                        UploadStatus.FAILED, DEFAULT_ERROR_STATUS_CODE, "invalid_url", "url is not a valid url", null));
+      }
+
+
+
       requestBuilder.addHeader("Accept", "application/json; charset=utf-8");
       requestBuilder.addHeader("Accept-Encoding", "br, gzip, deflate");
-      Request request = null;
+      Request request;
 
       switch (method.toUpperCase()) {
         case "PUT":
@@ -215,7 +219,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
         }
         return Result.failure(
             createOutputErrorData(
-                UploadStatus.FAILED, statusCode, "flutter_upload_error", responseString, null));
+                UploadStatus.FAILED, statusCode, "upload_error", responseString, null));
       }
       Data outputData =
           new Data.Builder()
@@ -243,7 +247,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
           createOutputErrorData(
               UploadStatus.FAILED,
               500,
-              "flutter_upload_json_io",
+              "json_error",
               ex.toString(),
               getStacktraceAsStringList(ex.getStackTrace())));
 
@@ -258,7 +262,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
           createOutputErrorData(
               UploadStatus.FAILED,
               500,
-              "flutter_upload_unknown_host",
+              "unknown_host",
               ex.toString(),
               getStacktraceAsStringList(ex.getStackTrace())));
     } catch (IOException ex) {
@@ -273,7 +277,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
           createOutputErrorData(
               UploadStatus.FAILED,
               500,
-              "flutter_upload_io_error",
+              "io_error",
               ex.toString(),
               getStacktraceAsStringList(ex.getStackTrace())));
     } catch (Exception ex) {
@@ -288,7 +292,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
           createOutputErrorData(
               UploadStatus.FAILED,
               500,
-              "flutter_upload_error",
+              "upload_error",
               ex.toString(),
               getStacktraceAsStringList(ex.getStackTrace())));
     }
@@ -330,21 +334,21 @@ public class UploadWorker extends Worker implements CountProgressListener {
   }
 
   private void sendUpdateProcessEvent(Context context, int status, int progress) {
-    Intent intent = new Intent(UPDATE_PROCESS_EVENT);
-    intent.putExtra(EXTRA_ID, getId().toString());
-    intent.putExtra(EXTRA_STATUS, status);
-    intent.putExtra(EXTRA_PROGRESS, progress);
-    LocalBroadcastManager.getInstance(context).sendBroadcast(intent);
+      UploadProgressReporter.getInstance().notifyProgress(new UploadProgress(
+              getId().toString(),
+              status,
+              progress
+      ));
   }
 
   private Data createOutputErrorData(
       int status, int statusCode, String code, String message, String[] details) {
     return new Data.Builder()
-        .putInt(EXTRA_STATUS_CODE, statusCode)
-        .putInt(EXTRA_STATUS, status)
-        .putString(EXTRA_ERROR_CODE, code)
-        .putString(EXTRA_ERROR_MESSAGE, message)
-        .putStringArray(EXTRA_ERROR_DETAILS, details)
+        .putInt(UploadWorker.EXTRA_STATUS_CODE, statusCode)
+        .putInt(UploadWorker.EXTRA_STATUS, status)
+        .putString(UploadWorker.EXTRA_ERROR_CODE, code)
+        .putString(UploadWorker.EXTRA_ERROR_MESSAGE, message)
+        .putStringArray(UploadWorker.EXTRA_ERROR_DETAILS, details)
         .build();
   }
 
@@ -469,6 +473,6 @@ public class UploadWorker extends Worker implements CountProgressListener {
       output.add(stacktrace.toString());
     }
 
-    return (String[]) output.toArray();
+    return output.toArray(new String[0]);
   }
 }

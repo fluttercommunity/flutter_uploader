@@ -259,39 +259,50 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             }
         }
 
+        var fileCount:Int = 0;
+        
         for file in files {
             let f = file as! Dictionary<String, Any>
             let filename = f[KEY_FILE_NAME] as! String
             let fieldname = f[KEY_FIELD_NAME] as! String
             let savedDir = f[KEY_SAVED_DIR] as! String
             let info = UploadFileInfo(fieldname: fieldname, filename: filename, savedDir: savedDir)
+            var isDir: ObjCBool = false
 
-            if !FileManager.default.fileExists(atPath: info.path) {
-                flutterError = FlutterError(code: "io_error", message: "file at path \(info.path) doesn't exists", details: nil)
-                break
-            } else {
-                let fileId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-                let ext = NSURL(fileURLWithPath: info.path).pathExtension!
-                let filename = "\(fileId).\(ext)"
-                let tempPath = tempDir?.appendingPathComponent("\(filename)", isDirectory: false)
-                do {
-                    try fm.copyItem(at: URL(fileURLWithPath: info.path), to: tempPath!)
-                    let fileInfo = UploadFileInfo(fieldname: info.fieldname, filename: info.filename, savedDir: info.savedDir, temporalFilePath: tempPath)
-                    itemsToUpload.append(fileInfo)
-
-                    if let temporalFilePath = fileInfo.temporalFilePath {
-                        NSLog("File: \(temporalFilePath) with mimeType: \(fileInfo.mimeType)")
+            let fm = FileManager.default
+            if fm.fileExists(atPath: info.path, isDirectory:&isDir) {
+                if !isDir.boolValue {
+                    fileCount += 1
+                    let fileId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+                    let ext = NSURL(fileURLWithPath: info.path).pathExtension!
+                    let filename = "\(fileId).\(ext)"
+                    let tempPath = tempDir?.appendingPathComponent("\(filename)", isDirectory: false)
+                    do {
+                        try fm.copyItem(at: URL(fileURLWithPath: info.path), to: tempPath!)
+                        let fileInfo = UploadFileInfo(fieldname: info.fieldname, filename: info.filename, savedDir: info.savedDir, temporalFilePath: tempPath)
+                        itemsToUpload.append(fileInfo)
+                        
+                        if let temporalFilePath = fileInfo.temporalFilePath {
+                            NSLog("File: \(temporalFilePath) with mimeType: \(fileInfo.mimeType)")
+                        }
+                    } catch {
+                        fileCount -= 1;
+                        NSLog("Failed to copy the file: \(info.path) to tempFile: \(tempPath!)")
                     }
-                } catch {
-                    NSLog("Failed to copy the file: \(info.path) to tempFile: \(tempPath!)")
                 }
+                else {
+                    flutterError = FlutterError(code: "io_error", message: "path \(info.path) is a directory. please provide valid file path", details: nil);
+                }
+            }
+            else {
+                flutterError = FlutterError(code: "io_error", message: "file at path \(info.path) doesn't exists", details: nil);
             }
         }
 
         let tout: Int = Int(self.timeout!)
 
-        if flutterError != nil {
-            completionHandler(nil, flutterError!)
+        if fileCount <= 0 {
+            completionHandler(nil, flutterError)
         } else {
             saveToFileWithCompletion(itemsToUpload, data, boundary, completion: {
                 [weak self] (path, error) in

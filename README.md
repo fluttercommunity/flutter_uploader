@@ -1,6 +1,6 @@
 # Flutter Uploader
 
-A plugin for creating and managing download tasks. Supports iOS and Android.
+A plugin for creating and managing upload tasks. Supports iOS and Android.
 
 This plugin is based on [`WorkManager`][1] in Android and [`NSURLSessionUploadTask`][2] in iOS to run upload task in background mode.
 
@@ -74,7 +74,7 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
  </provider>
 ```
 
-- **Localize notification messages:** you can localize notification messages of download progress by localizing following messages. (you can find the detail of string localization in Android in this [link][4])
+- **Localize notification messages:** you can localize notification messages of upload progress by localizing following messages. (you can find the detail of string localization in Android in this [link][4])
 
 ```xml
 <string name="flutter_uploader_notification_started">Upload started</string>

@@ -95,8 +95,8 @@ class _UploadScreenState extends State<UploadScreen> {
         task.status = result.status;
       });
     }, onError: (ex, stacktrace) {
-      print(ex);
-      print(stacktrace ?? "no stacktrace");
+      print("exception: $ex");
+      print("stacktrace: $stacktrace" ?? "no stacktrace");
       UploadException exp = ex as UploadException;
       final task = _tasks[exp.tag];
       if (task == null) return;
@@ -181,11 +181,11 @@ class _UploadScreenState extends State<UploadScreen> {
         files: [
           FileItem(
             filename: filename,
-            savedDir: savedDir,
+            savedDir: "", //savedDir,
             fieldname: "file",
           )
         ],
-        method: UplaodMethod.POST,
+        method: UploadMethod.POST,
         tag: tag,
         showNotification: true,
       );
@@ -221,7 +221,7 @@ class _UploadScreenState extends State<UploadScreen> {
             fieldname: "file",
           )
         ],
-        method: UplaodMethod.POST,
+        method: UploadMethod.POST,
         tag: tag,
         showNotification: true,
       );

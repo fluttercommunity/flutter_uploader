@@ -7,7 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 ///
-/// A class defines a set of possible statuses of a download task
+/// A class defines a set of possible statuses of a upload task
 ///
 class UploadTaskStatus {
   final int _value;
@@ -51,7 +51,7 @@ class UploadTaskStatus {
   static const paused = const UploadTaskStatus._internal(6);
 }
 
-enum UplaodMethod {
+enum UploadMethod {
   POST,
   PUT,
   PATCH,
@@ -222,7 +222,7 @@ class FlutterUploader {
   Future<String> enqueue({
     @required String url,
     @required List<FileItem> files,
-    UplaodMethod method = UplaodMethod.POST,
+    UploadMethod method = UploadMethod.POST,
     Map<String, String> headers,
     Map<String, String> data,
     bool showNotification = false,
@@ -246,8 +246,12 @@ class FlutterUploader {
       });
       print('Uplaod task is enqueued with id($taskId)');
       return taskId;
-    } on PlatformException catch (e) {
+    } on PlatformException catch (e, stackTrace) {
       print('Uplaod task is failed with reason(${e.message})');
+      _responseController?.sink?.addError(
+        _toUploadException(e, tag: tag),
+        stackTrace,
+      );
       return null;
     }
   }
@@ -262,8 +266,15 @@ class FlutterUploader {
   Future<void> cancel({@required String taskId}) async {
     try {
       await _platform.invokeMethod('cancel', {'task_id': taskId});
-    } on PlatformException catch (e) {
+    } on PlatformException catch (e, stackTrace) {
       print(e.message);
+      _responseController?.sink?.addError(
+        _toUploadException(
+          e,
+          taskId: taskId,
+        ),
+        stackTrace,
+      );
     }
   }
 
@@ -273,8 +284,13 @@ class FlutterUploader {
   Future<void> cancelAll() async {
     try {
       await _platform.invokeMethod('cancelAll');
-    } on PlatformException catch (e) {
+    } on PlatformException catch (e, strackTrace) {
       print(e.message);
+      _responseController?.sink?.addError(
+          _toUploadException(
+            e,
+          ),
+          strackTrace);
     }
   }
 
@@ -341,4 +357,18 @@ class FlutterUploader {
         throw UnsupportedError("Unrecognized JSON message");
     }
   }
+
+  UploadException _toUploadException(
+    PlatformException ex, {
+    String taskId,
+    String tag,
+  }) =>
+      UploadException(
+        code: ex.code,
+        message: ex.message,
+        taskId: taskId,
+        statusCode: 500,
+        status: UploadTaskStatus.failed,
+        tag: tag,
+      );
 }
