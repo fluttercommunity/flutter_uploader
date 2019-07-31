@@ -181,7 +181,7 @@ class _UploadScreenState extends State<UploadScreen> {
         files: [
           FileItem(
             filename: filename,
-            savedDir: "", //savedDir,
+            savedDir: savedDir,
             fieldname: "file",
           )
         ],

@@ -213,6 +213,13 @@ public class UploadWorker extends Worker implements CountProgressListener {
         }
       }
 
+
+      String responseHeaders = gson.toJson(outputHeaders);
+
+      Log.d(TAG, "Response: " + responseString);
+      Log.d(TAG, "Response header: " + responseHeaders);
+
+
       if (!response.isSuccessful()) {
         if (showNotification) {
           updateNotification(context, tag, UploadStatus.FAILED, 0, null);
@@ -221,14 +228,18 @@ public class UploadWorker extends Worker implements CountProgressListener {
             createOutputErrorData(
                 UploadStatus.FAILED, statusCode, "upload_error", responseString, null));
       }
+
+
       Data outputData =
           new Data.Builder()
               .putString(EXTRA_ID, getId().toString())
               .putInt(EXTRA_STATUS, UploadStatus.COMPLETE)
               .putInt(EXTRA_STATUS_CODE, statusCode)
               .putString(EXTRA_RESPONSE, responseString)
-              .putString(EXTRA_HEADERS, gson.toJson(outputHeaders))
+              .putString(EXTRA_HEADERS, responseHeaders)
               .build();
+
+
 
       if (showNotification) {
         updateNotification(context, tag, UploadStatus.COMPLETE, 0, null);
