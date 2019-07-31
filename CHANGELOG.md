@@ -1,6 +1,6 @@
 ## 1.0.3
 
-- prevent from start uploading when directory is passed as upload item
+- prevent from start uploading when directory is passed as file path
 - update androidx workmanager to 2.0.0
 - use observable for tracking progress instead of localbroadcastmanager (deprecation) on android
 - fixed few typoes in code
