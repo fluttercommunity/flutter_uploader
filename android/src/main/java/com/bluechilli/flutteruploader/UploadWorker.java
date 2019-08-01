@@ -207,7 +207,18 @@ public class UploadWorker extends Worker implements CountProgressListener {
       Headers rheaders = response.headers();
       Map<String, String> outputHeaders = new HashMap<>();
 
+      boolean hasJsonResponse = true;
+
       if (rheaders != null) {
+        String responseContentType = rheaders.get("content-type");
+
+        if(responseContentType != null && responseContentType.contains("json")) {
+          hasJsonResponse = true;
+        }
+        else {
+          hasJsonResponse = false;
+        }
+
         for (String name : rheaders.names()) {
           outputHeaders.put(name, rheaders.get(name));
         }
@@ -226,18 +237,20 @@ public class UploadWorker extends Worker implements CountProgressListener {
         }
         return Result.failure(
             createOutputErrorData(
-                UploadStatus.FAILED, statusCode, "upload_error", responseString, null));
+                UploadStatus.FAILED, statusCode, "upload_error", hasJsonResponse ? responseString : null, null));
       }
 
-
-      Data outputData =
-          new Data.Builder()
+      Data.Builder builder = new Data.Builder()
               .putString(EXTRA_ID, getId().toString())
               .putInt(EXTRA_STATUS, UploadStatus.COMPLETE)
               .putInt(EXTRA_STATUS_CODE, statusCode)
-              .putString(EXTRA_RESPONSE, responseString)
-              .putString(EXTRA_HEADERS, responseHeaders)
-              .build();
+              .putString(EXTRA_HEADERS, responseHeaders);
+
+      if(hasJsonResponse) {
+        builder.putString(EXTRA_RESPONSE, responseString);
+      }
+
+      Data outputData = builder.build();
 
 
 
