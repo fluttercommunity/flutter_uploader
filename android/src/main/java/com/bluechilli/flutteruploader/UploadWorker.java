@@ -172,7 +172,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
 
 
       requestBuilder.addHeader("Accept", "application/json; charset=utf-8");
-      requestBuilder.addHeader("Accept-Encoding", "br, gzip, deflate");
+
       Request request;
 
       switch (method.toUpperCase()) {
