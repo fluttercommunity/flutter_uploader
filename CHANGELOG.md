@@ -1,8 +1,3 @@
-## 1.0.3+1
-
-- ignore any http response that are not json on android due to WorkManager's Data object can support upto 10240 bytes (android)
-- remove aAccept-Encoding header because okHttp does the transparently adds it for compression
-
 ## 1.0.3
 
 - prevent from start uploading when directory is passed as file path
