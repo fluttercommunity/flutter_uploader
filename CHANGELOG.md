@@ -1,3 +1,9 @@
+## 1.0.3+1
+
+- remove Accept-Encoding header because OkHttp transparently adds it (android)
+- documentation update
+- clean up some code
+
 ## 1.0.3
 
 - prevent from start uploading when directory is passed as file path
