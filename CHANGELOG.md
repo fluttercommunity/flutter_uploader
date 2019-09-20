@@ -1,3 +1,7 @@
+## 1.0.3+2
+
+- fix bug that upon cancellation it was cancelling the work request however it wasn't cancelling the already progressing upload request (android);
+
 ## 1.0.3+1
 
 - remove Accept-Encoding header because OkHttp transparently adds it (android)
