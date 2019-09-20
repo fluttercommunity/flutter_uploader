@@ -68,6 +68,8 @@ public class UploadWorker extends Worker implements CountProgressListener {
   private int lastNotificationProgress = 0;
   private String tag;
   private int primaryId;
+  private Call call;
+  private boolean isCancelled = false;
 
   public UploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
@@ -200,7 +202,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
               .readTimeout((long) timeout, TimeUnit.SECONDS)
               .build();
 
-      Call call = client.newCall(request);
+      call = client.newCall(request);
       Response response = call.execute();
       String responseString = response.body().string();
       statusCode = response.code();
@@ -261,65 +263,38 @@ public class UploadWorker extends Worker implements CountProgressListener {
       return Result.success(outputData);
 
     } catch (JsonIOException ex) {
-      ex.printStackTrace();
-
-      if (showNotification) {
-        updateNotification(context, tag, UploadStatus.FAILED, 0, null);
-      }
-
-      return Result.failure(
-          createOutputErrorData(
-              UploadStatus.FAILED,
-              500,
-              "json_error",
-              ex.toString(),
-              getStacktraceAsStringList(ex.getStackTrace())));
-
+      return handleException(context, ex, "json_error");
     } catch (UnknownHostException ex) {
-      ex.printStackTrace();
-
-      if (showNotification) {
-        updateNotification(context, tag, UploadStatus.FAILED, 0, null);
-      }
-
-      return Result.failure(
-          createOutputErrorData(
-              UploadStatus.FAILED,
-              500,
-              "unknown_host",
-              ex.toString(),
-              getStacktraceAsStringList(ex.getStackTrace())));
+      return handleException(context, ex, "unknown_host");
     } catch (IOException ex) {
-
-      ex.printStackTrace();
-
-      if (showNotification) {
-        updateNotification(context, tag, UploadStatus.FAILED, 0, null);
-      }
-
-      return Result.failure(
-          createOutputErrorData(
-              UploadStatus.FAILED,
-              500,
-              "io_error",
-              ex.toString(),
-              getStacktraceAsStringList(ex.getStackTrace())));
+      return handleException(context, ex, "io_error");
     } catch (Exception ex) {
-
-      ex.printStackTrace();
-
-      if (showNotification) {
-        updateNotification(context, tag, UploadStatus.FAILED, 0, null);
-      }
-
-      return Result.failure(
-          createOutputErrorData(
-              UploadStatus.FAILED,
-              500,
-              "upload_error",
-              ex.toString(),
-              getStacktraceAsStringList(ex.getStackTrace())));
+      return handleException(context, ex, "upload error");
     }
+  }
+
+  private Result handleException(Context context,
+                                 Exception ex,
+                                 String code) {
+
+    ex.printStackTrace();
+
+
+    int finalStatus=  isCancelled ? UploadStatus.CANCELED : UploadStatus.FAILED;
+    String finalCode = isCancelled ? "upload_cancelled" : code;
+
+    if (showNotification) {
+      updateNotification(context, tag, finalStatus, 0, null);
+    }
+
+    return Result.failure(
+            createOutputErrorData(
+                    finalStatus,
+                    500,
+                    finalCode,
+                    ex.toString(),
+                    getStacktraceAsStringList(ex.getStackTrace())));
+
   }
 
   private String GetMimeType(String url) {
@@ -394,6 +369,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
             + ", lastProgress: "
             + lastProgress);
     if (running) {
+
       Context context = getApplicationContext();
       sendUpdateProcessEvent(context, UploadStatus.RUNNING, progress);
       boolean shouldSendNotification = isRunning(progress, lastNotificationProgress, 10);
@@ -403,6 +379,21 @@ public class UploadWorker extends Worker implements CountProgressListener {
       }
 
       lastProgress = progress;
+    }
+  }
+
+  @Override
+  public void onStopped() {
+    super.onStopped();
+    Log.d(TAG, "UploadWorker - Stopped");
+    try {
+      isCancelled = true;
+      if(call != null && !call.isCanceled()) {
+        call.cancel();
+      }
+    }
+    catch (Exception ex) {
+      Log.d(TAG, "Upload Request cancelled", ex);
     }
   }
 
@@ -418,6 +409,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
             + message);
     sendUpdateProcessEvent(getApplicationContext(), UploadStatus.FAILED, -1);
   }
+
 
   private void buildNotification(Context context) {
     // Make a channel if necessary
@@ -480,21 +472,22 @@ public class UploadWorker extends Worker implements CountProgressListener {
     }
   }
 
+
   private boolean isRunning(int currentProgress, int previousProgress, int step) {
     int prev = previousProgress + step;
     return (currentProgress == 0 || currentProgress > prev || currentProgress >= 100)
         && currentProgress != previousProgress;
   }
 
-  private String[] getStacktraceAsStringList(StackTraceElement[] stacktraces) {
+  private String[] getStacktraceAsStringList(StackTraceElement[] stacktrace) {
     List<String> output = new ArrayList<>();
 
-    if (stacktraces == null || (stacktraces != null && stacktraces.length == 0)) {
+    if (stacktrace == null || stacktrace.length == 0) {
       return null;
     }
 
-    for (StackTraceElement stacktrace : stacktraces) {
-      output.add(stacktrace.toString());
+    for (StackTraceElement stackTraceElement : stacktrace) {
+      output.add(stackTraceElement.toString());
     }
 
     return output.toArray(new String[0]);
