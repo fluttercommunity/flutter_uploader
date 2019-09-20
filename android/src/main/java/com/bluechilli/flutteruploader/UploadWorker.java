@@ -271,6 +271,9 @@ public class UploadWorker extends Worker implements CountProgressListener {
     } catch (Exception ex) {
       return handleException(context, ex, "upload error");
     }
+    finally {
+      call = null;
+    }
   }
 
   private Result handleException(Context context,
