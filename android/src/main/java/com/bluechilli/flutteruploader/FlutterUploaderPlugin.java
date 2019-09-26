@@ -5,6 +5,7 @@ import android.app.Application;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.work.BackoffPolicy;
@@ -161,15 +162,20 @@ public class FlutterUploaderPlugin
   private UploadCompletedObserver uploadCompletedObserver;
 
   @Override
-  public void onMethodCall(MethodCall call, Result result) {
-    if (call.method.equals("enqueue")) {
-      enqueue(call, result);
-    } else if (call.method.equals("cancel")) {
-      cancel(call, result);
-    } else if (call.method.equals("cancelAll")) {
-      cancelAll(call, result);
-    } else {
-      result.notImplemented();
+  public void onMethodCall(MethodCall call, @NonNull Result result) {
+    switch (call.method) {
+      case "enqueue":
+        enqueue(call, result);
+        break;
+      case "cancel":
+        cancel(call, result);
+        break;
+      case "cancelAll":
+        cancelAll(call, result);
+        break;
+      default:
+        result.notImplemented();
+        break;
     }
   }
 
