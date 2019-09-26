@@ -1,4 +1,4 @@
-## next
+## 1.0.5
 
 - Android: update AGP and various dependencies
 - Android: fixes memory leaks in the example project due to old image_picker dependency
