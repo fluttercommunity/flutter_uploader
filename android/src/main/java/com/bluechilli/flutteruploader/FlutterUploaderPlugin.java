@@ -204,9 +204,7 @@ public class FlutterUploaderPlugin
 
   @Override
   public void onActivityStopped(Activity activity) {
-    Log.d(TAG, "ABOUT TO STOP!!");
     if (activity == register.activity()) {
-      Log.d(TAG, "ABOUT TO STOP!!");
       if (uploadProgressObserver != null) {
         UploadProgressReporter.getInstance().removeObserver(uploadProgressObserver);
         uploadProgressObserver = null;
