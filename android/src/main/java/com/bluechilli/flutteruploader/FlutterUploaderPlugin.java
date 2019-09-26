@@ -143,8 +143,7 @@ public class FlutterUploaderPlugin
 
   @Override
   public void onActivityStarted(Activity activity) {
-    if (activity instanceof FlutterActivity) {
-
+    if (activity == register.activity()) {
       UploadProgressReporter.getInstance()
               .observeForever(uploadProgressObserver);
 
@@ -162,8 +161,7 @@ public class FlutterUploaderPlugin
 
   @Override
   public void onActivityStopped(Activity activity) {
-    if (activity instanceof FlutterActivity) {
-
+    if (activity == register.activity()) {
       UploadProgressReporter.getInstance()
               .removeObserver(uploadProgressObserver);
 
@@ -177,7 +175,11 @@ public class FlutterUploaderPlugin
   public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
 
   @Override
-  public void onActivityDestroyed(Activity activity) {}
+  public void onActivityDestroyed(Activity activity) {
+    if (activity == register.activity()) {
+      activity.getApplication().unregisterActivityLifecycleCallbacks(this);
+    }
+  }
 
   private void enqueue(MethodCall call, MethodChannel.Result result) {
     taskIdKey++;
