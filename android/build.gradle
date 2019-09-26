@@ -41,7 +41,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.work:work-runtime:$work_version") 
+    implementation "androidx.work:work-runtime:$work_version"
     implementation "androidx.concurrent:concurrent-futures:$futures_version"
     implementation "androidx.annotation:annotation:$annotation_version"
     implementation "androidx.lifecycle:lifecycle-livedata:$lifecycle_version"
