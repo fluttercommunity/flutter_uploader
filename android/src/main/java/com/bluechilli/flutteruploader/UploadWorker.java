@@ -9,18 +9,15 @@ import android.os.Build;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
-
 import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Data;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -30,7 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
 import okhttp3.Call;
 import okhttp3.Headers;
 import okhttp3.MediaType;

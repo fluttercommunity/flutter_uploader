@@ -3,7 +3,6 @@ package com.bluechilli.flutteruploader;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
@@ -15,10 +14,13 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
-
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -28,12 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 /** FlutterUploaderPlugin */
 public class FlutterUploaderPlugin
