@@ -17,7 +17,8 @@ task:
 #        - sudo apt-get install -y --allow-unauthenticated clang-format-7
       format_script: script/format.sh
     - name: analyze
-      script:        - pub global activate tuneup
+      script:
+        - pub global activate tuneup
         - flutter packages get
         - pub global run tuneup check
 
