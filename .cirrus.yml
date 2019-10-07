@@ -3,11 +3,11 @@ task:
     dockerfile: .ci/Dockerfile
     cpu: 8
     memory: 16G
-  upgrade_script:
-    - flutter channel master
-    - flutter upgrade
-    - git fetch origin master
-  activate_script: pub global activate flutter_plugin_tools
+#  upgrade_script:
+#    - flutter channel master
+#    - flutter upgrade
+#    - git fetch origin master
+#  activate_script: pub global activate flutter_plugin_tools
   matrix:
     - name: test+format
 #      install_script:
