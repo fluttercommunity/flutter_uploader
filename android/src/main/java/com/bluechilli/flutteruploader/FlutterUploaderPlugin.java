@@ -3,7 +3,6 @@ package com.bluechilli.flutteruploader;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,14 +15,9 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
-import io.flutter.plugin.common.MethodChannel.Result;
-import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
@@ -34,6 +28,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.plugin.common.MethodChannel.Result;
+import io.flutter.plugin.common.PluginRegistry.Registrar;
 
 /** FlutterUploaderPlugin */
 public class FlutterUploaderPlugin
@@ -91,8 +91,7 @@ public class FlutterUploaderPlugin
     }
   }
 
-  @Nullable
-  private UploadProgressObserver uploadProgressObserver;
+  @Nullable private UploadProgressObserver uploadProgressObserver;
 
   static class UploadCompletedObserver implements Observer<List<WorkInfo>> {
     private final WeakReference<FlutterUploaderPlugin> plugin;
@@ -119,28 +118,24 @@ public class FlutterUploaderPlugin
             switch (info.getState()) {
               case FAILED:
                 int failedStatus =
-                        outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.FAILED);
-                int statusCode =
-                        outputData.getInt(UploadWorker.EXTRA_STATUS_CODE, 500);
+                    outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.FAILED);
+                int statusCode = outputData.getInt(UploadWorker.EXTRA_STATUS_CODE, 500);
                 String code = outputData.getString(UploadWorker.EXTRA_ERROR_CODE);
-                String errorMessage =
-                        outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
-                String[] details =
-                        outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
+                String errorMessage = outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
+                String[] details = outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
                 plugin.sendFailed(id, failedStatus, statusCode, code, errorMessage, details);
                 break;
               case CANCELLED:
                 plugin.sendFailed(
-                        id,
-                        UploadStatus.CANCELED,
-                        500,
-                        "flutter_upload_cancelled",
-                        "upload has been cancelled",
-                        null);
+                    id,
+                    UploadStatus.CANCELED,
+                    500,
+                    "flutter_upload_cancelled",
+                    "upload has been cancelled",
+                    null);
                 break;
               case SUCCEEDED:
-                int status =
-                        outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.COMPLETE);
+                int status = outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.COMPLETE);
                 Map<String, String> headers = null;
                 Type type = new TypeToken<Map<String, String>>() {}.getType();
                 String headerJson = info.getOutputData().getString(UploadWorker.EXTRA_HEADERS);
@@ -158,8 +153,7 @@ public class FlutterUploaderPlugin
     }
   }
 
-  @Nullable
-  private UploadCompletedObserver uploadCompletedObserver;
+  @Nullable private UploadCompletedObserver uploadCompletedObserver;
 
   @Override
   public void onMethodCall(MethodCall call, @NonNull Result result) {
@@ -186,8 +180,7 @@ public class FlutterUploaderPlugin
   public void onActivityStarted(Activity activity) {
     if (activity == register.activity()) {
       uploadProgressObserver = new UploadProgressObserver(this);
-      UploadProgressReporter.getInstance()
-              .observeForever(uploadProgressObserver);
+      UploadProgressReporter.getInstance().observeForever(uploadProgressObserver);
 
       uploadCompletedObserver = new UploadCompletedObserver(this);
       WorkManager.getInstance(register.context())
@@ -210,8 +203,10 @@ public class FlutterUploaderPlugin
         uploadProgressObserver = null;
       }
 
-      if(uploadCompletedObserver != null) {
-        WorkManager.getInstance(register.context()).getWorkInfosByTagLiveData(TAG).removeObserver(uploadCompletedObserver);
+      if (uploadCompletedObserver != null) {
+        WorkManager.getInstance(register.context())
+            .getWorkInfosByTagLiveData(TAG)
+            .removeObserver(uploadCompletedObserver);
         uploadCompletedObserver = null;
       }
     }
