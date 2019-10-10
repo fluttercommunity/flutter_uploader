@@ -3,6 +3,8 @@ package com.bluechilli.flutteruploader;
 import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
@@ -14,12 +16,12 @@ import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.flutter.app.FlutterActivity;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,79 +64,108 @@ public class FlutterUploaderPlugin
     this.connectionTimeout = FlutterUploaderInitializer.getConnectionTimeout(registrar.context());
   }
 
-  private final Observer<UploadProgress> uploadProgressObserver = new Observer<UploadProgress>() {
+  static class UploadProgressObserver implements Observer<UploadProgress> {
+
+    private final WeakReference<FlutterUploaderPlugin> plugin;
+
+    UploadProgressObserver(FlutterUploaderPlugin plugin) {
+      this.plugin = new WeakReference<>(plugin);
+    }
+
     @Override
     public void onChanged(UploadProgress uploadProgress) {
+      FlutterUploaderPlugin plugin = this.plugin.get();
+
+      if (plugin == null) {
+        return;
+      }
+
       String id = uploadProgress.getTaskId();
       int progress = uploadProgress.getProgress();
       int status = uploadProgress.getStatus();
-      sendUpdateProgress(id, status, progress);
+      plugin.sendUpdateProgress(id, status, progress);
     }
-  };
+  }
 
-  private final Observer<List<WorkInfo>> completedEventObserver =
-      new Observer<List<WorkInfo>>() {
-        @Override
-        public void onChanged(List<WorkInfo> workInfoList) {
-          for (WorkInfo info : workInfoList) {
-            String id = info.getId().toString();
-            if (!completedTasks.containsKey(id)) {
-              if (info.getState().isFinished()) {
-                completedTasks.put(id, true);
-                Data outputData = info.getOutputData();
+  @Nullable private UploadProgressObserver uploadProgressObserver;
 
-                switch (info.getState()) {
-                  case FAILED:
-                    int failedStatus =
-                            outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.FAILED);
-                    int statusCode =
-                            outputData.getInt(UploadWorker.EXTRA_STATUS_CODE, 500);
-                    String code = outputData.getString(UploadWorker.EXTRA_ERROR_CODE);
-                    String errorMessage =
-                            outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
-                    String[] details =
-                            outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
-                    sendFailed(id, failedStatus, statusCode, code, errorMessage, details);
-                    break;
-                  case CANCELLED:
-                    sendFailed(
-                        id,
-                        UploadStatus.CANCELED,
-                        500,
-                        "flutter_upload_cancelled",
-                        "upload has been cancelled",
-                        null);
-                    break;
-                  case SUCCEEDED:
-                    int status =
-                            outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.COMPLETE);
-                    Map<String, String> headers = null;
-                    Type type = new TypeToken<Map<String, String>>() {}.getType();
-                    String headerJson = info.getOutputData().getString(UploadWorker.EXTRA_HEADERS);
-                    if (headerJson != null) {
-                      headers = gson.fromJson(headerJson, type);
-                    }
+  static class UploadCompletedObserver implements Observer<List<WorkInfo>> {
+    private final WeakReference<FlutterUploaderPlugin> plugin;
 
-                    String response = info.getOutputData().getString(UploadWorker.EXTRA_RESPONSE);
-                    sendCompleted(id, status, response, headers);
-                    break;
+    UploadCompletedObserver(FlutterUploaderPlugin plugin) {
+      this.plugin = new WeakReference<>(plugin);
+    }
+
+    @Override
+    public void onChanged(List<WorkInfo> workInfoList) {
+      FlutterUploaderPlugin plugin = this.plugin.get();
+
+      if (plugin == null) {
+        return;
+      }
+
+      for (WorkInfo info : workInfoList) {
+        String id = info.getId().toString();
+        if (!plugin.completedTasks.containsKey(id)) {
+          if (info.getState().isFinished()) {
+            plugin.completedTasks.put(id, true);
+            Data outputData = info.getOutputData();
+
+            switch (info.getState()) {
+              case FAILED:
+                int failedStatus =
+                    outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.FAILED);
+                int statusCode = outputData.getInt(UploadWorker.EXTRA_STATUS_CODE, 500);
+                String code = outputData.getString(UploadWorker.EXTRA_ERROR_CODE);
+                String errorMessage = outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
+                String[] details = outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
+                plugin.sendFailed(id, failedStatus, statusCode, code, errorMessage, details);
+                break;
+              case CANCELLED:
+                plugin.sendFailed(
+                    id,
+                    UploadStatus.CANCELED,
+                    500,
+                    "flutter_upload_cancelled",
+                    "upload has been cancelled",
+                    null);
+                break;
+              case SUCCEEDED:
+                int status = outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.COMPLETE);
+                Map<String, String> headers = null;
+                Type type = new TypeToken<Map<String, String>>() {}.getType();
+                String headerJson = info.getOutputData().getString(UploadWorker.EXTRA_HEADERS);
+                if (headerJson != null) {
+                  headers = plugin.gson.fromJson(headerJson, type);
                 }
-              }
+
+                String response = info.getOutputData().getString(UploadWorker.EXTRA_RESPONSE);
+                plugin.sendCompleted(id, status, response, headers);
+                break;
             }
           }
         }
-      };
+      }
+    }
+  }
+
+  @Nullable private UploadCompletedObserver uploadCompletedObserver;
 
   @Override
-  public void onMethodCall(MethodCall call, Result result) {
-    if (call.method.equals("enqueue")) {
-      enqueue(call, result);
-    } else if (call.method.equals("cancel")) {
-      cancel(call, result);
-    } else if (call.method.equals("cancelAll")) {
-      cancelAll(call, result);
-    } else {
-      result.notImplemented();
+  public void onMethodCall(MethodCall call, @NonNull Result result) {
+    switch (call.method) {
+      case "enqueue":
+        enqueue(call, result);
+        break;
+      case "cancel":
+        cancel(call, result);
+        break;
+      case "cancelAll":
+        cancelAll(call, result);
+        break;
+      default:
+        result.notImplemented();
+        break;
     }
   }
 
@@ -143,14 +174,14 @@ public class FlutterUploaderPlugin
 
   @Override
   public void onActivityStarted(Activity activity) {
-    if (activity instanceof FlutterActivity) {
+    if (activity == register.activity()) {
+      uploadProgressObserver = new UploadProgressObserver(this);
+      UploadProgressReporter.getInstance().observeForever(uploadProgressObserver);
 
-      UploadProgressReporter.getInstance()
-              .observeForever(uploadProgressObserver);
-
+      uploadCompletedObserver = new UploadCompletedObserver(this);
       WorkManager.getInstance(register.context())
           .getWorkInfosByTagLiveData(TAG)
-          .observeForever(completedEventObserver);
+          .observeForever(uploadCompletedObserver);
     }
   }
 
@@ -162,14 +193,18 @@ public class FlutterUploaderPlugin
 
   @Override
   public void onActivityStopped(Activity activity) {
-    if (activity instanceof FlutterActivity) {
+    if (activity == register.activity()) {
+      if (uploadProgressObserver != null) {
+        UploadProgressReporter.getInstance().removeObserver(uploadProgressObserver);
+        uploadProgressObserver = null;
+      }
 
-      UploadProgressReporter.getInstance()
-              .removeObserver(uploadProgressObserver);
-
-      WorkManager.getInstance(register.context())
-          .getWorkInfosByTagLiveData(TAG)
-          .removeObserver(completedEventObserver);
+      if (uploadCompletedObserver != null) {
+        WorkManager.getInstance(register.context())
+            .getWorkInfosByTagLiveData(TAG)
+            .removeObserver(uploadCompletedObserver);
+        uploadCompletedObserver = null;
+      }
     }
   }
 
@@ -177,7 +212,11 @@ public class FlutterUploaderPlugin
   public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
 
   @Override
-  public void onActivityDestroyed(Activity activity) {}
+  public void onActivityDestroyed(Activity activity) {
+    if (activity == register.activity()) {
+      activity.getApplication().unregisterActivityLifecycleCallbacks(this);
+    }
+  }
 
   private void enqueue(MethodCall call, MethodChannel.Result result) {
     taskIdKey++;

@@ -46,8 +46,8 @@ class UploadItem {
   final String id;
   final String tag;
   final MediaType type;
-  int progress;
-  UploadTaskStatus status;
+  final int progress;
+  final UploadTaskStatus status;
   UploadItem({
     this.id,
     this.tag,
@@ -55,6 +55,18 @@ class UploadItem {
     this.progress = 0,
     this.status = UploadTaskStatus.undefined,
   });
+
+  UploadItem copyWith({UploadTaskStatus status, int progress}) => UploadItem(
+      id: this.id,
+      tag: this.tag,
+      type: this.type,
+      status: status ?? this.status,
+      progress: progress ?? this.progress);
+
+  bool isCompleted() =>
+      this.status == UploadTaskStatus.canceled ||
+      this.status == UploadTaskStatus.complete ||
+      this.status == UploadTaskStatus.failed;
 }
 
 enum MediaType { Image, Video }
@@ -76,12 +88,13 @@ class _UploadScreenState extends State<UploadScreen> {
   void initState() {
     super.initState();
     _progressSubscription = uploader.progress.listen((progress) {
-      print("progress: ${progress.progress} , tag: ${progress.tag}");
       final task = _tasks[progress.tag];
+      print("progress: ${progress.progress} , tag: ${progress.tag}");
       if (task == null) return;
+      if (task.isCompleted()) return;
       setState(() {
-        task.progress = progress.progress;
-        task.status = progress.status;
+        _tasks[progress.tag] =
+            task.copyWith(progress: progress.progress, status: progress.status);
       });
     });
     _resultSubscription = uploader.result.listen((result) {
@@ -92,7 +105,7 @@ class _UploadScreenState extends State<UploadScreen> {
       if (task == null) return;
 
       setState(() {
-        task.status = result.status;
+        _tasks[result.tag] = task.copyWith(status: result.status);
       });
     }, onError: (ex, stacktrace) {
       print("exception: $ex");
@@ -102,7 +115,7 @@ class _UploadScreenState extends State<UploadScreen> {
       if (task == null) return;
 
       setState(() {
-        task.status = exp.status;
+        _tasks[exp.tag] = task.copyWith(status: exp.status);
       });
     });
   }
@@ -150,6 +163,7 @@ class _UploadScreenState extends State<UploadScreen> {
                   itemCount: _tasks.length,
                   itemBuilder: (context, index) {
                     final item = _tasks.values.elementAt(index);
+                    print("${item.tag} - ${item.status}");
                     return UploadItemView(
                       item: item,
                       onCancel: cancelUpload,

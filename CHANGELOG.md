@@ -1,3 +1,14 @@
+## 1.0.5+1
+
+- Android: update AGP and various dependencies
+- Android: fixes memory leaks in the example project due to old image_picker dependency
+- Android: fix memory leak due not unregistering ActivityLifecycleCallbacks
+- Android: fix memory leak due to not unregistering WorkManager observers
+
+## 1.0.3+2
+
+- fix bug that upon cancellation it was cancelling the work request however it wasn't cancelling the already progressing upload request (android);
+
 ## 1.0.3+1
 
 - remove Accept-Encoding header because OkHttp transparently adds it (android)
