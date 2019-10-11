@@ -129,8 +129,10 @@ public class UploadWorker extends Worker implements CountProgressListener {
 
         if (file.exists() && file.isFile()) {
           fileExistsCount++;
+          String mimeType = GetMimeType(item.getPath());
+          MediaType contentType = MediaType.parse(mimeType);
           RequestBody fileBody =
-              RequestBody.create(MediaType.parse(GetMimeType(item.getPath())), file);
+              RequestBody.create(file, contentType);
           formRequestBuilder.addFormDataPart(item.getFieldname(), item.getFilename(), fileBody);
         } else {
           Log.d(TAG, "File does not exists -> file:" + item.getPath());
