@@ -1,0 +1,24 @@
+task:
+  container:
+    dockerfile: .ci/Dockerfile
+    cpu: 8
+    memory: 16G
+#  upgrade_script:
+#    - flutter channel master
+#    - flutter upgrade
+#    - git fetch origin master
+#  activate_script: pub global activate flutter_plugin_tools
+  matrix:
+    - name: test+format
+#      install_script:
+#        - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+#        - sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main"
+#        - sudo apt-get update
+#        - sudo apt-get install -y --allow-unauthenticated clang-format-7
+      format_script: script/format.sh
+    - name: analyze
+      script:
+        - pub global activate tuneup
+        - flutter packages get
+        - pub global run tuneup check
+
