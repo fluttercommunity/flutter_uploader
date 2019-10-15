@@ -1,4 +1,5 @@
 name: flutter_uploader_example
+version: 1.0.5+1
 description: Demonstrates how to use the flutter_uploader plugin.
 publish_to: "none"
 
