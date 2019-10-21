@@ -1,4 +1,4 @@
-## 1.0.5+2
+## 1.0.6
 
 - fix #21 - handle other successful status code (from http spec) in iOS
 
