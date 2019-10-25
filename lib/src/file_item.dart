@@ -1,9 +1,12 @@
 part of flutter_uploader;
 
 class FileItem {
-  final String filename;
-  final String fieldname;
   final String savedDir;
+  final String filename;
+
+  /// The field name will be used during HTTP multipart/form-data uploads.
+  /// It is ignored for raw file uploads.
+  final String fieldname;
 
   FileItem({
     @required this.savedDir,

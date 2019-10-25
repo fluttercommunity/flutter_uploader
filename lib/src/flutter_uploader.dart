@@ -33,15 +33,13 @@ class FlutterUploader {
     _responseController?.close();
   }
 
-  ///
-  /// Create a new upload task
+  /// Create a new multipart/form-data upload task
   ///
   /// **parameters:**
   ///
   /// * `url`: upload link
   /// * `files`: files to be uploaded
   /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
-  /// * `encoding`: HTTP encoding (Form data or Raw, defaults to form-data)
   /// * `headers`: HTTP headers
   /// * `data`: additional data to be uploaded together with file
   /// * `showNotification`: sets `true` to show a notification displaying
@@ -56,7 +54,6 @@ class FlutterUploader {
     @required String url,
     @required List<FileItem> files,
     UploadMethod method = UploadMethod.POST,
-    UploadEncoding encoding = UploadEncoding.HTTP_FORM_DATA,
     Map<String, String> headers,
     Map<String, String> data,
     bool showNotification = false,
@@ -72,7 +69,6 @@ class FlutterUploader {
       String taskId = await _platform.invokeMethod('enqueue', {
         'url': url,
         'method': describeEnum(method),
-        'encoding': describeEnum(encoding),
         'files': f,
         'headers': headers,
         'data': data,
@@ -83,6 +79,39 @@ class FlutterUploader {
       return taskId;
     } on PlatformException catch (e, stackTrace) {
       print('Uplaod task is failed with reason(${e.message})');
+      _responseController?.sink?.addError(
+        _toUploadException(e, tag: tag),
+        stackTrace,
+      );
+      return null;
+    }
+  }
+
+  Future<String> enqueueRaw({
+    @required String url,
+    @required FileItem file,
+    UploadMethod method = UploadMethod.POST,
+    Map<String, String> headers,
+    bool showNotification = false,
+    String tag,
+  }) async {
+    assert(method != null);
+
+    try {
+      String taskId = await _platform.invokeMethod('enqueueRaw', {
+        'url': url,
+        'method': describeEnum(method),
+        'file': file.toJson(),
+        'headers': headers,
+        'show_notification': showNotification,
+        'tag': tag
+      });
+
+      print('Upload task is enqueued with id($taskId)');
+
+      return taskId;
+    } on PlatformException catch (e, stackTrace) {
+      print('Upload task is failed with reason(${e.message})');
       _responseController?.sink?.addError(
         _toUploadException(e, tag: tag),
         stackTrace,

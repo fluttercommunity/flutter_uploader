@@ -228,7 +228,6 @@ public class FlutterUploaderPlugin
     Map<String, String> headers = call.argument("headers");
     boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
-    boolean rawUpload = "RAW".equalsIgnoreCase(call.argument("encoding"));
 
     List<String> methods = Arrays.asList(validHttpMethods);
 
@@ -309,18 +308,13 @@ public class FlutterUploaderPlugin
       dataBuilder.putString(UploadWorker.ARG_DATA, parametersJson);
     }
 
-    WorkRequest request =
-        new OneTimeWorkRequest.Builder(UploadWorker.class)
-            .setConstraints(
-                new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .setRequiresStorageNotLow(true)
-                    .build())
-            .addTag(TAG)
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
-            .setInputData(dataBuilder.build())
-            .build();
-    return request;
+    return new OneTimeWorkRequest.Builder(UploadWorker.class)
+        .setConstraints(
+            new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        .addTag(TAG)
+        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
+        .setInputData(dataBuilder.build())
+        .build();
   }
 
   private void sendUpdateProgress(String id, int status, int progress) {
