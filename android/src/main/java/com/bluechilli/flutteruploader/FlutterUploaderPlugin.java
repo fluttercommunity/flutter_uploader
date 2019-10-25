@@ -47,6 +47,7 @@ public class FlutterUploaderPlugin
   private Gson gson = new Gson();
   private int taskIdKey = 0;
   private final String[] validHttpMethods = new String[] {"POST", "PUT", "PATCH"};
+  private final String[] validUploadEncodings = new String[] {"HTTP_FORM_DATA", "RAW"};
 
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), CHANNEL_NAME);
@@ -227,6 +228,7 @@ public class FlutterUploaderPlugin
     Map<String, String> headers = call.argument("headers");
     boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
+    boolean rawUpload = "RAW".equalsIgnoreCase(call.argument("encoding"));
 
     List<String> methods = Arrays.asList(validHttpMethods);
 
@@ -256,6 +258,7 @@ public class FlutterUploaderPlugin
                 parameters,
                 connectionTimeout,
                 showNotification,
+                rawUpload,
                 tag));
     WorkManager.getInstance(register.context()).enqueue(request);
     String taskId = request.getId().toString();
@@ -287,6 +290,7 @@ public class FlutterUploaderPlugin
             .putString(UploadWorker.ARG_METHOD, task.getMethod())
             .putInt(UploadWorker.ARG_REQUEST_TIMEOUT, task.getTimeout())
             .putBoolean(UploadWorker.ARG_SHOW_NOTIFICATION, task.canShowNotification())
+            .putBoolean(UploadWorker.ARG_RAW_UPLOAD, task.isRawUpload())
             .putString(UploadWorker.ARG_UPLOAD_REQUEST_TAG, task.getTag())
             .putInt(UploadWorker.ARG_ID, task.getId());
 

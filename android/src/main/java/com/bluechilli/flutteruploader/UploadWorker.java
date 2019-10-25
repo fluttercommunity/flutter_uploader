@@ -44,6 +44,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
   public static final String ARG_FILES = "files";
   public static final String ARG_REQUEST_TIMEOUT = "requestTimeout";
   public static final String ARG_SHOW_NOTIFICATION = "showNotification";
+  public static final String ARG_RAW_UPLOAD = "rawUpload";
   public static final String ARG_UPLOAD_REQUEST_TAG = "tag";
   public static final String ARG_ID = "primaryId";
   public static final String EXTRA_STATUS_CODE = "statusCode";
@@ -82,6 +83,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
     String method = getInputData().getString(ARG_METHOD);
     int timeout = getInputData().getInt(ARG_REQUEST_TIMEOUT, 3600);
     showNotification = getInputData().getBoolean(ARG_SHOW_NOTIFICATION, false);
+    boolean isRawUpload = getInputData().getBoolean(ARG_RAW_UPLOAD, false);
     String headersJson = getInputData().getString(ARG_HEADERS);
     String parametersJson = getInputData().getString(ARG_DATA);
     String filesJson = getInputData().getString(ARG_FILES);

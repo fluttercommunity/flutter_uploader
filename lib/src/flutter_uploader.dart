@@ -41,6 +41,7 @@ class FlutterUploader {
   /// * `url`: upload link
   /// * `files`: files to be uploaded
   /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
+  /// * `encoding`: HTTP encoding (Form data or Raw, defaults to form-data)
   /// * `headers`: HTTP headers
   /// * `data`: additional data to be uploaded together with file
   /// * `showNotification`: sets `true` to show a notification displaying
@@ -55,6 +56,7 @@ class FlutterUploader {
     @required String url,
     @required List<FileItem> files,
     UploadMethod method = UploadMethod.POST,
+    UploadEncoding encoding = UploadEncoding.HTTP_FORM_DATA,
     Map<String, String> headers,
     Map<String, String> data,
     bool showNotification = false,
@@ -70,13 +72,14 @@ class FlutterUploader {
       String taskId = await _platform.invokeMethod('enqueue', {
         'url': url,
         'method': describeEnum(method),
+        'encoding': describeEnum(encoding),
         'files': f,
         'headers': headers,
         'data': data,
         'show_notification': showNotification,
         'tag': tag
       });
-      print('Uplaod task is enqueued with id($taskId)');
+      print('Upload task is enqueued with id($taskId)');
       return taskId;
     } on PlatformException catch (e, stackTrace) {
       print('Uplaod task is failed with reason(${e.message})');

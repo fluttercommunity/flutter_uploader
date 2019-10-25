@@ -11,6 +11,8 @@ part 'src/file_item.dart';
 
 part 'src/flutter_uploader.dart';
 
+part 'src/upload_encoding.dart';
+
 part 'src/upload_exception.dart';
 
 part 'src/upload_method.dart';
