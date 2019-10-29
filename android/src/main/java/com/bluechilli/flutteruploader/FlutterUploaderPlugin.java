@@ -48,7 +48,6 @@ public class FlutterUploaderPlugin
   private Gson gson = new Gson();
   private int taskIdKey = 0;
   private final String[] validHttpMethods = new String[] {"POST", "PUT", "PATCH"};
-  private final String[] validUploadEncodings = new String[] {"HTTP_FORM_DATA", "RAW"};
 
   public static void registerWith(Registrar registrar) {
     final MethodChannel channel = new MethodChannel(registrar.messenger(), CHANNEL_NAME);
@@ -336,7 +335,7 @@ public class FlutterUploaderPlugin
             .putString(UploadWorker.ARG_METHOD, task.getMethod())
             .putInt(UploadWorker.ARG_REQUEST_TIMEOUT, task.getTimeout())
             .putBoolean(UploadWorker.ARG_SHOW_NOTIFICATION, task.canShowNotification())
-            .putBoolean(UploadWorker.ARG_BINARY_UPLOAD, task.isRawUpload())
+            .putBoolean(UploadWorker.ARG_BINARY_UPLOAD, task.isBinaryUpload())
             .putString(UploadWorker.ARG_UPLOAD_REQUEST_TAG, task.getTag())
             .putInt(UploadWorker.ARG_ID, task.getId());
 

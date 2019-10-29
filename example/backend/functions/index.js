@@ -58,7 +58,7 @@ const formUploadHandler = (req, res) => {
   return req.pipe(busboy);
 };
 
-const rawUploadHandler = (req, res) => {
+const binaryUploadHandler = (req, res) => {
   const methods = ["POST", "PUT", "PATCH"];
   if (!methods.includes(req.method, 0)) {
     return res.status(405).json({
@@ -85,9 +85,9 @@ app.post("/", formUploadHandler);
 app.put("/", formUploadHandler);
 app.patch("/", formUploadHandler);
 
-app.post("/raw", rawUploadHandler);
-app.put("/raw", rawUploadHandler);
-app.patch("/raw", rawUploadHandler);
+app.post("/binary", binaryUploadHandler);
+app.put("/binary", binaryUploadHandler);
+app.patch("/binary", binaryUploadHandler);
 
 exports.upload = functions.https.onRequest(app);
 functions.https.onRequest

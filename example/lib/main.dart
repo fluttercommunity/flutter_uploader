@@ -12,8 +12,8 @@ const String title = "FileUpload Sample app";
 const String uploadURL =
     "https://us-central1-flutteruploader.cloudfunctions.net/upload";
 
-const String uploadRawURL =
-    "https://us-central1-flutteruploader.cloudfunctions.net/upload/raw";
+const String uploadBinaryURL =
+    "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
 
 void main() => runApp(App());
 
@@ -144,19 +144,19 @@ class _UploadScreenState extends State<UploadScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 RaisedButton(
-                  onPressed: () => getImage(raw: false),
+                  onPressed: () => getImage(binary: false),
                   child: Text("upload image"),
                 ),
                 Container(width: 20.0),
                 RaisedButton(
-                  onPressed: () => getVideo(raw: false),
+                  onPressed: () => getVideo(binary: false),
                   child: Text("upload video"),
                 )
               ],
             ),
             Container(height: 20.0),
             Text(
-              'raw uploads',
+              'binary uploads',
               style: Theme.of(context).textTheme.subhead,
             ),
             Text('this will upload selected files as binary'),
@@ -164,12 +164,12 @@ class _UploadScreenState extends State<UploadScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 RaisedButton(
-                  onPressed: () => getImage(raw: true),
+                  onPressed: () => getImage(binary: true),
                   child: Text("upload image"),
                 ),
                 Container(width: 20.0),
                 RaisedButton(
-                  onPressed: () => getVideo(raw: true),
+                  onPressed: () => getVideo(binary: true),
                   child: Text("upload video"),
                 )
               ],
@@ -199,15 +199,15 @@ class _UploadScreenState extends State<UploadScreen> {
     );
   }
 
-  String _uploadUrl({bool raw}) {
-    if (raw) {
-      return uploadRawURL;
+  String _uploadUrl({bool binary}) {
+    if (binary) {
+      return uploadBinaryURL;
     } else {
       return uploadURL;
     }
   }
 
-  Future getImage({@required bool raw}) async {
+  Future getImage({@required bool binary}) async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       final Directory dir = await getApplicationDocumentsDirectory();
@@ -215,14 +215,14 @@ class _UploadScreenState extends State<UploadScreen> {
       final String filename = basename(image.path);
       await image.copy('$savedDir/$filename');
       final tag = "image upload ${_tasks.length + 1}";
-      var url = _uploadUrl(raw: raw);
+      var url = _uploadUrl(binary: binary);
       var fileItem = FileItem(
         filename: filename,
         savedDir: savedDir,
         fieldname: "file",
       );
 
-      var taskId = raw
+      var taskId = binary
           ? await uploader.enqueueBinary(
               url: url,
               file: fileItem,
@@ -252,7 +252,7 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future getVideo({@required bool raw}) async {
+  Future getVideo({@required bool binary}) async {
     var video = await ImagePicker.pickVideo(source: ImageSource.gallery);
     if (video != null) {
       final Directory dir = await getApplicationDocumentsDirectory();
@@ -260,7 +260,7 @@ class _UploadScreenState extends State<UploadScreen> {
       final String filename = basename(video.path);
       await video.copy('$savedDir/$filename');
       final tag = "video upload ${_tasks.length + 1}";
-      final url = _uploadUrl(raw: raw);
+      final url = _uploadUrl(binary: binary);
 
       var fileItem = FileItem(
         filename: filename,
@@ -268,7 +268,7 @@ class _UploadScreenState extends State<UploadScreen> {
         fieldname: "file",
       );
 
-      var taskId = raw
+      var taskId = binary
           ? await uploader.enqueueBinary(
               url: url,
               file: fileItem,

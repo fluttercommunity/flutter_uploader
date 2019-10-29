@@ -72,7 +72,7 @@ public class UploadTask {
     return _showNotification;
   }
 
-  public boolean isRawUpload() {
+  public boolean isBinaryUpload() {
     return _binaryUpload;
   }
 

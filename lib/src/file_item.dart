@@ -5,7 +5,7 @@ class FileItem {
   final String filename;
 
   /// The field name will be used during HTTP multipart/form-data uploads.
-  /// It is ignored for raw file uploads.
+  /// It is ignored for binary file uploads.
   final String fieldname;
 
   FileItem({
