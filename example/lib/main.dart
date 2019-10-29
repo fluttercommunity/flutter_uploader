@@ -10,14 +10,10 @@ import 'package:path_provider/path_provider.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
-//    "https://us-central1-flutteruploader.cloudfunctions.net/upload";
-//    'https://us-central1-flutteruploadertest.cloudfunctions.net/upload';
-    'http://192.168.8.187:5000/flutteruploadertest/us-central1/upload';
+    "https://us-central1-flutteruploader.cloudfunctions.net/upload";
 
 const String uploadRawURL =
-//    "https://us-central1-flutteruploader.cloudfunctions.net/upload/raw";
-//    'https://us-central1-flutteruploadertest.cloudfunctions.net/upload/raw';
-    'http://192.168.8.187:5000/flutteruploadertest/us-central1/upload/raw';
+    "https://us-central1-flutteruploader.cloudfunctions.net/upload/raw";
 
 void main() => runApp(App());
 
@@ -227,7 +223,7 @@ class _UploadScreenState extends State<UploadScreen> {
       );
 
       var taskId = raw
-          ? await uploader.enqueueRaw(
+          ? await uploader.enqueueBinary(
               url: url,
               file: fileItem,
               method: UploadMethod.POST,
@@ -273,7 +269,7 @@ class _UploadScreenState extends State<UploadScreen> {
       );
 
       var taskId = raw
-          ? await uploader.enqueueRaw(
+          ? await uploader.enqueueBinary(
               url: url,
               file: fileItem,
               method: UploadMethod.POST,

@@ -13,7 +13,7 @@ public class UploadTask {
   private List<FileItem> _files;
   private int _requestTimeoutInSeconds;
   private boolean _showNotification;
-  private boolean _rawUpload;
+  private boolean _binaryUpload;
   private String _tag;
   private int _id;
 
@@ -26,7 +26,7 @@ public class UploadTask {
       Map<String, String> data,
       int requestTimeoutInSeconds,
       boolean showNotification,
-      boolean rawUpload,
+      boolean binaryUpload,
       String tag) {
     _id = id;
     _url = url;
@@ -36,7 +36,7 @@ public class UploadTask {
     _data = data;
     _requestTimeoutInSeconds = requestTimeoutInSeconds;
     _showNotification = showNotification;
-    _rawUpload = rawUpload;
+    _binaryUpload = binaryUpload;
     _tag = tag;
   }
 
@@ -73,7 +73,7 @@ public class UploadTask {
   }
 
   public boolean isRawUpload() {
-    return _rawUpload;
+    return _binaryUpload;
   }
 
   public String getTag() {
