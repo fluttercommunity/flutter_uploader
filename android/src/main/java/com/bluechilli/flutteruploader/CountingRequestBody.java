@@ -1,5 +1,6 @@
 package com.bluechilli.flutteruploader;
 
+import androidx.annotation.NonNull;
 import java.io.IOException;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -33,7 +34,7 @@ public class CountingRequestBody extends RequestBody {
   }
 
   @Override
-  public void writeTo(BufferedSink sink) throws IOException {
+  public void writeTo(@NonNull BufferedSink sink) throws IOException {
     try {
       _countingSink = new CountingSink(this, sink);
       BufferedSink bufferedSink = Okio.buffer(_countingSink);
@@ -67,7 +68,7 @@ public class CountingRequestBody extends RequestBody {
     }
 
     @Override
-    public void write(Buffer source, long byteCount) throws IOException {
+    public void write(@NonNull Buffer source, long byteCount) throws IOException {
       try {
         super.write(source, byteCount);
 

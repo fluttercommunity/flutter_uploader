@@ -1,4 +1,4 @@
-task:
+code_style_task:
   container:
     dockerfile: .ci/Dockerfile
     cpu: 8
@@ -22,3 +22,16 @@ task:
         - flutter packages get
         - pub global run tuneup check
 
+android_task:
+  container:
+    dockerfile: .ci/Dockerfile
+    cpu: 8
+    memory: 16G
+  build_script:
+    - cd example && flutter build apk --release
+
+ios_task:
+  osx_instance:
+    image: mojave-flutter
+  build_script:
+    - cd example && flutter build ios --release --no-codesign

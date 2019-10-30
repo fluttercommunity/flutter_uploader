@@ -1,3 +1,8 @@
+## 1.1.0
+
+- iOS: define clang module
+- iOS: upgrade example project xcode version & compatibility
+
 ## 1.0.6
 
 - fix #21 - handle other successful status code (from http spec) in iOS

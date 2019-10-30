@@ -7,7 +7,7 @@ const functions = require("firebase-functions");
 const cors = require("cors");
 const Busboy = require("busboy");
 
-const uploadHandler = (req, res) => {
+const formUploadHandler = (req, res) => {
   const uploads = [];
   const methods = ["POST", "PUT", "PATCH"];
   if (!methods.includes(req.method, 0)) {
@@ -55,14 +55,39 @@ const uploadHandler = (req, res) => {
     res.end();
   });
   busboy.end(req.rawBody);
-  req.pipe(busboy);
+  return req.pipe(busboy);
+};
+
+const binaryUploadHandler = (req, res) => {
+  const methods = ["POST", "PUT", "PATCH"];
+  if (!methods.includes(req.method, 0)) {
+    return res.status(405).json({
+      errorMessage: "Method is not allowed"
+    });
+  }
+
+  const filename = [...Array(10)].map(i=>(~~(Math.random()*36)).toString(36)).join('');
+  const filepath = path.join(os.tmpdir(), filename);
+
+  console.log("File [" + filename + "]: filepath: " + filepath);
+
+  const out = fs.createWriteStream(filepath);
+  out.write(req.rawBody);
+  out.close();
+
+  return res.status(200).end();
 };
 
 const app = express();
 app.use(cors({ origin: true }));
 app.use(compression());
-app.post("/", uploadHandler);
-app.put("/", uploadHandler);
-app.patch("/", uploadHandler);
+app.post("/", formUploadHandler);
+app.put("/", formUploadHandler);
+app.patch("/", formUploadHandler);
+
+app.post("/binary", binaryUploadHandler);
+app.put("/binary", binaryUploadHandler);
+app.patch("/binary", binaryUploadHandler);
 
 exports.upload = functions.https.onRequest(app);
+functions.https.onRequest

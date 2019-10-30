@@ -25,6 +25,7 @@ import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -157,6 +158,9 @@ public class FlutterUploaderPlugin
       case "enqueue":
         enqueue(call, result);
         break;
+      case "enqueueBinary":
+        enqueueBinary(call, result);
+        break;
       case "cancel":
         cancel(call, result);
         break;
@@ -256,12 +260,57 @@ public class FlutterUploaderPlugin
                 parameters,
                 connectionTimeout,
                 showNotification,
+                false,
                 tag));
     WorkManager.getInstance(register.context()).enqueue(request);
     String taskId = request.getId().toString();
     if (!tasks.containsKey(taskId)) {
       tasks.put(taskId, tag);
     }
+    result.success(taskId);
+    sendUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+  }
+
+  private void enqueueBinary(MethodCall call, MethodChannel.Result result) {
+    taskIdKey++;
+    String url = call.argument("url");
+    String method = call.argument("method");
+    Map<String, String> files = call.argument("file");
+    Map<String, String> headers = call.argument("headers");
+    boolean showNotification = call.argument("show_notification");
+    String tag = call.argument("tag");
+
+    List<String> methods = Arrays.asList(validHttpMethods);
+
+    if (method == null) {
+      method = "POST";
+    }
+
+    if (!methods.contains(method.toUpperCase())) {
+      result.error("invalid_method", "Method must be either POST | PUT | PATCH", null);
+      return;
+    }
+
+    WorkRequest request =
+        buildRequest(
+            new UploadTask(
+                taskIdKey,
+                url,
+                method,
+                Collections.singletonList(FileItem.fromJson(files)),
+                headers,
+                Collections.emptyMap(),
+                connectionTimeout,
+                showNotification,
+                true,
+                tag));
+    WorkManager.getInstance(register.context()).enqueue(request);
+    String taskId = request.getId().toString();
+
+    if (!tasks.containsKey(taskId)) {
+      tasks.put(taskId, tag);
+    }
+
     result.success(taskId);
     sendUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
   }
@@ -278,7 +327,6 @@ public class FlutterUploaderPlugin
   }
 
   private WorkRequest buildRequest(UploadTask task) {
-
     Gson gson = new Gson();
 
     Data.Builder dataBuilder =
@@ -287,6 +335,7 @@ public class FlutterUploaderPlugin
             .putString(UploadWorker.ARG_METHOD, task.getMethod())
             .putInt(UploadWorker.ARG_REQUEST_TIMEOUT, task.getTimeout())
             .putBoolean(UploadWorker.ARG_SHOW_NOTIFICATION, task.canShowNotification())
+            .putBoolean(UploadWorker.ARG_BINARY_UPLOAD, task.isBinaryUpload())
             .putString(UploadWorker.ARG_UPLOAD_REQUEST_TAG, task.getTag())
             .putInt(UploadWorker.ARG_ID, task.getId());
 
@@ -305,18 +354,13 @@ public class FlutterUploaderPlugin
       dataBuilder.putString(UploadWorker.ARG_DATA, parametersJson);
     }
 
-    WorkRequest request =
-        new OneTimeWorkRequest.Builder(UploadWorker.class)
-            .setConstraints(
-                new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .setRequiresStorageNotLow(true)
-                    .build())
-            .addTag(TAG)
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
-            .setInputData(dataBuilder.build())
-            .build();
-    return request;
+    return new OneTimeWorkRequest.Builder(UploadWorker.class)
+        .setConstraints(
+            new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        .addTag(TAG)
+        .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
+        .setInputData(dataBuilder.build())
+        .build();
   }
 
   private void sendUpdateProgress(String id, int status, int progress) {

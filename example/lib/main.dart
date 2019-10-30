@@ -1,15 +1,19 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'dart:async';
-import 'package:path/path.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:meta/meta.dart';
+import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
     "https://us-central1-flutteruploader.cloudfunctions.net/upload";
+
+const String uploadBinaryURL =
+    "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
 
 void main() => runApp(App());
 
@@ -25,20 +29,12 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: title,
-        theme: ThemeData(
-          // This is the theme of your application.
-          //
-          // Try running your application with "flutter run". You'll see the
-          // application has a blue toolbar. Then, without quitting the app, try
-          // changing the primarySwatch below to Colors.green and then invoke
-          // "hot reload" (press "r" in the console where you ran "flutter run",
-          // or simply save your changes to "hot reload" in a Flutter IDE).
-          // Notice that the counter didn't reset back to zero; the application
-          // is not restarted.
-          primarySwatch: Colors.blue,
-        ),
-        home: UploadScreen());
+      title: title,
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: UploadScreen(),
+    );
   }
 }
 
@@ -48,6 +44,7 @@ class UploadItem {
   final MediaType type;
   final int progress;
   final UploadTaskStatus status;
+
   UploadItem({
     this.id,
     this.tag,
@@ -130,58 +127,87 @@ class _UploadScreenState extends State<UploadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                height: 20.0,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  RaisedButton(
-                    onPressed: getImage,
-                    child: Text("upload image"),
-                  ),
-                  Container(
-                    width: 20.0,
-                  ),
-                  RaisedButton(
-                    onPressed: getVideo,
-                    child: Text("upload video"),
-                  )
-                ],
-              ),
-              Expanded(
-                child: ListView.separated(
-                  padding: EdgeInsets.all(20.0),
-                  itemCount: _tasks.length,
-                  itemBuilder: (context, index) {
-                    final item = _tasks.values.elementAt(index);
-                    print("${item.tag} - ${item.status}");
-                    return UploadItemView(
-                      item: item,
-                      onCancel: cancelUpload,
-                    );
-                  },
-                  separatorBuilder: (context, index) {
-                    return Divider(
-                      color: Colors.black,
-                    );
-                  },
+      appBar: AppBar(
+        title: const Text('Plugin example app'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            Container(height: 20.0),
+            Text(
+              'multipart/form-data uploads',
+              style: Theme.of(context).textTheme.subhead,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                RaisedButton(
+                  onPressed: () => getImage(binary: false),
+                  child: Text("upload image"),
                 ),
+                Container(width: 20.0),
+                RaisedButton(
+                  onPressed: () => getVideo(binary: false),
+                  child: Text("upload video"),
+                )
+              ],
+            ),
+            Container(height: 20.0),
+            Text(
+              'binary uploads',
+              style: Theme.of(context).textTheme.subhead,
+            ),
+            Text('this will upload selected files as binary'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                RaisedButton(
+                  onPressed: () => getImage(binary: true),
+                  child: Text("upload image"),
+                ),
+                Container(width: 20.0),
+                RaisedButton(
+                  onPressed: () => getVideo(binary: true),
+                  child: Text("upload video"),
+                )
+              ],
+            ),
+            Expanded(
+              child: ListView.separated(
+                padding: EdgeInsets.all(20.0),
+                itemCount: _tasks.length,
+                itemBuilder: (context, index) {
+                  final item = _tasks.values.elementAt(index);
+                  print("${item.tag} - ${item.status}");
+                  return UploadItemView(
+                    item: item,
+                    onCancel: cancelUpload,
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return Divider(
+                    color: Colors.black,
+                  );
+                },
               ),
-            ],
-          ),
-        ));
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Future getImage() async {
+  String _uploadUrl({bool binary}) {
+    if (binary) {
+      return uploadBinaryURL;
+    } else {
+      return uploadURL;
+    }
+  }
+
+  Future getImage({@required bool binary}) async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
       final Directory dir = await getApplicationDocumentsDirectory();
@@ -189,20 +215,29 @@ class _UploadScreenState extends State<UploadScreen> {
       final String filename = basename(image.path);
       await image.copy('$savedDir/$filename');
       final tag = "image upload ${_tasks.length + 1}";
-      var taskId = await uploader.enqueue(
-        url: uploadURL,
-        data: {"name": "john"},
-        files: [
-          FileItem(
-            filename: filename,
-            savedDir: savedDir,
-            fieldname: "file",
-          )
-        ],
-        method: UploadMethod.POST,
-        tag: tag,
-        showNotification: true,
+      var url = _uploadUrl(binary: binary);
+      var fileItem = FileItem(
+        filename: filename,
+        savedDir: savedDir,
+        fieldname: "file",
       );
+
+      var taskId = binary
+          ? await uploader.enqueueBinary(
+              url: url,
+              file: fileItem,
+              method: UploadMethod.POST,
+              tag: tag,
+              showNotification: true,
+            )
+          : await uploader.enqueue(
+              url: url,
+              data: {"name": "john"},
+              files: [fileItem],
+              method: UploadMethod.POST,
+              tag: tag,
+              showNotification: true,
+            );
 
       setState(() {
         _tasks.putIfAbsent(
@@ -217,7 +252,7 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future getVideo() async {
+  Future getVideo({@required bool binary}) async {
     var video = await ImagePicker.pickVideo(source: ImageSource.gallery);
     if (video != null) {
       final Directory dir = await getApplicationDocumentsDirectory();
@@ -225,20 +260,30 @@ class _UploadScreenState extends State<UploadScreen> {
       final String filename = basename(video.path);
       await video.copy('$savedDir/$filename');
       final tag = "video upload ${_tasks.length + 1}";
-      var taskId = await uploader.enqueue(
-        url: uploadURL,
-        data: {"name": "john"},
-        files: [
-          FileItem(
-            filename: filename,
-            savedDir: savedDir,
-            fieldname: "file",
-          )
-        ],
-        method: UploadMethod.POST,
-        tag: tag,
-        showNotification: true,
+      final url = _uploadUrl(binary: binary);
+
+      var fileItem = FileItem(
+        filename: filename,
+        savedDir: savedDir,
+        fieldname: "file",
       );
+
+      var taskId = binary
+          ? await uploader.enqueueBinary(
+              url: url,
+              file: fileItem,
+              method: UploadMethod.POST,
+              tag: tag,
+              showNotification: true,
+            )
+          : await uploader.enqueue(
+              url: url,
+              data: {"name": "john"},
+              files: [fileItem],
+              method: UploadMethod.POST,
+              tag: tag,
+              showNotification: true,
+            );
 
       setState(() {
         _tasks.putIfAbsent(
