@@ -307,7 +307,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         request.timeoutInterval = self.timeout
 
         let uploadTask = self.session.uploadTask(with: request as URLRequest, fromFile: URL(fileURLWithPath: file.path))
-        uploadTask.taskDescription = file.path
+        uploadTask.taskDescription = "\(file.path),KEEP"
         uploadTask.resume()
         completionHandler(uploadTask, nil)
     }
@@ -541,7 +541,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         }
 
         let uploadTask = self.session.uploadTask(with: request as URLRequest, fromFile: URL(fileURLWithPath: path))
-        uploadTask.taskDescription = path
+        uploadTask.taskDescription = "\(path),DELETE"
         uploadTask.resume()
         completionHandler(uploadTask, nil)
     }
@@ -591,13 +591,18 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
 
         NSLog("URLSessionDidCompleteWithError: upload completed")
 
-        let path = uploadTask.taskDescription
+        if let pathDescription = uploadTask.taskDescription {
+            let split = pathDescription.split(separator: ",")
 
-        if path != nil && FileManager.default.fileExists(atPath: path!) {
-            do {
-                try FileManager.default.removeItem(atPath: path!)
-            } catch {
-                NSLog("URLSessionDidCompleteWithError: Failed to delete file in path \(path!)")
+            if split.count == 2 {
+                let path = String(split[0])
+                if split[1] == "DELETE" && FileManager.default.fileExists(atPath: path) {
+                    do {
+                        try FileManager.default.removeItem(atPath: path)
+                    } catch {
+                        NSLog("URLSessionDidCompleteWithError: Failed to delete file in path \(path)")
+                    }
+                }
             }
         }
 
