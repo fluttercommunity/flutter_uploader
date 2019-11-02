@@ -71,3 +71,4 @@
 
 **/ios/*.lock
 *.lock
+ios/Flutter/flutter_export_environment.sh
