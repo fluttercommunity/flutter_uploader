@@ -511,7 +511,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             if response != nil {
                 NSLog("URLSessionDidCompleteWithError: \(taskId) with response: \(response!) and status: \(response!.statusCode)")
                 statusCode = response!.statusCode
-                hasResponseError = response!.statusCode != 200 && response!.statusCode != 201
+                hasResponseError = !isRequestSuccessful(response!.statusCode)
             }
         }
 
@@ -578,9 +578,12 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         default:
             return "unknown"
         }
-
     }
-
+    
+    private func isRequestSuccessful(_ statusCode:Int) -> Bool {
+        return statusCode >= 200 && statusCode <= 299
+    }
+  
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         NSLog("URLSessionDidReceiveData:")
 
@@ -689,4 +692,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         uploadedData.removeAll()
         queue.cancelAllOperations()
     }
+    
+    
 }
