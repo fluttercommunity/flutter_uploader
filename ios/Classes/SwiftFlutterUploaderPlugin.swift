@@ -22,8 +22,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         case undefined = 0, enqueue, running, completed, failed, canceled, paused
     }
 
-    let uploadFileSuffix = "--multi-part"
-
     struct UploadTask {
         var taskId: String
         var status: UploadTaskStatus
@@ -59,16 +57,15 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         }
     }
 
-    var channel: FlutterMethodChannel
+    let channel: FlutterMethodChannel
     var session: URLSession
-    var queue: OperationQueue
-    var taskQueue: DispatchQueue
-    var runningTaskById = [String: UploadTask]()
-    var boundary: String = ""
+    let queue: OperationQueue
+    let taskQueue: DispatchQueue
     let timeout: Double
     var allFileUploadedMessage = "All files have been uploaded"
     var backgroundTransferCompletionHander: Any?
     var uploadedData = [String: Data]()
+    var runningTaskById = [String: UploadTask]()
 
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "flutter_uploader", binaryMessenger: registrar.messenger())
@@ -146,8 +143,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         sessionConfiguration.timeoutIntervalForRequest = timeout
         self.session = URLSession(configuration: sessionConfiguration, delegate: self, delegateQueue: queue)
         NSLog("init NSURLSession with id: %@", session.configuration.identifier!)
-        let boundaryId = UUID().uuidString.replacingOccurrences(of: "-", with: "")
-        self.boundary = "---------------------------------\(boundaryId)"
     }
 
     private func enqueueMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
@@ -177,7 +172,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             return
         }
 
-        uploadTaskWithURLWithCompletion(url: url, files: files!, method: method, headers: headers, parameters: data, tag: tag, completion: { [unowned self] (task, error) in
+        uploadTaskWithURLWithCompletion(url: url, files: files!, method: method, headers: headers, parameters: data, tag: tag, completion: { (task, error) in
             if (error != nil) {
                 result(error!)
             } else {
@@ -254,7 +249,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
     }
 
     private func cancelWithTaskId(_ taskId: String) {
-        session.getTasksWithCompletionHandler { [unowned self] (_, uploadTasks, _) in
+        session.getTasksWithCompletionHandler { (_, uploadTasks, _) in
             uploadTasks.forEach({ (uploadTask) in
                 let state = uploadTask.state
                 let taskIdValue = self.identifierForTask(uploadTask)
@@ -268,7 +263,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
     }
 
     private func cancelAllTasks() {
-        session.getTasksWithCompletionHandler { [unowned self] (_, uploadTasks, _) in
+        session.getTasksWithCompletionHandler { (_, uploadTasks, _) in
             uploadTasks.forEach({ (uploadTask) in
                 let state = uploadTask.state
                 let taskId = self.identifierForTask(uploadTask)
@@ -376,15 +371,15 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
            }
             
            let path = tempPath!.path;
-           let requestfileURL = URL(fileURLWithPath: path)
             do {
+                let requestfileURL = URL(fileURLWithPath: path)
                 try formData.writeEncodedData(to: requestfileURL)
             } catch {
                 completionHandler(nil, FlutterError(code: "io_error", message: "failed to write request \(requestFile)", details: nil))
                 return
             }
 
-            self.makeRequest(path, url, method, headers, boundary, tout, completion: {
+            self.makeRequest(path, url, method, headers, formData.contentType, formData.contentLength, tout, completion: {
                               (task, error) in
                               completionHandler(task, error)
            })
@@ -423,12 +418,13 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             ])
     }
 
-    private func makeRequest(_ path: String, _ url: URL, _ method: String, _ headers: Dictionary<String, Any?>?, _ boundary: String, _ timeout: Int, completion completionHandler: (URLSessionUploadTask?, FlutterError?) -> Void) {
+    private func makeRequest(_ path: String, _ url: URL, _ method: String, _ headers: Dictionary<String, Any?>?, _ contentType: String,  _ contentLength: UInt64, _ timeout: Int, completion completionHandler: (URLSessionUploadTask?, FlutterError?) -> Void) {
 
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = method
         request.addValue("*/*", forHTTPHeaderField: "Accept")
-        request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.addValue("\(contentType)", forHTTPHeaderField: "Content-Type")
+        request.addValue("\(contentLength)", forHTTPHeaderField: "Content-Length")
 
         if headers != nil {
             headers!.forEach { (key, value) in

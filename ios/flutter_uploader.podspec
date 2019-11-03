@@ -3,7 +3,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_uploader'
-  s.version          = '1.1.0'
+  s.version          = '1.2.0'
   s.summary          = 'background upload plugin for flutter'
   s.description      = <<-DESC
 A new flutter plugin project.
