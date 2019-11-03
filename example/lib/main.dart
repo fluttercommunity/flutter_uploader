@@ -210,10 +210,8 @@ class _UploadScreenState extends State<UploadScreen> {
   Future getImage({@required bool binary}) async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      final Directory dir = await getApplicationDocumentsDirectory();
-      final String savedDir = dir.path;
       final String filename = basename(image.path);
-      await image.copy('$savedDir/$filename');
+      final String savedDir = dirname(image.path);
       final tag = "image upload ${_tasks.length + 1}";
       var url = _uploadUrl(binary: binary);
       var fileItem = FileItem(
@@ -255,10 +253,8 @@ class _UploadScreenState extends State<UploadScreen> {
   Future getVideo({@required bool binary}) async {
     var video = await ImagePicker.pickVideo(source: ImageSource.gallery);
     if (video != null) {
-      final Directory dir = await getApplicationDocumentsDirectory();
-      final String savedDir = dir.path;
+      final String savedDir = dirname(video.path);
       final String filename = basename(video.path);
-      await video.copy('$savedDir/$filename');
       final tag = "video upload ${_tasks.length + 1}";
       final url = _uploadUrl(binary: binary);
 

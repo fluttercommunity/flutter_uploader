@@ -319,21 +319,18 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                                                  tag: String?,
                                                  completion completionHandler:@escaping (URLSessionUploadTask?, FlutterError?) -> Void) {
 
-        var itemsToUpload = Array<UploadFileInfo>()
         var flutterError: FlutterError?
         let fm = FileManager.default
-        let tempDirectory = NSURL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        let tempDir = tempDirectory.appendingPathComponent("request_files", isDirectory: true)
-        if !fm.fileExists(atPath: tempDir!.path) {
-            do {
-                try fm.createDirectory(at: tempDir!, withIntermediateDirectories: true, attributes: nil)
-            } catch {
-                completionHandler(nil, FlutterError(code: "io_error", message: "failed to create directory", details: nil))
-                return
-            }
-        }
-
         var fileCount:Int = 0;
+        let formData = MultipartFormData()
+        
+        if(data != nil) {
+            data?.forEach({ (key, value) in
+                if let v = value as? String {
+                    formData.append(v.data(using: .utf8)!, withName: key)
+                }
+            })
+        }
         
         for file in files {
             let f = file as! Dictionary<String, Any>
@@ -347,22 +344,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             if fm.fileExists(atPath: info.path, isDirectory:&isDir) {
                 if !isDir.boolValue {
                     fileCount += 1
-                    let fileId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-                    let ext = NSURL(fileURLWithPath: info.path).pathExtension!
-                    let filename = "\(fileId).\(ext)"
-                    let tempPath = tempDir?.appendingPathComponent("\(filename)", isDirectory: false)
-                    do {
-                        try fm.copyItem(at: URL(fileURLWithPath: info.path), to: tempPath!)
-                        let fileInfo = UploadFileInfo(fieldname: info.fieldname, filename: info.filename, savedDir: info.savedDir, temporalFilePath: tempPath)
-                        itemsToUpload.append(fileInfo)
-                        
-                        if let temporalFilePath = fileInfo.temporalFilePath {
-                            NSLog("File: \(temporalFilePath) with mimeType: \(fileInfo.mimeType)")
-                        }
-                    } catch {
-                        fileCount -= 1;
-                        NSLog("Failed to copy the file: \(info.path) to tempFile: \(tempPath!)")
-                    }
+                    let fileURL = URL(fileURLWithPath: info.path)
+                    formData.append(fileURL, withName: info.fieldname, fileName: info.filename, mimeType: info.mimeType)
                 }
                 else {
                     flutterError = FlutterError(code: "io_error", message: "path \(info.path) is a directory. please provide valid file path", details: nil);
@@ -378,19 +361,33 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         if fileCount <= 0 {
             completionHandler(nil, flutterError)
         } else {
-            saveToFileWithCompletion(itemsToUpload, data, boundary, completion: {
-                [weak self] (path, error) in
+           let requestId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
+           let requestFile = "\(requestId).req"
+           let tempDirectory = NSURL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+           let tempPath = tempDirectory.appendingPathComponent(requestFile, isDirectory: false)
 
-                if error != nil {
-                    completionHandler(nil, error)
-                    return
-                }
+           if fm.fileExists(atPath: tempPath!.path) {
+               do {
+                   try fm.removeItem(at: tempPath!)
+               } catch {
+                   completionHandler(nil, FlutterError(code: "io_error", message: "failed to delete file \(requestFile)", details: nil))
+                   return
+               }
+           }
+            
+           let path = tempPath!.path;
+           let requestfileURL = URL(fileURLWithPath: path)
+            do {
+                try formData.writeEncodedData(to: requestfileURL)
+            } catch {
+                completionHandler(nil, FlutterError(code: "io_error", message: "failed to write request \(requestFile)", details: nil))
+                return
+            }
 
-                self?.makeRequest(path!, url, method, headers, boundary, tout, completion: {
-                    (task, error) in
-                    completionHandler(task, error)
-                })
-            })
+            self.makeRequest(path, url, method, headers, boundary, tout, completion: {
+                              (task, error) in
+                              completionHandler(task, error)
+           })
         }
     }
 
@@ -424,96 +421,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             "headers": headers,
             "tag": tag ?? NSNull()
             ])
-    }
-
-    private func saveToFileWithCompletion(_ uploadItems: Array<UploadFileInfo>, _ parameters: Dictionary<String, Any?>?, _ boundary: String,
-                                          completion completionHandler: (String?, FlutterError?) -> Void) {
-
-        taskQueue.sync {
-            var dataRequest = ""
-            if(parameters != nil) {
-                parameters?.forEach({ (key, value) in
-                    if let v = value as? String {
-                        dataRequest += "--\(boundary)\r\n"
-                        dataRequest += "Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n"
-                        dataRequest += "\(v)\r\n"
-                    }
-                })
-            }
-
-            let fm = FileManager.default
-            let requestId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-            let requestFile = "\(requestId).req"
-            let tempDirectory = NSURL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-            let tempDir = tempDirectory.appendingPathComponent("requests", isDirectory: true)
-            if !fm.fileExists(atPath: tempDir!.path) {
-                do {
-                    try fm.createDirectory(at: tempDir!, withIntermediateDirectories: true, attributes: nil)
-                } catch {
-                    completionHandler(nil, FlutterError(code: "io_error", message: "failed to create directory", details: nil))
-                    return
-                }
-            }
-
-            let tempPath = tempDir?.appendingPathComponent(requestFile, isDirectory: false)
-
-            if fm.fileExists(atPath: tempPath!.path) {
-                do {
-                    try fm.removeItem(at: tempPath!)
-                } catch {
-                    completionHandler(nil, FlutterError(code: "io_error", message: "failed to delete file \(requestFile)", details: nil))
-                    return
-                }
-            }
-
-            do {
-
-                try dataRequest.write(toFile: tempPath!.path, atomically: true, encoding: String.Encoding.utf8)
-
-                let stream = FileHandle(forWritingAtPath: tempPath!.path)
-                defer {
-                    stream?.closeFile()
-                }
-
-                stream?.seekToEndOfFile()
-
-                uploadItems.forEach({ info in
-                    var fileRequest = ""
-                    fileRequest += "--\(boundary)\r\n"
-                    fileRequest += "Content-Disposition: form-data; name=\"\(info.fieldname)\"; filename=\"\(info.filename)\"\r\n"
-                    fileRequest += "Content-Type: \(info.mimeType)\r\n\r\n"
-                    stream?.write(fileRequest.data(using: String.Encoding.utf8)!)
-
-                    NSLog("attaching the file: \(info.path) - tempPath:\(info.temporalFilePath?.path ?? "na")")
-
-                    if info.temporalFilePath != nil && fm.fileExists(atPath: info.temporalFilePath!.path) {
-                        stream?.write(fm.contents(atPath: info.temporalFilePath!.path)!)
-                    } else if (fm.fileExists(atPath: info.path)) {
-                        stream?.write(fm.contents(atPath: info.path)!)
-                    }
-
-                    stream?.write("\r\n".data(using: String.Encoding.utf8)!)
-
-                    if info.temporalFilePath != nil {
-                        do {
-                            try fm.removeItem(at: info.temporalFilePath!)
-                        } catch {
-
-                        }
-                    }
-
-                    stream?.write("\r\n--\(boundary)--\r\n".data(using: String.Encoding.utf8)!)
-                })
-
-                stream?.closeFile()
-
-                completionHandler(tempPath!.path, nil)
-            } catch {
-                completionHandler(nil, FlutterError(code: "io_error", message: "failed to write request", details: nil))
-                return
-            }
-
-        }
     }
 
     private func makeRequest(_ path: String, _ url: URL, _ method: String, _ headers: Dictionary<String, Any?>?, _ boundary: String, _ timeout: Int, completion completionHandler: (URLSessionUploadTask?, FlutterError?) -> Void) {
@@ -746,11 +653,11 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                     self.backgroundTransferCompletionHander = nil
 
                     OperationQueue.main.addOperation({
-                        [unowned self] in
+                        [weak self] in
                         completionHandler()
 
                         let localNotification = UILocalNotification()
-                        localNotification.alertBody = self.allFileUploadedMessage
+                        localNotification.alertBody = self?.allFileUploadedMessage
                         UIApplication.shared.presentLocalNotificationNow(localNotification)
                     })
                 }
