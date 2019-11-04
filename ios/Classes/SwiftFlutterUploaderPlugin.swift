@@ -314,7 +314,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                                                  tag: String?,
                                                  completion completionHandler:@escaping (URLSessionUploadTask?, FlutterError?) -> Void) {
         
-            var itemsToUpload = Array<UploadFileInfo>()
             var flutterError: FlutterError?
             let fm = FileManager.default
             var fileCount:Int = 0;
@@ -343,7 +342,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                         let filePath = URL(fileURLWithPath: fileInfo.path)
                         formData.append(filePath, withName: fileInfo.fieldname, fileName: fileInfo.filename, mimeType: fileInfo.mimeType)
                         fileCount += 1
-                        itemsToUpload.append(fileInfo)
                     }
                     else {
                         flutterError = FlutterError(code: "io_error", message: "path \(path) is a directory. please provide valid file path", details: nil);
@@ -376,9 +374,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                 do {
                     let requestfileURL = URL(fileURLWithPath: path)
                     try formData.writeEncodedData(to: requestfileURL)
-                    for item in itemsToUpload {
-                        try fm.removeItem(at: item.temporalFilePath!)
-                    }
                 } catch {
                     completionHandler(nil, FlutterError(code: "io_error", message: "failed to write request \(requestFile)", details: nil))
                     return
