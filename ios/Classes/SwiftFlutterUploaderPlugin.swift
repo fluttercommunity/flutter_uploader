@@ -43,14 +43,12 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         var savedDir: String
         var mimeType: String
         var path: String
-        var temporalFilePath: URL?
-
-        init(fieldname: String, filename: String, savedDir: String, temporalFilePath: URL? = nil) {
+       
+        init(fieldname: String, filename: String, savedDir: String) {
             self.fieldname = fieldname
             self.filename = filename
             self.savedDir = savedDir
             self.path = "\(savedDir)/\(filename)"
-            self.temporalFilePath = temporalFilePath
             let mime = MimeType(url: URL(fileURLWithPath: path))
             self.mimeType = mime.value
         }
