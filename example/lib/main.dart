@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
@@ -68,7 +65,7 @@ class UploadItem {
 
 enum MediaType { Image, Video }
 
-class UploadScreen extends StatefulWidget { 
+class UploadScreen extends StatefulWidget {
   UploadScreen({Key key}) : super(key: key);
 
   @override
