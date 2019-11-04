@@ -74,7 +74,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        NSLog("methodCallHandler: \(call.method)")
         switch call.method {
         case "enqueue":
             enqueueMethodCall(call, result)
@@ -95,12 +94,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         self.queue.name = "chillisource.flutter_uploader.queue"
         self.session = URLSession()
         self.taskQueue = DispatchQueue(label: "chillisource.flutter_uploader.dispatch.queue")
-
         self.timeout = SwiftFlutterUploaderPlugin.determineTimeout()
-        NSLog("TIMEOUT = \(timeout)")
-
         super.init()
-
         self.setupSession()
     }
 
@@ -137,7 +132,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         sessionConfiguration.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
         sessionConfiguration.timeoutIntervalForRequest = timeout
         self.session = URLSession(configuration: sessionConfiguration, delegate: self, delegateQueue: queue)
-        NSLog("init NSURLSession with id: %@", session.configuration.identifier!)
     }
 
     private func enqueueMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
@@ -385,7 +379,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
             SwiftFlutterUploaderPlugin.KEY_STATUS: NSNumber(integerLiteral: status.rawValue),
             SwiftFlutterUploaderPlugin.KEY_PROGRESS: NSNumber(integerLiteral: progress),
             "tag": (tag ?? NSNull()) as Any
-        ]) 
+        ])
     }
 
     private func sendUploadFailedForTaskId(_ taskId: String, inStatus status: UploadTaskStatus, statusCode: Int, error: FlutterError, tag: String?) {
