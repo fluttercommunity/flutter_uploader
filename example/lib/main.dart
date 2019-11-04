@@ -68,7 +68,7 @@ class UploadItem {
 
 enum MediaType { Image, Video }
 
-class UploadScreen extends StatefulWidget {
+class UploadScreen extends StatefulWidget { 
   UploadScreen({Key key}) : super(key: key);
 
   @override
@@ -107,7 +107,7 @@ class _UploadScreenState extends State<UploadScreen> {
     }, onError: (ex, stacktrace) {
       print("exception: $ex");
       print("stacktrace: $stacktrace" ?? "no stacktrace");
-      UploadException exp = ex as UploadException;
+      final exp = ex as UploadException;
       final task = _tasks[exp.tag];
       if (task == null) return;
 
