@@ -117,7 +117,7 @@ public struct MimeType {
         let fext = fileExtension.lowercased()
         return mimeTypes.keys.contains(fext) ? mimeTypes[fext]! : DEFAULT_MIME_TYPE
     }
-    
+
     public init(path: String) {
         ext = NSString(string: path).pathExtension
     }
