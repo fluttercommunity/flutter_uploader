@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import Alamofire
 
 public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTaskDelegate, URLSessionDataDelegate {
     
