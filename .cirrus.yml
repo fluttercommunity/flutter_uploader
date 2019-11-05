@@ -34,4 +34,5 @@ ios_task:
   osx_instance:
     image: mojave-flutter
   build_script:
+    - pod repo update
     - cd example && flutter build ios --release --no-codesign
