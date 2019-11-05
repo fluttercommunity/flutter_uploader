@@ -1,12 +1,9 @@
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
@@ -107,7 +104,7 @@ class _UploadScreenState extends State<UploadScreen> {
     }, onError: (ex, stacktrace) {
       print("exception: $ex");
       print("stacktrace: $stacktrace" ?? "no stacktrace");
-      UploadException exp = ex as UploadException;
+      final exp = ex as UploadException;
       final task = _tasks[exp.tag];
       if (task == null) return;
 
@@ -210,10 +207,8 @@ class _UploadScreenState extends State<UploadScreen> {
   Future getImage({@required bool binary}) async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      final Directory dir = await getApplicationDocumentsDirectory();
-      final String savedDir = dir.path;
       final String filename = basename(image.path);
-      await image.copy('$savedDir/$filename');
+      final String savedDir = dirname(image.path);
       final tag = "image upload ${_tasks.length + 1}";
       var url = _uploadUrl(binary: binary);
       var fileItem = FileItem(
@@ -255,10 +250,8 @@ class _UploadScreenState extends State<UploadScreen> {
   Future getVideo({@required bool binary}) async {
     var video = await ImagePicker.pickVideo(source: ImageSource.gallery);
     if (video != null) {
-      final Directory dir = await getApplicationDocumentsDirectory();
-      final String savedDir = dir.path;
+      final String savedDir = dirname(video.path);
       final String filename = basename(video.path);
-      await video.copy('$savedDir/$filename');
       final tag = "video upload ${_tasks.length + 1}";
       final url = _uploadUrl(binary: binary);
 

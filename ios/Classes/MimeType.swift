@@ -110,11 +110,14 @@ let mimeTypes = [
 public struct MimeType {
     let ext: String?
     public var value: String {
-        guard let ext = ext else {
+        guard let fileExtension: String = ext else {
             return DEFAULT_MIME_TYPE
         }
-        return mimeTypes[ext.lowercased()] ?? DEFAULT_MIME_TYPE
+
+        let fext = fileExtension.lowercased()
+        return mimeTypes.keys.contains(fext) ? mimeTypes[fext]! : DEFAULT_MIME_TYPE
     }
+
     public init(path: String) {
         ext = NSString(string: path).pathExtension
     }
