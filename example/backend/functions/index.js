@@ -6,6 +6,7 @@ const fs = require("fs");
 const functions = require("firebase-functions");
 const cors = require("cors");
 const Busboy = require("busboy");
+const md5File = require('md5-file');
 
 const formUploadHandler = (req, res) => {
   const uploads = [];
@@ -75,7 +76,14 @@ const binaryUploadHandler = (req, res) => {
   out.write(req.rawBody);
   out.close();
 
-  return res.status(200).end();
+  const md5hash = md5File.sync(filepath);
+  var stats = fs.statSync(filepath)
+
+  return res.status(200).json({
+    length: stats["size"],
+    message: "Successfully uploaded",
+    md5: md5hash,
+  }).end();
 };
 
 const app = express();
