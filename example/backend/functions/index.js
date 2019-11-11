@@ -59,7 +59,7 @@ const formUploadHandler = (req, res) => {
   return req.pipe(busboy);
 };
 
-const binaryUploadHandler = (req, res) => {
+const binaryUploadHandler = async (req, res) => {
   const methods = ["POST", "PUT", "PATCH"];
   if (!methods.includes(req.method, 0)) {
     return res.status(405).json({
@@ -67,24 +67,33 @@ const binaryUploadHandler = (req, res) => {
     });
   }
 
-  const filename = [...Array(10)].map(i=>(~~(Math.random()*36)).toString(36)).join('');
+  const filename = [...Array(10)].map(i => (~~(Math.random() * 36)).toString(36)).join('');
   const filepath = path.join(os.tmpdir(), filename);
 
   console.log("File [" + filename + "]: filepath: " + filepath);
 
-  const out = fs.createWriteStream(filepath);
-  out.write(req.rawBody);
-  out.close();
+  await writeToFile(filepath, req.rawBody);
 
   const md5hash = md5File.sync(filepath);
-  var stats = fs.statSync(filepath)
+  const stats = fs.statSync(filepath);
+  const fileSizeInBytes = stats.size;
 
   return res.status(200).json({
-    length: stats["size"],
     message: "Successfully uploaded",
+    length: fileSizeInBytes,
     md5: md5hash,
   }).end();
 };
+
+function writeToFile(filePath, rawBody) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(filePath);
+    file.write(rawBody);
+    file.end();
+    file.on("finish", () => { resolve(); });
+    file.on("error", reject);
+  });
+}
 
 const app = express();
 app.use(cors({ origin: true }));
