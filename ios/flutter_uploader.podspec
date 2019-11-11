@@ -3,7 +3,7 @@
 #
 Pod::Spec.new do |s|
   s.name             = 'flutter_uploader'
-  s.version          = '1.1.0'
+  s.version          = '1.2.0'
   s.summary          = 'background upload plugin for flutter'
   s.description      = <<-DESC
 A new flutter plugin project.
@@ -16,6 +16,7 @@ A new flutter plugin project.
   s.public_header_files = 'Classes/**/*.h'
   s.static_framework = true
   s.dependency 'Flutter'
+  s.dependency 'Alamofire', '4.9.1'
   s.ios.deployment_target = '8.0'
   s.swift_version = '5.0'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }

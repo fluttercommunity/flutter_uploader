@@ -1,3 +1,8 @@
+## 1.2.0
+
+- iOS: fix multipartform upload to be able upload large files
+- iOS: fix multipartform upload to be able upload multiple files in one uplaod task
+
 ## 1.1.0
 
 - iOS: define clang module
