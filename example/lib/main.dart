@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,10 +11,10 @@ import 'package:path/path.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
-    "https://us-central1-flutteruploader.cloudfunctions.net/upload";
+   "https://us-central1-flutteruploader.cloudfunctions.net/upload";
 
 const String uploadBinaryURL =
-    "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
+   "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
 
 void main() => runApp(App());
 
@@ -38,24 +42,40 @@ class _AppState extends State<App> {
 class UploadItem {
   final String id;
   final String tag;
+  final String path;
   final MediaType type;
+  final String remoteHash;
+  final int remoteSize;
   final int progress;
   final UploadTaskStatus status;
 
   UploadItem({
     this.id,
     this.tag,
+    this.path,
     this.type,
+    this.remoteHash,
+    this.remoteSize,
     this.progress = 0,
     this.status = UploadTaskStatus.undefined,
   });
 
-  UploadItem copyWith({UploadTaskStatus status, int progress}) => UploadItem(
-      id: this.id,
-      tag: this.tag,
-      type: this.type,
-      status: status ?? this.status,
-      progress: progress ?? this.progress);
+  UploadItem copyWith({
+    UploadTaskStatus status,
+    int progress,
+    String remoteHash,
+    int remoteSize,
+  }) =>
+      UploadItem(
+        id: this.id,
+        tag: this.tag,
+        path: this.path,
+        type: this.type,
+        status: status ?? this.status,
+        progress: progress ?? this.progress,
+        remoteHash: remoteHash ?? this.remoteHash,
+        remoteSize: remoteSize ?? this.remoteSize,
+      );
 
   bool isCompleted() =>
       this.status == UploadTaskStatus.canceled ||
@@ -96,10 +116,17 @@ class _UploadScreenState extends State<UploadScreen> {
           "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}, tag: ${result.tag}, headers: ${result.headers}");
 
       final task = _tasks[result.tag];
+
       if (task == null) return;
 
+      final responseJson = jsonDecode(result.response);
+
       setState(() {
-        _tasks[result.tag] = task.copyWith(status: result.status);
+        _tasks[result.tag] = task.copyWith(
+          status: result.status,
+          remoteHash: responseJson['md5'],
+          remoteSize: responseJson['length'],
+        );
       });
     }, onError: (ex, stacktrace) {
       print("exception: $ex");
@@ -240,6 +267,7 @@ class _UploadScreenState extends State<UploadScreen> {
             () => UploadItem(
                   id: taskId,
                   tag: tag,
+                  path: image.path,
                   type: MediaType.Video,
                   status: UploadTaskStatus.enqueued,
                 ));
@@ -284,6 +312,7 @@ class _UploadScreenState extends State<UploadScreen> {
             () => UploadItem(
                   id: taskId,
                   tag: tag,
+                  path: video.path,
                   type: MediaType.Video,
                   status: UploadTaskStatus.enqueued,
                 ));
@@ -335,6 +364,18 @@ class UploadItemView extends StatelessWidget {
                 height: 5.0,
               ),
               Text(item.status.description),
+              if (item.status == UploadTaskStatus.complete &&
+                  item.remoteHash != null)
+                Builder(builder: (context) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _compareMd5(item.path, item.remoteHash),
+                      _compareSize(item.path, item.remoteSize),
+                    ],
+                  );
+                }),
               Container(
                 height: 5.0,
               ),
@@ -345,5 +386,35 @@ class UploadItemView extends StatelessWidget {
         buttonWidget
       ],
     );
+  }
+
+  Text _compareMd5(String localPath, String remoteHash) {
+    var digest = md5.convert(File(localPath).readAsBytesSync());
+    if (digest.toString().toLowerCase() == remoteHash) {
+      return Text(
+        'Hash $digest √',
+        style: TextStyle(color: Colors.green),
+      );
+    } else {
+      return Text(
+        'Hash $digest vs $remoteHash ƒ',
+        style: TextStyle(color: Colors.red),
+      );
+    }
+  }
+
+  Text _compareSize(String localPath, int remoteSize) {
+    final length = File(localPath).lengthSync();
+    if (length == remoteSize) {
+      return Text(
+        'Length $length √',
+        style: TextStyle(color: Colors.green),
+      );
+    } else {
+      return Text(
+        'Length $length vs $remoteSize ƒ',
+        style: TextStyle(color: Colors.red),
+      );
+    }
   }
 }
