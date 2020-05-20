@@ -278,7 +278,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                                                        completion completionHandler:@escaping (URLSessionUploadTask?, FlutterError?) -> Void) {
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = method
-        request.addValue("*/*", forHTTPHeaderField: "Accept")
+        // request.addValue("*/*", forHTTPHeaderField: "Accept")
 
         headers?.forEach { (key, value) in
             if let v = value as? String {
