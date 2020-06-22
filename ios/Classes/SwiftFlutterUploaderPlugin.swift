@@ -281,7 +281,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Accept")
 
         headers?.forEach { (key, value) in
-            print(value)
             if let v = value as? String {
                 request.setValue(v, forHTTPHeaderField: key)
             }
