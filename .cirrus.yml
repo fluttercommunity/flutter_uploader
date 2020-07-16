@@ -30,6 +30,17 @@ android_task:
   build_script:
     - cd example && flutter build apk --release
 
+backend_task:
+  container:
+    image: node:latest
+
+  lint_task:
+    node_modules_cache:
+      folder: example/backend/functions/node_modules
+      fingerprint_script: cat example/backend/functions/package-lock.json
+      populate_script: cd example/backend/functions && npm ci
+    test_script: cd example/backend/functions && npm run-script lint
+
 connected_check_task:
   skip: true
   name: Flutter driver test on Android

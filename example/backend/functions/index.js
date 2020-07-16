@@ -44,7 +44,8 @@ const formUploadHandler = (req, res) => {
   });
   busboy.on("finish", () => {
     res.status(200).json({
-      message: "Successfully uploaded"
+      message: "Successfully uploaded",
+      uploads: uploads,
     });
     res.end();
   });
