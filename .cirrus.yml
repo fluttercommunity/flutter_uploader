@@ -31,7 +31,7 @@ android_task:
     - cd example && flutter build apk --release
 
 connected_check_task:
-  name: Run Android instrumented tests
+  name: Flutter driver test on Android
   only_if: $CIRRUS_BRANCH == "master" || CIRRUS_PR != ""
   env:
     API_LEVEL: 28
@@ -57,7 +57,13 @@ connected_check_task:
 
 ios_task:
   osx_instance:
-    image: mojave-flutter
+    image: catalina-flutter
+  create_simulator_script:
+    - xcrun simctl list
+    - xcrun simctl create Flutter-iPhone com.apple.CoreSimulator.SimDeviceType.iPhone-X com.apple.CoreSimulator.SimRuntime.iOS-13-5 | xargs xcrun simctl boot
   build_script:
     - pod repo update
     - cd example && flutter build ios --release --no-codesign
+  run_instrumented_tests_script:
+    cd example
+    flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
