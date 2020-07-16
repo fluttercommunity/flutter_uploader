@@ -14,9 +14,6 @@ const String title = "FileUpload Sample app";
 const String uploadURL =
     "https://us-central1-flutteruploader.cloudfunctions.net/upload";
 
-const String uploadBinaryURL =
-    "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
-
 void main() => runApp(App());
 
 class App extends StatefulWidget {
@@ -276,7 +273,7 @@ class _UploadScreenState extends State<UploadScreen> {
     final String savedDir = dirname(file.path);
     final tag = "image upload ${_tasks.length + 1}";
 
-    var url = binary ? uploadBinaryURL : uploadURL;
+    final url = uploadURL + (binary ? '/binary' : '');
     var fileItem = FileItem(
       filename: filename,
       savedDir: savedDir,
