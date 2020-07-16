@@ -11,6 +11,7 @@ dependencies:
   image_picker: ^0.6.7+4
 
 dev_dependencies:
+  e2e: ^0.6.1
   flutter_test:
     sdk: flutter
 

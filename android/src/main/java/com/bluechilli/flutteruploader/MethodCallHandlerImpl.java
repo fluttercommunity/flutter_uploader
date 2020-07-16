@@ -37,15 +37,17 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
   private final Context context;
   private int connectionTimeout;
-  private final StatusListener statusListener;
+
+  @NonNull private final StatusListener statusListener;
 
   private Map<String, Boolean> completedTasks = new HashMap<>();
   private Map<String, String> tasks = new HashMap<>();
   private Gson gson = new Gson();
   private int taskIdKey = 0;
-  private final String[] validHttpMethods = new String[] {"POST", "PUT", "PATCH"};
 
-  MethodCallHandlerImpl(Context context, int timeout, StatusListener listener) {
+  private static final List<String> VALID_HTTP_METHODS = Arrays.asList("POST", "PUT", "PATCH");
+
+  MethodCallHandlerImpl(Context context, int timeout, @NonNull StatusListener listener) {
     this.context = context;
     this.connectionTimeout = timeout;
     this.statusListener = listener;
@@ -70,7 +72,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       String id = uploadProgress.getTaskId();
       int progress = uploadProgress.getProgress();
       int status = uploadProgress.getStatus();
-      plugin.sendUpdateProgress(id, status, progress);
+
+      plugin.statusListener.onUpdateProgress(plugin.tasks.get(id), id, status, progress);
     }
   }
 
@@ -93,6 +96,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
       for (WorkInfo info : workInfoList) {
         String id = info.getId().toString();
+        final String tag = plugin.tasks.get(id);
+
         if (!plugin.completedTasks.containsKey(id)) {
           if (info.getState().isFinished()) {
             plugin.completedTasks.put(id, true);
@@ -106,10 +111,13 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 String code = outputData.getString(UploadWorker.EXTRA_ERROR_CODE);
                 String errorMessage = outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
                 String[] details = outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
-                plugin.sendFailed(id, failedStatus, statusCode, code, errorMessage, details);
+
+                plugin.statusListener.onFailed(
+                    tag, id, failedStatus, statusCode, code, errorMessage, details);
                 break;
               case CANCELLED:
-                plugin.sendFailed(
+                plugin.statusListener.onFailed(
+                    tag,
                     id,
                     UploadStatus.CANCELED,
                     500,
@@ -127,7 +135,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 }
 
                 String response = info.getOutputData().getString(UploadWorker.EXTRA_RESPONSE);
-                plugin.sendCompleted(id, status, response, headers);
+                plugin.statusListener.onCompleted(tag, id, status, response, headers);
                 break;
             }
           }
@@ -184,25 +192,33 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
   }
 
   private void enqueue(MethodCall call, MethodChannel.Result result) {
-    taskIdKey++;
     String url = call.argument("url");
     String method = call.argument("method");
     List<Map<String, String>> files = call.argument("files");
     Map<String, String> parameters = call.argument("data");
     Map<String, String> headers = call.argument("headers");
-    boolean showNotification = call.argument("show_notification");
+    Boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
-
-    List<String> methods = Arrays.asList(validHttpMethods);
 
     if (method == null) {
       method = "POST";
     }
 
-    if (!methods.contains(method.toUpperCase())) {
+    if (showNotification == null) {
+      showNotification = false;
+    }
+
+    if (tag == null || files == null || files.isEmpty()) {
+      result.error("invalid_call", "Invalid call parameters passed", null);
+      return;
+    }
+
+    if (!VALID_HTTP_METHODS.contains(method.toUpperCase())) {
       result.error("invalid_method", "Method must be either POST | PUT | PATCH", null);
       return;
     }
+
+    taskIdKey++;
 
     List<FileItem> items = new ArrayList<>();
 
@@ -229,28 +245,36 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       tasks.put(taskId, tag);
     }
     result.success(taskId);
-    sendUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+    statusListener.onUpdateProgress(tag, taskId, UploadStatus.ENQUEUED, 0);
   }
 
   private void enqueueBinary(MethodCall call, MethodChannel.Result result) {
-    taskIdKey++;
     String url = call.argument("url");
     String method = call.argument("method");
     Map<String, String> files = call.argument("file");
     Map<String, String> headers = call.argument("headers");
-    boolean showNotification = call.argument("show_notification");
+    Boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
-
-    List<String> methods = Arrays.asList(validHttpMethods);
 
     if (method == null) {
       method = "POST";
     }
 
-    if (!methods.contains(method.toUpperCase())) {
+    if (showNotification == null) {
+      showNotification = false;
+    }
+
+    if (tag == null || files == null || files.isEmpty()) {
+      result.error("invalid_call", "Invalid call parameters passed", null);
+      return;
+    }
+
+    if (!VALID_HTTP_METHODS.contains(method.toUpperCase())) {
       result.error("invalid_method", "Method must be either POST | PUT | PATCH", null);
       return;
     }
+
+    taskIdKey++;
 
     WorkRequest request =
         buildRequest(
@@ -273,7 +297,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     }
 
     result.success(taskId);
-    sendUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+    statusListener.onUpdateProgress(tag, taskId, UploadStatus.ENQUEUED, 0);
   }
 
   private void cancel(MethodCall call, MethodChannel.Result result) {
@@ -323,5 +347,4 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
         .setInputData(dataBuilder.build())
         .build();
   }
-
 }

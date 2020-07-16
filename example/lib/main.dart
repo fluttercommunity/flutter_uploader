@@ -11,10 +11,10 @@ import 'package:path/path.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
-   "https://us-central1-flutteruploader.cloudfunctions.net/upload";
+    "https://us-central1-flutteruploader.cloudfunctions.net/upload";
 
 const String uploadBinaryURL =
-   "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
+    "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
 
 void main() => runApp(App());
 
@@ -110,6 +110,9 @@ class _UploadScreenState extends State<UploadScreen> {
         _tasks[progress.tag] =
             task.copyWith(progress: progress.progress, status: progress.status);
       });
+    }, onError: (ex, stacktrace) {
+      print("exception: $ex");
+      print("stacktrace: $stacktrace" ?? "no stacktrace");
     });
     _resultSubscription = uploader.result.listen((result) {
       print(

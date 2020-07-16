@@ -1,7 +1,9 @@
 package com.bluechilli.flutteruploader;
 
 import android.content.Context;
+import android.util.Log;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import com.bluechilli.flutteruploader.plugin.StatusListener;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.embedding.engine.plugins.activity.ActivityAware;
@@ -11,6 +13,7 @@ import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -75,52 +78,46 @@ public class FlutterUploaderPlugin implements FlutterPlugin, ActivityAware, Stat
 
   @Override
   public void onUpdateProgress(String tag, String id, int status, int progress) {
-    String tag = tasks.get(id);
     Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
     args.put("status", status);
     args.put("progress", progress);
     args.put("tag", tag);
     channel.invokeMethod("updateProgress", args);
-
   }
 
   @Override
   public void onFailed(
-      String id, int status, int statusCode, String code, String message, String[] details) {}
-
-  @Override
-  public void onCompleted(String id, int status, String response, Map<String, Object> headers) {}
-
-
-  private void sendUpdateProgress(String id, int status, int progress) {
-  }
-
-  private void sendFailed(
-      String id, int status, int statusCode, String code, String message, String[] details) {
-
-    String tag = tasks.get(id);
+      String tag,
+      String id,
+      int status,
+      int statusCode,
+      String code,
+      String message,
+      @Nullable String[] details) {
     Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
     args.put("status", status);
     args.put("statusCode", statusCode);
     args.put("code", code);
     args.put("message", message);
-    args.put("details", details != null ? new ArrayList<>(Arrays.asList(details)) : null);
+    args.put(
+        "details",
+        details != null ? new ArrayList<>(Arrays.asList(details)) : Collections.emptyList());
     args.put("tag", tag);
     channel.invokeMethod("uploadFailed", args);
   }
 
-  private void sendCompleted(String id, int status, String response, Map headers) {
-    String tag = tasks.get(id);
+  @Override
+  public void onCompleted(
+      String tag, String id, int status, String response, @Nullable Map<String, String> headers) {
     Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
     args.put("status", status);
     args.put("statusCode", 200);
     args.put("message", response);
-    args.put("headers", headers);
+    args.put("headers", headers != null ? headers : Collections.emptyMap());
     args.put("tag", tag);
     channel.invokeMethod("uploadCompleted", args);
   }
-
 }
