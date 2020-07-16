@@ -52,8 +52,8 @@ connected_check_task:
     adb shell settings put global transition_animation_scale 0.0
     adb shell settings put global animator_duration_scale 0.0
   run_instrumented_tests_script:
-    cd example
-    flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
+    - cd example
+    - flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
 
 ios_task:
   osx_instance:
@@ -65,5 +65,5 @@ ios_task:
     - pod repo update
     - cd example && flutter build ios --release --no-codesign
   run_instrumented_tests_script:
-    cd example
-    flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
+    - cd example
+    - flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
