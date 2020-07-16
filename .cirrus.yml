@@ -31,6 +31,7 @@ android_task:
     - cd example && flutter build apk --release
 
 connected_check_task:
+  skip: true
   name: Flutter driver test on Android
   only_if: $CIRRUS_BRANCH == "master" || CIRRUS_PR != ""
   env:
@@ -41,7 +42,6 @@ connected_check_task:
     dockerfile: .ci/Dockerfile
     cpu: 3
     memory: 4G
-    kvm: true
   create_device_script:
     - echo no | avdmanager create avd --force --name "api-${API_LEVEL}" --abi "${TARGET}/${ARCH}" --package "system-images;android-${API_LEVEL};${TARGET};${ARCH}"
   start_emulator_background_script:
