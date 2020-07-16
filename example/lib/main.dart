@@ -8,6 +8,7 @@ import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
@@ -93,6 +94,7 @@ class UploadScreen extends StatefulWidget {
 }
 
 class _UploadScreenState extends State<UploadScreen> {
+  ImagePicker imagePicker = ImagePicker();
   FlutterUploader uploader = FlutterUploader();
   StreamSubscription _progressSubscription;
   StreamSubscription _resultSubscription;
@@ -101,6 +103,7 @@ class _UploadScreenState extends State<UploadScreen> {
   @override
   void initState() {
     super.initState();
+
     _progressSubscription = uploader.progress.listen((progress) {
       final task = _tasks[progress.tag];
       print("progress: ${progress.progress} , tag: ${progress.tag}");
@@ -142,6 +145,19 @@ class _UploadScreenState extends State<UploadScreen> {
         _tasks[exp.tag] = task.copyWith(status: exp.status);
       });
     });
+
+    imagePicker.getLostData().then((lostData) {
+      if (lostData == null) {
+        return;
+      }
+
+      if (lostData.type == RetrieveType.image) {
+        _handleFileUpload(lostData.file, MediaType.Image);
+      }
+      if (lostData.type == RetrieveType.video) {
+        _handleFileUpload(lostData.file, MediaType.Video);
+      }
+    });
   }
 
   @override
@@ -165,7 +181,7 @@ class _UploadScreenState extends State<UploadScreen> {
             Container(height: 20.0),
             Text(
               'multipart/form-data uploads',
-              style: Theme.of(context).textTheme.subhead,
+              style: Theme.of(context).textTheme.subtitle1,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -184,7 +200,7 @@ class _UploadScreenState extends State<UploadScreen> {
             Container(height: 20.0),
             Text(
               'binary uploads',
-              style: Theme.of(context).textTheme.subhead,
+              style: Theme.of(context).textTheme.subtitle1,
             ),
             Text('this will upload selected files as binary'),
             Row(
@@ -226,105 +242,75 @@ class _UploadScreenState extends State<UploadScreen> {
     );
   }
 
-  String _uploadUrl({bool binary}) {
-    if (binary) {
-      return uploadBinaryURL;
-    } else {
-      return uploadURL;
-    }
-  }
-
   Future getImage({@required bool binary}) async {
-    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('binary', binary);
+
+    var image = await imagePicker.getImage(source: ImageSource.gallery);
+
     if (image != null) {
-      final String filename = basename(image.path);
-      final String savedDir = dirname(image.path);
-      final tag = "image upload ${_tasks.length + 1}";
-      var url = _uploadUrl(binary: binary);
-      var fileItem = FileItem(
-        filename: filename,
-        savedDir: savedDir,
-        fieldname: "file",
-      );
-
-      var taskId = binary
-          ? await uploader.enqueueBinary(
-              url: url,
-              file: fileItem,
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            )
-          : await uploader.enqueue(
-              url: url,
-              data: {"name": "john"},
-              files: [fileItem],
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            );
-
-      setState(() {
-        _tasks.putIfAbsent(
-            tag,
-            () => UploadItem(
-                  id: taskId,
-                  tag: tag,
-                  path: image.path,
-                  type: MediaType.Video,
-                  status: UploadTaskStatus.enqueued,
-                ));
-      });
+      _handleFileUpload(image, MediaType.Image);
     }
   }
 
   Future getVideo({@required bool binary}) async {
-    var video = await ImagePicker.pickVideo(source: ImageSource.gallery);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('binary', binary);
+
+    var video = await imagePicker.getVideo(source: ImageSource.gallery);
+
     if (video != null) {
-      final String savedDir = dirname(video.path);
-      final String filename = basename(video.path);
-      final tag = "video upload ${_tasks.length + 1}";
-      final url = _uploadUrl(binary: binary);
-
-      var fileItem = FileItem(
-        filename: filename,
-        savedDir: savedDir,
-        fieldname: "file",
-      );
-
-      var taskId = binary
-          ? await uploader.enqueueBinary(
-              url: url,
-              file: fileItem,
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            )
-          : await uploader.enqueue(
-              url: url,
-              data: {"name": "john"},
-              files: [fileItem],
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            );
-
-      setState(() {
-        _tasks.putIfAbsent(
-            tag,
-            () => UploadItem(
-                  id: taskId,
-                  tag: tag,
-                  path: video.path,
-                  type: MediaType.Video,
-                  status: UploadTaskStatus.enqueued,
-                ));
-      });
+      _handleFileUpload(video, MediaType.Video);
     }
   }
 
   Future cancelUpload(String id) async {
     await uploader.cancel(taskId: id);
+  }
+
+  void _handleFileUpload(PickedFile file, MediaType mediaType) async {
+    final prefs = await SharedPreferences.getInstance();
+    final binary = prefs.getBool('binary') ?? false;
+
+    final String filename = basename(file.path);
+    final String savedDir = dirname(file.path);
+    final tag = "image upload ${_tasks.length + 1}";
+
+    var url = binary ? uploadBinaryURL : uploadURL;
+    var fileItem = FileItem(
+      filename: filename,
+      savedDir: savedDir,
+      fieldname: "file",
+    );
+
+    var taskId = binary
+        ? await uploader.enqueueBinary(
+            url: url,
+            file: fileItem,
+            method: UploadMethod.POST,
+            tag: tag,
+            showNotification: true,
+          )
+        : await uploader.enqueue(
+            url: url,
+            data: {"name": "john"},
+            files: [fileItem],
+            method: UploadMethod.POST,
+            tag: tag,
+            showNotification: true,
+          );
+
+    setState(() {
+      _tasks.putIfAbsent(
+          tag,
+          () => UploadItem(
+                id: taskId,
+                tag: tag,
+                path: file.path,
+                type: mediaType,
+                status: UploadTaskStatus.enqueued,
+              ));
+    });
   }
 }
 
