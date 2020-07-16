@@ -11,7 +11,7 @@ part of flutter_uploader;
 /// * [filens] list of files to upload
 /// * [data] additional data to be sent together with file
 ///
-class UploadTask {
+class UploadTask extends Equatable {
   final String taskId;
   final UploadTaskStatus status;
   final int progress;
@@ -32,6 +32,17 @@ class UploadTask {
       files != null ? files.reduce((x, s) => s == null ? x : "$s, $x") : "na";
 
   @override
-  String toString() =>
-      "UploadTask(taskId: $taskId, status: $status, progress:$progress, url:$url, filenames:${_files()}, data:${data != null ? json.encode(data) : "na"}";
+  bool get stringify => true;
+
+  @override
+  List<Object> get props {
+    return [
+      taskId,
+      status,
+      progress,
+      url,
+      files,
+      data,
+    ];
+  }
 }

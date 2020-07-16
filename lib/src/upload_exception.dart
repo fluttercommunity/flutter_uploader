@@ -1,6 +1,6 @@
 part of flutter_uploader;
 
-class UploadException implements Exception {
+class UploadException extends Equatable implements Exception {
   final String taskId;
   final int statusCode;
   final UploadTaskStatus status;
@@ -9,15 +9,26 @@ class UploadException implements Exception {
   final String code;
 
   UploadException({
-    this.code,
-    this.message,
     this.taskId,
     this.statusCode,
     this.status,
     this.tag,
+    this.message,
+    this.code,
   });
 
   @override
-  String toString() =>
-      "taskId: $taskId, status:$status, statusCode:$statusCode, code:$code, message:$message}, tag:$tag";
+  bool get stringify => true;
+
+  @override
+  List<Object> get props {
+    return [
+      taskId,
+      statusCode,
+      status,
+      tag,
+      message,
+      code,
+    ];
+  }
 }
