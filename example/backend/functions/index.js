@@ -7,6 +7,7 @@ const functions = require("firebase-functions");
 const cors = require("cors");
 const Busboy = require("busboy");
 const md5File = require('md5-file');
+const crypto = require("crypto");
 
 const formUploadHandler = (req, res) => {
   const uploads = [];
@@ -34,18 +35,31 @@ const formUploadHandler = (req, res) => {
       fieldname: fieldname,
       filename: filename,
       mimetype: mimetype,
-      encoding: encoding
+      encoding: encoding,
     });
     console.log(`Saving '${fieldname}' to ${filepath}`);
     file.pipe(fs.createWriteStream(filepath));
   });
+
+  const fields = {};
+
+
+
   busboy.on("field", (fieldname, val, fieldnameTruncated, valTruncated) => {
     console.log("Field [" + fieldname + "]: value: " + val);
+    fields[fieldname] = val;
   });
   busboy.on("finish", () => {
     res.status(200).json({
       message: "Successfully uploaded",
-      uploads: uploads,
+      request: {
+        uploads: uploads,
+        fields: fields,
+        headers: req.headers,
+        method: req.method,
+        // Simple random data added to each request to test for issue https://github.com/BlueChilli/flutter_uploader/issues/53.
+        random: crypto.randomBytes(10240).toString('hex'),
+      }
     });
     res.end();
   });
