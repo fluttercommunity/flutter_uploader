@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.UnknownHostException;
@@ -35,6 +36,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class UploadWorker extends Worker implements CountProgressListener {
   public static final String ARG_URL = "url";
@@ -53,6 +55,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
   public static final String EXTRA_ERROR_CODE = "errorCode";
   public static final String EXTRA_ERROR_DETAILS = "errorDetails";
   public static final String EXTRA_RESPONSE = "response";
+  public static final String EXTRA_RESPONSE_FILE = "response_file";
   public static final String EXTRA_ID = "id";
   public static final String EXTRA_HEADERS = "headers";
   private static final String TAG = UploadWorker.class.getSimpleName();
@@ -227,7 +230,6 @@ public class UploadWorker extends Worker implements CountProgressListener {
 
       call = client.newCall(request);
       Response response = call.execute();
-      String responseString = response.body().string();
       statusCode = response.code();
       Headers rheaders = response.headers();
       Map<String, String> outputHeaders = new HashMap<>();
@@ -236,32 +238,34 @@ public class UploadWorker extends Worker implements CountProgressListener {
 
       String responseContentType = rheaders.get("content-type");
 
-      if (responseContentType != null && responseContentType.contains("json")) {
-        hasJsonResponse = true;
-      } else {
-        hasJsonResponse = false;
-      }
+      ResponseBody body = response.body();
+
+      hasJsonResponse =
+          responseContentType != null && responseContentType.contains("json") && body != null;
 
       for (String name : rheaders.names()) {
-        outputHeaders.put(name, rheaders.get(name));
+        String value = rheaders.get(name);
+        if (value != null) {
+          outputHeaders.put(name, value);
+        } else {
+          outputHeaders.put(name, "");
+        }
       }
 
       String responseHeaders = gson.toJson(outputHeaders);
-
-      Log.d(TAG, "Response: " + responseString);
-      Log.d(TAG, "Response header: " + responseHeaders);
+      String responseString = "";
+      if (body != null) {
+        responseString = body.string();
+      }
 
       if (!response.isSuccessful()) {
         if (showNotification) {
           updateNotification(context, tag, UploadStatus.FAILED, 0, null);
         }
+
         return Result.failure(
             createOutputErrorData(
-                UploadStatus.FAILED,
-                statusCode,
-                "upload_error",
-                hasJsonResponse ? responseString : null,
-                null));
+                UploadStatus.FAILED, statusCode, "upload_error", responseString, null));
       }
 
       Data.Builder builder =
@@ -275,7 +279,27 @@ public class UploadWorker extends Worker implements CountProgressListener {
         builder.putString(EXTRA_RESPONSE, responseString);
       }
 
-      Data outputData = builder.build();
+      Data outputData;
+      try {
+        outputData = builder.build();
+      } catch (IllegalStateException e) {
+        if (responseString.isEmpty()) {
+          // Managed to break it with an empty string.
+          throw e;
+        }
+
+        Log.d(
+            TAG,
+            "IllegalStateException while building a outputData object. Replace response with on-disk reference.");
+        builder.putString(EXTRA_RESPONSE, null);
+
+        File responseFile = writeResponseToTemporaryFile(context, responseString);
+        if(responseFile != null) {
+          builder.putString(EXTRA_RESPONSE_FILE, responseFile.getAbsolutePath());
+        }
+
+        outputData = builder.build();
+      }
 
       if (showNotification) {
         updateNotification(context, tag, UploadStatus.COMPLETE, 0, null);
@@ -296,9 +320,28 @@ public class UploadWorker extends Worker implements CountProgressListener {
     }
   }
 
-  private Result handleException(Context context, Exception ex, String code) {
+  private File writeResponseToTemporaryFile(Context context, String body) {
+    FileOutputStream fos = null;
+    try {
+      File tempFile = File.createTempFile("flutter_uploader", null, context.getCacheDir());
+      fos = new FileOutputStream(tempFile);
+      fos.write(body.getBytes());
+      fos.close();
+      return tempFile;
+    } catch (Throwable e) {
+      if (fos != null) {
+        try {
+          fos.close();
+        } catch (Throwable ignored) {
+        }
+      }
+    }
 
-    ex.printStackTrace();
+    return null;
+  }
+
+  private Result handleException(Context context, Exception ex, String code) {
+    Log.e(TAG, "exception encountered", ex);
 
     int finalStatus = isCancelled ? UploadStatus.CANCELED : UploadStatus.FAILED;
     String finalCode = isCancelled ? "upload_cancelled" : code;
