@@ -1,8 +1,8 @@
 code_style_task:
   container:
     dockerfile: .ci/Dockerfile
-    cpu: 8
-    memory: 16G
+    cpu: 1
+    memory: 2G
 #  upgrade_script:
 #    - flutter channel master
 #    - flutter upgrade
@@ -41,21 +41,23 @@ backend_task:
   test_script: cd example/backend/functions && npm run-script lint
 
 connected_check_task:
-  skip: true
   name: Flutter driver test on Android
   only_if: $CIRRUS_BRANCH == "master" || CIRRUS_PR != ""
   env:
-    API_LEVEL: 28
+    API_LEVEL: 29
     TARGET: default
     ARCH: x86_64
   container:
     dockerfile: .ci/Dockerfile
-    cpu: 3
-    memory: 4G
+    cpu: 4
+    memory: 8G
+    kvm: true
   create_device_script:
     - echo no | avdmanager create avd --force --name "api-${API_LEVEL}" --abi "${TARGET}/${ARCH}" --package "system-images;android-${API_LEVEL};${TARGET};${ARCH}"
   start_emulator_background_script:
-    - $ANDROID_HOME/emulator/emulator -avd "api-${API_LEVEL}" -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+    - sudo chown cirrus:cirrus /dev/kvm
+    - $ANDROID_HOME/emulator/emulator -avd "api-${API_LEVEL}" -no-window -gpu off -no-snapshot -noaudio -no-boot-anim -camera-back none -show-kernel -verbose -debug all
+    # - $ANDROID_HOME/emulator/emulator -avd "api-${API_LEVEL}" -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -show-kernel -verbose -debug all
   wait_for_emulator_script:
     - adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 3; done; input keyevent 82'
   disable_animations_script:
@@ -63,7 +65,9 @@ connected_check_task:
     - adb shell settings put global transition_animation_scale 0.0
     - adb shell settings put global animator_duration_scale 0.0
   run_instrumented_tests_script:
+    - adb devices
     - cd example
+    - flutter build apk --debug
     - flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
 
 ios_task:
