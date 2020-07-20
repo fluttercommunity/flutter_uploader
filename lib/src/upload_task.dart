@@ -28,9 +28,6 @@ class UploadTask extends Equatable {
     this.data,
   });
 
-  String _files() =>
-      files != null ? files.reduce((x, s) => s == null ? x : "$s, $x") : "na";
-
   @override
   bool get stringify => true;
 
