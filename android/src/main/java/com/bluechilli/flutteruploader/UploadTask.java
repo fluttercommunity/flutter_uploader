@@ -12,7 +12,6 @@ public class UploadTask {
   private Map<String, String> _data;
   private List<FileItem> _files;
   private int _requestTimeoutInSeconds;
-  private boolean _showNotification;
   private boolean _binaryUpload;
   private String _tag;
   private int _id;
@@ -25,7 +24,6 @@ public class UploadTask {
       Map<String, String> headers,
       Map<String, String> data,
       int requestTimeoutInSeconds,
-      boolean showNotification,
       boolean binaryUpload,
       String tag) {
     _id = id;
@@ -35,7 +33,6 @@ public class UploadTask {
     _headers = headers;
     _data = data;
     _requestTimeoutInSeconds = requestTimeoutInSeconds;
-    _showNotification = showNotification;
     _binaryUpload = binaryUpload;
     _tag = tag;
   }
@@ -66,10 +63,6 @@ public class UploadTask {
 
   public int getTimeout() {
     return _requestTimeoutInSeconds;
-  }
-
-  public boolean canShowNotification() {
-    return _showNotification;
   }
 
   public boolean isBinaryUpload() {

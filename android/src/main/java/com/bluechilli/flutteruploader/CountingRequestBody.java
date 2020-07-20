@@ -58,7 +58,7 @@ public class CountingRequestBody extends RequestBody {
     }
   }
 
-  protected class CountingSink extends ForwardingSink {
+  protected static class CountingSink extends ForwardingSink {
     private long _bytesWritten;
     private final CountingRequestBody _parent;
 
@@ -75,7 +75,6 @@ public class CountingRequestBody extends RequestBody {
         _bytesWritten += byteCount;
 
         if (_parent != null) {
-
           _parent.sendProgress(_bytesWritten, _parent.contentLength());
         }
       } catch (IOException ex) {

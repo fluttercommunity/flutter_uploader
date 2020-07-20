@@ -10,6 +10,7 @@ dependencies:
   path_provider: ^1.6.11
   image_picker: ^0.6.7+4
   shared_preferences: ^0.5.8
+  flutter_local_notifications: ^1.4.4+2
 
 dev_dependencies:
   e2e: ^0.6.1

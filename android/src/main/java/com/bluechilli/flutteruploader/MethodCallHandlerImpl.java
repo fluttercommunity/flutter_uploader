@@ -12,7 +12,6 @@ import androidx.work.Data;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
-import androidx.work.WorkInfo.State;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 import com.bluechilli.flutteruploader.plugin.StatusListener;
@@ -29,7 +28,6 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -45,8 +43,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
   @NonNull private final StatusListener statusListener;
 
-  private Map<String, Boolean> completedTasks = new HashMap<>();
-  private Map<String, String> tasks = new HashMap<>();
   private Gson gson = new Gson();
   private int taskIdKey = 0;
 
@@ -75,60 +71,52 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
       for (WorkInfo info : workInfoList) {
         String id = info.getId().toString();
-        final String tag = plugin.tasks.get(id);
 
-        if (info.getState() == State.RUNNING) {
-          Data progress = info.getProgress();
-          Log.d(TAG, "progress update: " + progress.toString());
-          Log.d(TAG, "progress update tag: " + info.getTags());
-          plugin.statusListener.onUpdateProgress(
-              null,
-              info.getId().toString(),
-              progress.getInt("status", -1),
-              progress.getInt("progress", -1));
-        }
-
-        if (!plugin.completedTasks.containsKey(id)) {
-          if (info.getState().isFinished()) {
-            plugin.completedTasks.put(id, true);
-            Data outputData = info.getOutputData();
-
-            switch (info.getState()) {
-              case FAILED:
-                int failedStatus =
-                    outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.FAILED);
-                int statusCode = outputData.getInt(UploadWorker.EXTRA_STATUS_CODE, 500);
-                String code = outputData.getString(UploadWorker.EXTRA_ERROR_CODE);
-                String errorMessage = outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
-                String[] details = outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
-
-                plugin.statusListener.onFailed(
-                    tag, id, failedStatus, statusCode, code, errorMessage, details);
-                break;
-              case CANCELLED:
-                plugin.statusListener.onFailed(
-                    tag,
-                    id,
-                    UploadStatus.CANCELED,
-                    500,
-                    "flutter_upload_cancelled",
-                    "upload has been cancelled",
-                    null);
-                break;
-              case SUCCEEDED:
-                int status = outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.COMPLETE);
-                Map<String, String> headers = null;
-                Type type = new TypeToken<Map<String, String>>() {}.getType();
-                String headerJson = outputData.getString(UploadWorker.EXTRA_HEADERS);
-                if (headerJson != null) {
-                  headers = plugin.gson.fromJson(headerJson, type);
-                }
-
-                String response = extractResponse(outputData);
-                plugin.statusListener.onCompleted(tag, id, status, response, headers);
-                break;
+        switch (info.getState()) {
+          case RUNNING:
+            {
+              Data progress = info.getProgress();
+              Log.d(TAG, "progress update: " + progress.toString());
+              Log.d(TAG, "progress update tag: " + info.getTags());
+              plugin.statusListener.onUpdateProgress(
+                  info.getId().toString(),
+                  progress.getInt("status", -1),
+                  progress.getInt("progress", -1));
             }
-          }
+            break;
+          case FAILED:
+            {
+              final Data outputData = info.getOutputData();
+              int failedStatus = outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.FAILED);
+              int statusCode = outputData.getInt(UploadWorker.EXTRA_STATUS_CODE, 500);
+              String code = outputData.getString(UploadWorker.EXTRA_ERROR_CODE);
+              String errorMessage = outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
+              String[] details = outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
+
+              plugin.statusListener.onFailed(
+                  id, failedStatus, statusCode, code, errorMessage, details);
+            }
+            break;
+          case CANCELLED:
+            plugin.statusListener.onFailed(
+                id, UploadStatus.CANCELED, 500, "flutter_upload_cancelled", null, null);
+            break;
+          case SUCCEEDED:
+            {
+              final Data outputData = info.getOutputData();
+              int status = outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.COMPLETE);
+              int statusCode = outputData.getInt(UploadWorker.EXTRA_STATUS_CODE, 500);
+              Map<String, String> headers = null;
+              Type type = new TypeToken<Map<String, String>>() {}.getType();
+              String headerJson = outputData.getString(UploadWorker.EXTRA_HEADERS);
+              if (headerJson != null) {
+                headers = plugin.gson.fromJson(headerJson, type);
+              }
+
+              String response = extractResponse(outputData);
+              plugin.statusListener.onCompleted(id, status, statusCode, response, headers);
+            }
+            break;
         }
       }
     }
@@ -177,6 +165,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       case "cancelAll":
         cancelAll(call, result);
         break;
+      case "clearUploads":
+        clearUploads(call, result);
+        break;
       default:
         result.notImplemented();
         break;
@@ -212,15 +203,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     List<Map<String, String>> files = call.argument("files");
     Map<String, String> parameters = call.argument("data");
     Map<String, String> headers = call.argument("headers");
-    Boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
 
     if (method == null) {
       method = "POST";
-    }
-
-    if (showNotification == null) {
-      showNotification = false;
     }
 
     if (tag == null || files == null || files.isEmpty()) {
@@ -244,23 +230,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     WorkRequest request =
         buildRequest(
             new UploadTask(
-                taskIdKey,
-                url,
-                method,
-                items,
-                headers,
-                parameters,
-                connectionTimeout,
-                showNotification,
-                false,
-                tag));
+                taskIdKey, url, method, items, headers, parameters, connectionTimeout, false, tag));
     WorkManager.getInstance(context).enqueue(request);
     String taskId = request.getId().toString();
-    if (!tasks.containsKey(taskId)) {
-      tasks.put(taskId, tag);
-    }
     result.success(taskId);
-    statusListener.onUpdateProgress(tag, taskId, UploadStatus.ENQUEUED, 0);
+    statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
   }
 
   private void enqueueBinary(MethodCall call, MethodChannel.Result result) {
@@ -268,15 +242,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     String method = call.argument("method");
     Map<String, String> files = call.argument("file");
     Map<String, String> headers = call.argument("headers");
-    Boolean showNotification = call.argument("show_notification");
     String tag = call.argument("tag");
 
     if (method == null) {
       method = "POST";
-    }
-
-    if (showNotification == null) {
-      showNotification = false;
     }
 
     if (tag == null || files == null || files.isEmpty()) {
@@ -301,18 +270,13 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 headers,
                 Collections.emptyMap(),
                 connectionTimeout,
-                showNotification,
                 true,
                 tag));
     WorkManager.getInstance(context).enqueue(request);
     String taskId = request.getId().toString();
 
-    if (!tasks.containsKey(taskId)) {
-      tasks.put(taskId, tag);
-    }
-
     result.success(taskId);
-    statusListener.onUpdateProgress(tag, taskId, UploadStatus.ENQUEUED, 0);
+    statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
   }
 
   private void cancel(MethodCall call, MethodChannel.Result result) {
@@ -326,6 +290,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     result.success(null);
   }
 
+  private void clearUploads(MethodCall call, MethodChannel.Result result) {
+    WorkManager.getInstance(context).pruneWork();
+    result.success(null);
+  }
+
   private WorkRequest buildRequest(UploadTask task) {
     Gson gson = new Gson();
 
@@ -334,7 +303,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
             .putString(UploadWorker.ARG_URL, task.getURL())
             .putString(UploadWorker.ARG_METHOD, task.getMethod())
             .putInt(UploadWorker.ARG_REQUEST_TIMEOUT, task.getTimeout())
-            .putBoolean(UploadWorker.ARG_SHOW_NOTIFICATION, task.canShowNotification())
             .putBoolean(UploadWorker.ARG_BINARY_UPLOAD, task.isBinaryUpload())
             .putString(UploadWorker.ARG_UPLOAD_REQUEST_TAG, task.getTag())
             .putInt(UploadWorker.ARG_ID, task.getId());

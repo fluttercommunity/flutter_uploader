@@ -4,10 +4,9 @@ import androidx.annotation.Nullable;
 import java.util.Map;
 
 public interface StatusListener {
-  void onUpdateProgress(String tag, String id, int status, int progress);
+  void onUpdateProgress(String id, int status, int progress);
 
   void onFailed(
-      String tag,
       String id,
       int status,
       int statusCode,
@@ -16,5 +15,9 @@ public interface StatusListener {
       @Nullable String[] details);
 
   void onCompleted(
-      String tag, String id, int status, String response, @Nullable Map<String, String> headers);
+      String id,
+      int status,
+      int statusCode,
+      String response,
+      @Nullable Map<String, String> headers);
 }

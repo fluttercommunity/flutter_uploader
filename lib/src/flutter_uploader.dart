@@ -40,48 +40,60 @@ class FlutterUploader {
   /// stream to listen on upload progress
   ///
   Stream<UploadTaskProgress> get progress {
-    return _progressChannel.receiveBroadcastStream().map((map) {
-      String id = map['task_id'];
-      int status = map['status'];
-      int uploadProgress = map['progress'];
-      String tag = map['tag'];
-      return UploadTaskProgress(
-          id, uploadProgress, UploadTaskStatus.from(status), tag);
-    });
+    return _progressChannel
+        .receiveBroadcastStream()
+        .map<Map<String, dynamic>>((event) => Map<String, dynamic>.from(event))
+        .transform(StreamTransformer<Map<String, dynamic>,
+            UploadTaskProgress>.fromHandlers(
+      handleData:
+          (Map<String, dynamic> map, EventSink<UploadTaskProgress> sink) {
+        String id = map['task_id'];
+        int status = map['status'];
+        int uploadProgress = map['progress'];
+        final t = UploadTaskProgress(
+            id, uploadProgress, UploadTaskStatus.from(status));
+
+        sink.add(t);
+      },
+    ));
   }
 
   ///
   /// stream to listen on upload result
   ///
   Stream<UploadTaskResponse> get result {
-    return _resultChannel.receiveBroadcastStream().transform(
-          StreamTransformer<dynamic, UploadTaskResponse>.fromHandlers(
-            handleData: (dynamic value, EventSink<UploadTaskResponse> sink) {
+    return _resultChannel
+        .receiveBroadcastStream()
+        .map<Map<String, dynamic>>((event) => Map<String, dynamic>.from(event))
+        .transform(
+          StreamTransformer<Map<String, dynamic>,
+              UploadTaskResponse>.fromHandlers(
+            handleData: (Map<String, dynamic> value,
+                EventSink<UploadTaskResponse> sink) {
               String id = value['task_id'];
               String message = value['message'];
               String code = value['code'];
               int status = value["status"];
               int statusCode = value["statusCode"];
-              String tag = value["tag"];
+              Map<String, dynamic> headers = value['headers'] != null
+                  ? Map<String, dynamic>.from(value['headers'])
+                  : {};
 
-              dynamic details = value['details'];
-              StackTrace stackTrace;
-
-              if (details != null && details.length > 0) {
-                stackTrace =
-                    StackTrace.fromString(details.reduce((s, r) => "$r\n$s"));
-              }
-
-              return UploadTaskResponse(
+              final r = UploadTaskResponse(
                 taskId: id,
                 status: UploadTaskStatus.from(status),
                 statusCode: statusCode,
-                headers: {},
+                headers: headers,
                 response: message,
-                tag: tag,
               );
+
+              sink.add(r);
             },
-            handleError: (error, stackTrace, sink) {},
+            handleError: (error, stackTrace, sink) {
+              print('error: $error, stack: $stackTrace');
+
+              sink.addError(error, stackTrace);
+            },
           ),
         );
   }
@@ -99,7 +111,6 @@ class FlutterUploader {
   /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
   /// * `headers`: HTTP headers
   /// * `data`: additional data to be uploaded together with file
-  /// * `showNotification`: sets `true` to show a notification displaying
   /// upload progress and success or failure of upload task (Android only), otherwise will disable
   /// this feature. The default value is `false`
   /// * `tag`: name of the upload request (only used on Android)
@@ -113,7 +124,6 @@ class FlutterUploader {
     UploadMethod method = UploadMethod.POST,
     Map<String, String> headers,
     Map<String, String> data,
-    bool showNotification = false,
     String tag,
   }) async {
     assert(method != null);
@@ -128,7 +138,6 @@ class FlutterUploader {
       'files': f,
       'headers': headers,
       'data': data,
-      'show_notification': showNotification,
       'tag': tag
     });
   }
@@ -141,7 +150,6 @@ class FlutterUploader {
   /// * `file`: single file to upload
   /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
   /// * `headers`: HTTP headers
-  /// * `showNotification`: sets `true` to show a notification displaying
   /// upload progress and success or failure of upload task (Android only), otherwise will disable
   /// this feature. The default value is `false`
   /// * `tag`: name of the upload request (only used on Android)
@@ -154,7 +162,6 @@ class FlutterUploader {
     @required FileItem file,
     UploadMethod method = UploadMethod.POST,
     Map<String, String> headers,
-    bool showNotification = false,
     String tag,
   }) async {
     assert(method != null);
@@ -164,7 +171,6 @@ class FlutterUploader {
       'method': describeEnum(method),
       'file': file.toJson(),
       'headers': headers,
-      'show_notification': showNotification,
       'tag': tag
     });
   }
@@ -185,5 +191,14 @@ class FlutterUploader {
   ///
   Future<void> cancelAll() async {
     await _platform.invokeMethod<void>('cancelAll');
+  }
+
+  /// Clears all previously downloaded files from the database.
+  /// Normally, the uploader, through it's various platform implementations,
+  /// will keep a list of successfully uploaded files (or failed uploads).
+  ///
+  /// Be careful, clearing this list will clear this list and you won't have access to it anymore.
+  Future<void> clearUploads() async {
+    await _platform.invokeMethod<void>('clearUploads');
   }
 }

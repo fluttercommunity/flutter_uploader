@@ -16,26 +16,14 @@ void main() {
     final uploader = FlutterUploader();
     const url = 'https://us-central1-flutteruploader.cloudfunctions.net/upload';
 
-    final String filename = p.basename(file.path);
-    final String savedDir = p.dirname(file.path);
-    final tag = "image upload e2e";
-    
-    var fileItem = FileItem(
-      filename: filename,
-      savedDir: savedDir,
-      fieldname: "file",
-    );
+    var fileItem = FileItem(path: file.path, field: "file");
 
-    final identifier = await uploader.enqueue(
-      url: url,
-      files: [fileItem],
-      tag: tag,
-    );
+    final taskId = await uploader.enqueue(url: url, files: [fileItem]);
 
-    expect(identifier, isNotNull);
+    expect(taskId, isNotNull);
 
     final res =
-        await uploader.result.firstWhere((element) => element.tag == tag);
+        await uploader.result.firstWhere((element) => element.taskId == taskId);
     expect(res.response, '{"message":"Successfully uploaded"}');
   });
 }

@@ -18,9 +18,9 @@ const formUploadHandler = (req, res) => {
     });
   }
 
-  const simulate = req.query.simulate ?? 'ok200';
-  
-  const busboy = new Busboy({ headers: req.headers });
+  const simulate = req.query.simulate !== null ? req.query.simulate : 'ok200';
+
+  const busboy = new Busboy({ headers: req.headers, highWaterMark: 2 * 1024 });
 
   busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
     console.log("File [" + fieldname + "]: filename: " + filename);
@@ -45,14 +45,14 @@ const formUploadHandler = (req, res) => {
 
   const fields = {};
 
-
-
   busboy.on("field", (fieldname, val, fieldnameTruncated, valTruncated) => {
     console.log("Field [" + fieldname + "]: value: " + val);
     fields[fieldname] = val;
   });
   busboy.on("finish", () => {
-    res.status(200).json({
+    const statusCode = statusCodeForSimulation(simulate);
+
+    res.status(statusCode).json({
       message: "Successfully uploaded",
       request: {
         uploads: uploads,
@@ -84,6 +84,8 @@ const binaryUploadHandler = async (req, res) => {
     });
   }
 
+  const simulate = req.query.simulate !== null ? req.query.simulate : 'ok200';
+
   const filename = [...Array(10)].map(i => (~~(Math.random() * 36)).toString(36)).join('');
   const filepath = path.join(os.tmpdir(), filename);
 
@@ -95,12 +97,34 @@ const binaryUploadHandler = async (req, res) => {
   const stats = fs.statSync(filepath);
   const fileSizeInBytes = stats.size;
 
-  return res.status(200).json({
+  fs.unlinkSync(filepath);
+
+  const statusCode = statusCodeForSimulation(simulate);
+
+  return res.status(statusCode).json({
     message: "Successfully uploaded",
     length: fileSizeInBytes,
     md5: md5hash,
   }).end();
 };
+
+function statusCodeForSimulation(simulation) {
+  switch (simulation) {
+    case 'ok200':
+      return 200;
+    case 'ok201':
+      return 201;
+    case 'error401':
+      return 401;
+    case 'error403':
+      return 403;
+    case 'error500':
+      return 500;
+    default:
+      console.error('Unknown simulation, returning 500');
+      return 500;
+  }
+}
 
 function writeToFile(filePath, rawBody) {
   return new Promise((resolve, reject) => {
@@ -115,11 +139,12 @@ function writeToFile(filePath, rawBody) {
 const app = express();
 app.use(cors({ origin: true }));
 app.use(compression());
+
 app.post("/", formUploadHandler);
 app.put("/", formUploadHandler);
 app.patch("/", formUploadHandler);
 
-app.post("/binary", binaryUploadHandler);
+app.post("/binary", binaryUploadHandler,);
 app.put("/binary", binaryUploadHandler);
 app.patch("/binary", binaryUploadHandler);
 

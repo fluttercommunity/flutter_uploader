@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** FlutterUploaderPlugin */
@@ -29,9 +30,11 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
   private EventChannel progressEventChannel;
   @Nullable private EventSink progressEventSink;
+  List<Map<String, Object>> cachedProgress = new ArrayList<>();
 
   private EventChannel resultEventChannel;
   @Nullable private EventSink resultEventSink;
+  List<Map<String, Object>> cachedResults = new ArrayList<>();
 
   public static void registerWith(Registrar registrar) {
     final FlutterUploaderPlugin plugin = new FlutterUploaderPlugin();
@@ -62,6 +65,12 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
           @Override
           public void onListen(Object arguments, EventSink events) {
             progressEventSink = events;
+            if (!cachedProgress.isEmpty()) {
+              for (Map<String, Object> item : cachedProgress) {
+                events.success(item);
+              }
+              cachedProgress.clear();
+            }
           }
 
           @Override
@@ -76,6 +85,12 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
           @Override
           public void onListen(Object arguments, EventSink events) {
             resultEventSink = events;
+            if (!cachedResults.isEmpty()) {
+              for (Map<String, Object> item : cachedResults) {
+                events.success(item);
+              }
+              cachedResults.clear();
+            }
           }
 
           @Override
@@ -100,21 +115,21 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
   }
 
   @Override
-  public void onUpdateProgress(String tag, String id, int status, int progress) {
+  public void onUpdateProgress(String id, int status, int progress) {
     final Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
     args.put("status", status);
     args.put("progress", progress);
-    args.put("tag", tag);
 
     if (progressEventSink != null) {
       progressEventSink.success(args);
+    } else {
+      cachedProgress.add(args);
     }
   }
 
   @Override
   public void onFailed(
-      String tag,
       String id,
       int status,
       int statusCode,
@@ -129,27 +144,29 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     args.put("message", message);
     args.put(
         "details",
-        details != null ? new ArrayList<>(Arrays.asList(details)) : Collections.emptyList());
-    args.put("tag", tag);
+        details != null ? new ArrayList<>(Arrays.asList(details)) : Collections.<String>emptyList());
 
     if (resultEventSink != null) {
       resultEventSink.success(args);
+    } else {
+      cachedResults.add(args);
     }
   }
 
   @Override
   public void onCompleted(
-      String tag, String id, int status, String response, @Nullable Map<String, String> headers) {
+      String id, int status, int statusCode, String response, @Nullable Map<String, String> headers) {
     Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
     args.put("status", status);
-    args.put("statusCode", 200);
+    args.put("statusCode", statusCode);
     args.put("message", response);
-    args.put("headers", headers != null ? headers : Collections.emptyMap());
-    args.put("tag", tag);
+    args.put("headers", headers != null ? headers : Collections.<String, Object>emptyMap());
 
     if (resultEventSink != null) {
       resultEventSink.success(args);
+    } else {
+      cachedResults.add(args);
     }
   }
 }
