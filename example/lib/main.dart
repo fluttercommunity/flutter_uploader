@@ -1,16 +1,18 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const String title = "FileUpload Sample app";
 const String uploadURL =
     "https://us-central1-flutteruploader.cloudfunctions.net/upload";
-
-const String uploadBinaryURL =
-    "https://us-central1-flutteruploader.cloudfunctions.net/upload/binary";
 
 void main() => runApp(App());
 
@@ -38,24 +40,40 @@ class _AppState extends State<App> {
 class UploadItem {
   final String id;
   final String tag;
+  final String path;
   final MediaType type;
+  final String remoteHash;
+  final int remoteSize;
   final int progress;
   final UploadTaskStatus status;
 
   UploadItem({
     this.id,
     this.tag,
+    this.path,
     this.type,
+    this.remoteHash,
+    this.remoteSize,
     this.progress = 0,
     this.status = UploadTaskStatus.undefined,
   });
 
-  UploadItem copyWith({UploadTaskStatus status, int progress}) => UploadItem(
-      id: this.id,
-      tag: this.tag,
-      type: this.type,
-      status: status ?? this.status,
-      progress: progress ?? this.progress);
+  UploadItem copyWith({
+    UploadTaskStatus status,
+    int progress,
+    String remoteHash,
+    int remoteSize,
+  }) =>
+      UploadItem(
+        id: this.id,
+        tag: this.tag,
+        path: this.path,
+        type: this.type,
+        status: status ?? this.status,
+        progress: progress ?? this.progress,
+        remoteHash: remoteHash ?? this.remoteHash,
+        remoteSize: remoteSize ?? this.remoteSize,
+      );
 
   bool isCompleted() =>
       this.status == UploadTaskStatus.canceled ||
@@ -73,6 +91,7 @@ class UploadScreen extends StatefulWidget {
 }
 
 class _UploadScreenState extends State<UploadScreen> {
+  ImagePicker imagePicker = ImagePicker();
   FlutterUploader uploader = FlutterUploader();
   StreamSubscription _progressSubscription;
   StreamSubscription _resultSubscription;
@@ -81,6 +100,7 @@ class _UploadScreenState extends State<UploadScreen> {
   @override
   void initState() {
     super.initState();
+
     _progressSubscription = uploader.progress.listen((progress) {
       final task = _tasks[progress.tag];
       print("progress: ${progress.progress} , tag: ${progress.tag}");
@@ -90,16 +110,26 @@ class _UploadScreenState extends State<UploadScreen> {
         _tasks[progress.tag] =
             task.copyWith(progress: progress.progress, status: progress.status);
       });
+    }, onError: (ex, stacktrace) {
+      print("exception: $ex");
+      print("stacktrace: $stacktrace" ?? "no stacktrace");
     });
     _resultSubscription = uploader.result.listen((result) {
       print(
           "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}, tag: ${result.tag}, headers: ${result.headers}");
 
       final task = _tasks[result.tag];
+
       if (task == null) return;
 
+      final responseJson = jsonDecode(result.response);
+
       setState(() {
-        _tasks[result.tag] = task.copyWith(status: result.status);
+        _tasks[result.tag] = task.copyWith(
+          status: result.status,
+          remoteHash: responseJson['md5'],
+          remoteSize: responseJson['length'],
+        );
       });
     }, onError: (ex, stacktrace) {
       print("exception: $ex");
@@ -111,6 +141,19 @@ class _UploadScreenState extends State<UploadScreen> {
       setState(() {
         _tasks[exp.tag] = task.copyWith(status: exp.status);
       });
+    });
+
+    imagePicker.getLostData().then((lostData) {
+      if (lostData == null) {
+        return;
+      }
+
+      if (lostData.type == RetrieveType.image) {
+        _handleFileUpload(lostData.file, MediaType.Image);
+      }
+      if (lostData.type == RetrieveType.video) {
+        _handleFileUpload(lostData.file, MediaType.Video);
+      }
     });
   }
 
@@ -135,7 +178,7 @@ class _UploadScreenState extends State<UploadScreen> {
             Container(height: 20.0),
             Text(
               'multipart/form-data uploads',
-              style: Theme.of(context).textTheme.subhead,
+              style: Theme.of(context).textTheme.subtitle1,
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -154,7 +197,7 @@ class _UploadScreenState extends State<UploadScreen> {
             Container(height: 20.0),
             Text(
               'binary uploads',
-              style: Theme.of(context).textTheme.subhead,
+              style: Theme.of(context).textTheme.subtitle1,
             ),
             Text('this will upload selected files as binary'),
             Row(
@@ -196,103 +239,75 @@ class _UploadScreenState extends State<UploadScreen> {
     );
   }
 
-  String _uploadUrl({bool binary}) {
-    if (binary) {
-      return uploadBinaryURL;
-    } else {
-      return uploadURL;
-    }
-  }
-
   Future getImage({@required bool binary}) async {
-    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('binary', binary);
+
+    var image = await imagePicker.getImage(source: ImageSource.gallery);
+
     if (image != null) {
-      final String filename = basename(image.path);
-      final String savedDir = dirname(image.path);
-      final tag = "image upload ${_tasks.length + 1}";
-      var url = _uploadUrl(binary: binary);
-      var fileItem = FileItem(
-        filename: filename,
-        savedDir: savedDir,
-        fieldname: "file",
-      );
-
-      var taskId = binary
-          ? await uploader.enqueueBinary(
-              url: url,
-              file: fileItem,
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            )
-          : await uploader.enqueue(
-              url: url,
-              data: {"name": "john"},
-              files: [fileItem],
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            );
-
-      setState(() {
-        _tasks.putIfAbsent(
-            tag,
-            () => UploadItem(
-                  id: taskId,
-                  tag: tag,
-                  type: MediaType.Video,
-                  status: UploadTaskStatus.enqueued,
-                ));
-      });
+      _handleFileUpload(image, MediaType.Image);
     }
   }
 
   Future getVideo({@required bool binary}) async {
-    var video = await ImagePicker.pickVideo(source: ImageSource.gallery);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('binary', binary);
+
+    var video = await imagePicker.getVideo(source: ImageSource.gallery);
+
     if (video != null) {
-      final String savedDir = dirname(video.path);
-      final String filename = basename(video.path);
-      final tag = "video upload ${_tasks.length + 1}";
-      final url = _uploadUrl(binary: binary);
-
-      var fileItem = FileItem(
-        filename: filename,
-        savedDir: savedDir,
-        fieldname: "file",
-      );
-
-      var taskId = binary
-          ? await uploader.enqueueBinary(
-              url: url,
-              file: fileItem,
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            )
-          : await uploader.enqueue(
-              url: url,
-              data: {"name": "john"},
-              files: [fileItem],
-              method: UploadMethod.POST,
-              tag: tag,
-              showNotification: true,
-            );
-
-      setState(() {
-        _tasks.putIfAbsent(
-            tag,
-            () => UploadItem(
-                  id: taskId,
-                  tag: tag,
-                  type: MediaType.Video,
-                  status: UploadTaskStatus.enqueued,
-                ));
-      });
+      _handleFileUpload(video, MediaType.Video);
     }
   }
 
   Future cancelUpload(String id) async {
     await uploader.cancel(taskId: id);
+  }
+
+  void _handleFileUpload(PickedFile file, MediaType mediaType) async {
+    final prefs = await SharedPreferences.getInstance();
+    final binary = prefs.getBool('binary') ?? false;
+
+    final String filename = basename(file.path);
+    final String savedDir = dirname(file.path);
+    final tag = "image upload ${_tasks.length + 1}";
+
+    final url = uploadURL + (binary ? '/binary' : '');
+    var fileItem = FileItem(
+      filename: filename,
+      savedDir: savedDir,
+      fieldname: "file",
+    );
+
+    var taskId = binary
+        ? await uploader.enqueueBinary(
+            url: url,
+            file: fileItem,
+            method: UploadMethod.POST,
+            tag: tag,
+            showNotification: true,
+          )
+        : await uploader.enqueue(
+            url: url,
+            data: {"name": "john"},
+            files: [fileItem],
+            method: UploadMethod.POST,
+            tag: tag,
+            showNotification: true,
+          );
+
+    setState(() {
+      _tasks.putIfAbsent(
+          tag,
+          () => UploadItem(
+                id: taskId,
+                tag: tag,
+                path: file.path,
+                type: mediaType,
+                status: UploadTaskStatus.enqueued,
+              ));
+    });
   }
 }
 
@@ -335,6 +350,18 @@ class UploadItemView extends StatelessWidget {
                 height: 5.0,
               ),
               Text(item.status.description),
+              if (item.status == UploadTaskStatus.complete &&
+                  item.remoteHash != null)
+                Builder(builder: (context) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _compareMd5(item.path, item.remoteHash),
+                      _compareSize(item.path, item.remoteSize),
+                    ],
+                  );
+                }),
               Container(
                 height: 5.0,
               ),
@@ -345,5 +372,35 @@ class UploadItemView extends StatelessWidget {
         buttonWidget
       ],
     );
+  }
+
+  Text _compareMd5(String localPath, String remoteHash) {
+    var digest = md5.convert(File(localPath).readAsBytesSync());
+    if (digest.toString().toLowerCase() == remoteHash) {
+      return Text(
+        'Hash $digest √',
+        style: TextStyle(color: Colors.green),
+      );
+    } else {
+      return Text(
+        'Hash $digest vs $remoteHash ƒ',
+        style: TextStyle(color: Colors.red),
+      );
+    }
+  }
+
+  Text _compareSize(String localPath, int remoteSize) {
+    final length = File(localPath).lengthSync();
+    if (length == remoteSize) {
+      return Text(
+        'Length $length √',
+        style: TextStyle(color: Colors.green),
+      );
+    } else {
+      return Text(
+        'Length $length vs $remoteSize ƒ',
+        style: TextStyle(color: Colors.red),
+      );
+    }
   }
 }

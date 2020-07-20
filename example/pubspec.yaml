@@ -3,16 +3,16 @@ version: 1.2.0
 description: Demonstrates how to use the flutter_uploader plugin.
 publish_to: "none"
 
-environment:
-  sdk: ">=2.1.0 <3.0.0"
-
 dependencies:
+  crypto: ^2.1.4
   flutter:
     sdk: flutter
-  path_provider: ^1.4.0
-  image_picker: ^0.6.1+8
+  path_provider: ^1.6.11
+  image_picker: ^0.6.7+4
+  shared_preferences: ^0.5.8
 
 dev_dependencies:
+  e2e: ^0.6.1
   flutter_test:
     sdk: flutter
 
