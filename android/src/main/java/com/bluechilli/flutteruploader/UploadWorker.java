@@ -10,14 +10,24 @@ import android.util.Log;
 import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.concurrent.futures.CallbackToFutureAdapter;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Data;
-import androidx.work.Worker;
+import androidx.work.ListenableWorker;
 import androidx.work.WorkerParameters;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
+import io.flutter.embedding.engine.FlutterEngine;
+import io.flutter.embedding.engine.dart.DartExecutor;
+import io.flutter.plugin.common.MethodCall;
+import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
+import io.flutter.view.FlutterCallbackInformation;
+import io.flutter.view.FlutterMain;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -27,6 +37,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Headers;
@@ -38,7 +50,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class UploadWorker extends Worker implements CountProgressListener {
+public class UploadWorker extends ListenableWorker
+    implements CountProgressListener, MethodCallHandler {
   public static final String ARG_URL = "url";
   public static final String ARG_METHOD = "method";
   public static final String ARG_HEADERS = "headers";
@@ -73,14 +86,52 @@ public class UploadWorker extends Worker implements CountProgressListener {
   private Call call;
   private boolean isCancelled = false;
 
+  private Context context;
+
   public UploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
+
+    this.context = context;
   }
+
+  @Nullable private static FlutterEngine engine;
+
+  @Nullable private MethodChannel backgroundChannel;
+
+  private static final String BACKGROUND_CHANNEL_NAME =
+      "com.bluechilli.flutteruploader/background_channel_uploader";
+  private static final String BACKGROUND_CHANNEL_INITIALIZED = "backgroundChannelInitialized";
+
+  private Executor backgroundExecutor = Executors.newSingleThreadExecutor();
 
   @NonNull
   @Override
-  public Result doWork() {
-    Context context = getApplicationContext();
+  public ListenableFuture<Result> startWork() {
+    startEngine();
+
+    return CallbackToFutureAdapter.getFuture(
+        completer -> {
+          backgroundExecutor.execute(
+              () -> {
+                try {
+                  final Result result = doWorkInternal();
+                  completer.set(result);
+                } catch (Throwable e) {
+                  completer.setException(e);
+                } finally {
+                  // Do not destroy the engine at this very moment.
+                  // Keep it running in the background for just a little while.
+//                  stopEngine();
+                }
+              });
+
+          return getId().toString();
+        });
+  }
+
+  @NonNull
+  public Result doWorkInternal() {
+
     String url = getInputData().getString(ARG_URL);
     String method = getInputData().getString(ARG_METHOD);
     int timeout = getInputData().getInt(ARG_REQUEST_TIMEOUT, 3600);
@@ -97,7 +148,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
     }
 
     int statusCode = 200;
-    Resources res = getApplicationContext().getResources();
+    Resources res = context.getResources();
     msgStarted = res.getString(R.string.flutter_uploader_notification_started);
     msgInProgress = res.getString(R.string.flutter_uploader_notification_in_progress);
     msgCanceled = res.getString(R.string.flutter_uploader_notification_canceled);
@@ -217,7 +268,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
           break;
       }
 
-      buildNotification(getApplicationContext());
+      buildNotification(context);
 
       Log.d(TAG, "Start uploading for " + tag);
 
@@ -336,6 +387,50 @@ public class UploadWorker extends Worker implements CountProgressListener {
         }
       }
     }
+  }
+
+  private void startEngine() {
+    long callbackHandle = SharedPreferenceHelper.getCallbackHandle(context);
+
+    Log.d(TAG, "callbackHandle: " + callbackHandle);
+
+    if (callbackHandle != -1L && engine == null) {
+      engine = new FlutterEngine(context);
+      FlutterMain.ensureInitializationComplete(context, null);
+
+      FlutterCallbackInformation callbackInfo =
+          FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
+      String dartBundlePath = FlutterMain.findAppBundlePath();
+
+      engine
+          .getDartExecutor()
+          .executeDartCallback(
+              new DartExecutor.DartCallback(context.getAssets(), dartBundlePath, callbackInfo));
+
+      backgroundChannel = new MethodChannel(engine.getDartExecutor(), BACKGROUND_CHANNEL_NAME);
+      backgroundChannel.setMethodCallHandler(this);
+    }
+  }
+
+  private void stopEngine() {
+    Log.d(TAG, "Destroying worker engine.");
+
+    if (backgroundChannel != null) {
+      backgroundChannel.setMethodCallHandler(null);
+      backgroundChannel = null;
+    }
+
+    if (engine != null) {
+      try {
+        engine.destroy();
+      } catch (Throwable e) {
+        Log.e(TAG, "Can not destroy engine", e);
+      }
+      engine = null;
+    }
+  }
+
+  private Result handleException(Context context, Exception ex, String code) {
 
     return null;
   }
@@ -395,8 +490,8 @@ public class UploadWorker extends Worker implements CountProgressListener {
   }
 
   private void sendUpdateProcessEvent(Context context, int status, int progress) {
-    UploadProgressReporter.getInstance()
-        .notifyProgress(new UploadProgress(getId().toString(), status, progress));
+    setProgressAsync(
+        new Data.Builder().putInt("status", status).putInt("progress", progress).build());
   }
 
   private Data createOutputErrorData(
@@ -428,8 +523,6 @@ public class UploadWorker extends Worker implements CountProgressListener {
             + ", lastProgress: "
             + lastProgress);
     if (running) {
-
-      Context context = getApplicationContext();
       sendUpdateProcessEvent(context, UploadStatus.RUNNING, progress);
       boolean shouldSendNotification = isRunning(progress, lastNotificationProgress, 10);
       if (showNotification && shouldSendNotification) {
@@ -465,7 +558,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
             + code
             + ", error: "
             + message);
-    sendUpdateProcessEvent(getApplicationContext(), UploadStatus.FAILED, -1);
+    sendUpdateProcessEvent(context, UploadStatus.FAILED, -1);
   }
 
   private void buildNotification(Context context) {
@@ -547,5 +640,10 @@ public class UploadWorker extends Worker implements CountProgressListener {
     }
 
     return output.toArray(new String[0]);
+  }
+
+  @Override
+  public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+    // To be considered - if we actually need a background engine, for anything.
   }
 }

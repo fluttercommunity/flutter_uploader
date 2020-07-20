@@ -5,14 +5,30 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
+import 'package:flutter_uploader_example/server_behavior.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:meta/meta.dart';
 import 'package:path/path.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String title = "FileUpload Sample app";
-const String uploadURL =
-    "https://us-central1-flutteruploader.cloudfunctions.net/upload";
+final Uri uploadURL =
+    // Uri.parse("https://us-central1-flutteruploader.cloudfunctions.net/upload");
+    Uri.parse(
+        "http://192.168.1.148:5000/flutteruploadertest/us-central1/upload");
+
+FlutterUploader _uploader = FlutterUploader();
+
+void backgroundHandler() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Notice this uploader instance belongs to a forked isolate.
+  FlutterUploader uploader = FlutterUploader();
+
+  uploader.progress.listen((progress) {
+    print("In ISOLATE: progress: ${progress.progress} , tag: ${progress.tag}");
+  });
+}
 
 void main() => runApp(App());
 
@@ -25,6 +41,13 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  @override
+  void initState() {
+    super.initState();
+
+    _uploader.setBackgroundHandler(backgroundHandler);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -92,16 +115,17 @@ class UploadScreen extends StatefulWidget {
 
 class _UploadScreenState extends State<UploadScreen> {
   ImagePicker imagePicker = ImagePicker();
-  FlutterUploader uploader = FlutterUploader();
   StreamSubscription _progressSubscription;
   StreamSubscription _resultSubscription;
   Map<String, UploadItem> _tasks = {};
+
+  ServerBehavior _serverBehavior = ServerBehavior.defaultOk200;
 
   @override
   void initState() {
     super.initState();
 
-    _progressSubscription = uploader.progress.listen((progress) {
+    _progressSubscription = _uploader.progress.listen((progress) {
       final task = _tasks[progress.tag];
       print("progress: ${progress.progress} , tag: ${progress.tag}");
       if (task == null) return;
@@ -114,7 +138,7 @@ class _UploadScreenState extends State<UploadScreen> {
       print("exception: $ex");
       print("stacktrace: $stacktrace" ?? "no stacktrace");
     });
-    _resultSubscription = uploader.result.listen((result) {
+    _resultSubscription = _uploader.result.listen((result) {
       print(
           "id: ${result.taskId}, status: ${result.status}, response: ${result.response}, statusCode: ${result.statusCode}, tag: ${result.tag}, headers: ${result.headers}");
 
@@ -144,6 +168,7 @@ class _UploadScreenState extends State<UploadScreen> {
     });
 
     imagePicker.getLostData().then((lostData) {
+      print('have lost data!');
       if (lostData == null) {
         return;
       }
@@ -176,6 +201,19 @@ class _UploadScreenState extends State<UploadScreen> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             Container(height: 20.0),
+            Text(
+              'Configure test Server Behavior',
+              style: Theme.of(context).textTheme.subtitle1,
+            ),
+            DropdownButton<ServerBehavior>(
+              items: ServerBehavior.all.map((e) {
+                return DropdownMenuItem(child: Text('${e.title}'), value: e);
+              }).toList(),
+              onChanged: (newBehavior) {
+                setState(() => _serverBehavior = newBehavior);
+              },
+              value: _serverBehavior,
+            ),
             Text(
               'multipart/form-data uploads',
               style: Theme.of(context).textTheme.subtitle1,
@@ -262,7 +300,7 @@ class _UploadScreenState extends State<UploadScreen> {
   }
 
   Future cancelUpload(String id) async {
-    await uploader.cancel(taskId: id);
+    await _uploader.cancel(taskId: id);
   }
 
   void _handleFileUpload(PickedFile file, MediaType mediaType) async {
@@ -273,23 +311,32 @@ class _UploadScreenState extends State<UploadScreen> {
     final String savedDir = dirname(file.path);
     final tag = "image upload ${_tasks.length + 1}";
 
-    final url = uploadURL + (binary ? '/binary' : '');
+    Uri url = binary
+        ? uploadURL.replace(path: uploadURL.path + '/binary')
+        : uploadURL;
+
+    url = url.replace(queryParameters: {
+      'simulate': _serverBehavior.name,
+    });
+
     var fileItem = FileItem(
       filename: filename,
       savedDir: savedDir,
       fieldname: "file",
     );
 
+    print('URL: $url');
+
     var taskId = binary
-        ? await uploader.enqueueBinary(
-            url: url,
+        ? await _uploader.enqueueBinary(
+            url: url.toString(),
             file: fileItem,
             method: UploadMethod.POST,
             tag: tag,
             showNotification: true,
           )
-        : await uploader.enqueue(
-            url: url,
+        : await _uploader.enqueue(
+            url: url.toString(),
             data: {"name": "john"},
             files: [fileItem],
             method: UploadMethod.POST,

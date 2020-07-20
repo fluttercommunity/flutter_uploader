@@ -18,6 +18,8 @@ const formUploadHandler = (req, res) => {
     });
   }
 
+  const simulate = req.query.simulate ?? 'ok200';
+  
   const busboy = new Busboy({ headers: req.headers });
 
   busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {

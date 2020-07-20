@@ -2,35 +2,92 @@ part of flutter_uploader;
 
 class FlutterUploader {
   final MethodChannel _platform;
-  final StreamController<UploadTaskProgress> _progressController =
-      StreamController<UploadTaskProgress>.broadcast();
-  final StreamController<UploadTaskResponse> _responseController =
-      StreamController<UploadTaskResponse>.broadcast();
+  final EventChannel _progressChannel;
+  final EventChannel _resultChannel;
 
-  factory FlutterUploader() => _instance;
+  static FlutterUploader _instance;
 
-  @visibleForTesting
-  FlutterUploader.private(MethodChannel channel) : _platform = channel {
-    _platform.setMethodCallHandler(_handleMethod);
+  factory FlutterUploader() {
+    return _instance ??= FlutterUploader.private(
+      const MethodChannel('flutter_uploader'),
+      const EventChannel('flutter_uploader/events/progress'),
+      const EventChannel('flutter_uploader/events/result'),
+    );
   }
 
-  static final FlutterUploader _instance =
-      FlutterUploader.private(const MethodChannel('flutter_uploader'));
+  @visibleForTesting
+  FlutterUploader.private(
+    MethodChannel channel,
+    EventChannel progressChannel,
+    EventChannel resultChannel,
+  )   : _platform = channel,
+        _progressChannel = progressChannel,
+        _resultChannel = resultChannel;
+
+  /// This call is required to receive background notifications.
+  /// [callbackDispatcher] is a top level function which will be invoked by Android
+  Future<void> setBackgroundHandler(final Function callbackDispatcher) async {
+    final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
+    assert(callback != null,
+        "The callbackDispatcher needs to be either a static function or a top level function to be accessible as a Flutter entry point.");
+    final int handle = callback.toRawHandle();
+    await _platform.invokeMethod<void>('setBackgroundHandler', {
+      'callbackHandle': handle,
+    });
+  }
 
   ///
   /// stream to listen on upload progress
   ///
-  Stream<UploadTaskProgress> get progress => _progressController.stream;
+  Stream<UploadTaskProgress> get progress {
+    return _progressChannel.receiveBroadcastStream().map((map) {
+      String id = map['task_id'];
+      int status = map['status'];
+      int uploadProgress = map['progress'];
+      String tag = map['tag'];
+      return UploadTaskProgress(
+          id, uploadProgress, UploadTaskStatus.from(status), tag);
+    });
+  }
 
   ///
   /// stream to listen on upload result
   ///
-  Stream<UploadTaskResponse> get result => _responseController.stream;
+  Stream<UploadTaskResponse> get result {
+    return _resultChannel.receiveBroadcastStream().transform(
+          StreamTransformer<dynamic, UploadTaskResponse>.fromHandlers(
+            handleData: (dynamic value, EventSink<UploadTaskResponse> sink) {
+              String id = value['task_id'];
+              String message = value['message'];
+              String code = value['code'];
+              int status = value["status"];
+              int statusCode = value["statusCode"];
+              String tag = value["tag"];
+
+              dynamic details = value['details'];
+              StackTrace stackTrace;
+
+              if (details != null && details.length > 0) {
+                stackTrace =
+                    StackTrace.fromString(details.reduce((s, r) => "$r\n$s"));
+              }
+
+              return UploadTaskResponse(
+                taskId: id,
+                status: UploadTaskStatus.from(status),
+                statusCode: statusCode,
+                headers: {},
+                response: message,
+                tag: tag,
+              );
+            },
+            handleError: (error, stackTrace, sink) {},
+          ),
+        );
+  }
 
   void dispose() {
     _platform.setMethodCallHandler(null);
-    _progressController?.close();
-    _responseController?.close();
   }
 
   /// Create a new multipart/form-data upload task
@@ -65,23 +122,15 @@ class FlutterUploader {
         ? files.map((f) => f.toJson()).toList()
         : [];
 
-    try {
-      return await _platform.invokeMethod<String>('enqueue', {
-        'url': url,
-        'method': describeEnum(method),
-        'files': f,
-        'headers': headers,
-        'data': data,
-        'show_notification': showNotification,
-        'tag': tag
-      });
-    } on PlatformException catch (e, stackTrace) {
-      _responseController?.sink?.addError(
-        _toUploadException(e, tag: tag),
-        stackTrace,
-      );
-      return null;
-    }
+    return await _platform.invokeMethod<String>('enqueue', {
+      'url': url,
+      'method': describeEnum(method),
+      'files': f,
+      'headers': headers,
+      'data': data,
+      'show_notification': showNotification,
+      'tag': tag
+    });
   }
 
   /// Create a new binary data upload task
@@ -110,22 +159,14 @@ class FlutterUploader {
   }) async {
     assert(method != null);
 
-    try {
-      return await _platform.invokeMethod<String>('enqueueBinary', {
-        'url': url,
-        'method': describeEnum(method),
-        'file': file.toJson(),
-        'headers': headers,
-        'show_notification': showNotification,
-        'tag': tag
-      });
-    } on PlatformException catch (e, stackTrace) {
-      _responseController?.sink?.addError(
-        _toUploadException(e, tag: tag),
-        stackTrace,
-      );
-      return null;
-    }
+    return await _platform.invokeMethod<String>('enqueueBinary', {
+      'url': url,
+      'method': describeEnum(method),
+      'file': file.toJson(),
+      'headers': headers,
+      'show_notification': showNotification,
+      'tag': tag
+    });
   }
 
   ///
@@ -136,111 +177,13 @@ class FlutterUploader {
   /// * `taskId`: unique identifier of the upload task
   ///
   Future<void> cancel({@required String taskId}) async {
-    try {
-      await _platform.invokeMethod('cancel', {'task_id': taskId});
-    } on PlatformException catch (e, stackTrace) {
-      print(e.message);
-      _responseController?.sink?.addError(
-        _toUploadException(
-          e,
-          taskId: taskId,
-        ),
-        stackTrace,
-      );
-    }
+    await _platform.invokeMethod<void>('cancel', {'task_id': taskId});
   }
 
   ///
   /// Cancel all enqueued and running upload tasks
   ///
   Future<void> cancelAll() async {
-    try {
-      await _platform.invokeMethod('cancelAll');
-    } on PlatformException catch (e, strackTrace) {
-      print(e.message);
-      _responseController?.sink?.addError(
-          _toUploadException(
-            e,
-          ),
-          strackTrace);
-    }
+    await _platform.invokeMethod<void>('cancelAll');
   }
-
-  Future<Null> _handleMethod(MethodCall call) async {
-    switch (call.method) {
-      case "updateProgress":
-        String id = call.arguments['task_id'];
-        int status = call.arguments['status'];
-        int uploadProgress = call.arguments['progress'];
-        String tag = call.arguments["tag"];
-
-        _progressController?.sink?.add(UploadTaskProgress(
-            id, uploadProgress, UploadTaskStatus.from(status), tag));
-
-        break;
-      case "uploadFailed":
-        String id = call.arguments['task_id'];
-        String message = call.arguments['message'];
-        String code = call.arguments['code'];
-        int status = call.arguments["status"];
-        int statusCode = call.arguments["statusCode"];
-        String tag = call.arguments["tag"];
-
-        dynamic details = call.arguments['details'];
-        StackTrace stackTrace;
-
-        if (details != null && details.length > 0) {
-          stackTrace =
-              StackTrace.fromString(details.reduce((s, r) => "$r\n$s"));
-        }
-
-        _responseController?.sink?.addError(
-          UploadException(
-            code: code,
-            message: message,
-            taskId: id,
-            statusCode: statusCode,
-            status: UploadTaskStatus.from(status),
-            tag: tag,
-          ),
-          stackTrace,
-        );
-        break;
-      case "uploadCompleted":
-        String id = call.arguments['task_id'];
-        Map headers = call.arguments["headers"];
-        String message = call.arguments["message"];
-        int status = call.arguments["status"];
-        int statusCode = call.arguments["statusCode"];
-        String tag = call.arguments["tag"];
-        Map<String, String> h = headers?.map(
-            (key, value) => MapEntry<String, String>(key, value as String));
-
-        _responseController?.sink?.add(UploadTaskResponse(
-          taskId: id,
-          status: UploadTaskStatus.from(status),
-          statusCode: statusCode,
-          headers: h,
-          response: message,
-          tag: tag,
-        ));
-        break;
-      default:
-        throw UnsupportedError("Unrecognized JSON message");
-    }
-  }
-
-  UploadException _toUploadException(
-    PlatformException ex, {
-    String taskId,
-    String tag,
-  }) =>
-      UploadException(
-        code: ex.code,
-        message: ex.message,
-        taskId: taskId,
-        statusCode: 500,
-        status: UploadTaskStatus.failed,
-        tag: tag,
-      );
 }

@@ -2,6 +2,7 @@ package com.bluechilli.flutteruploader;
 
 import android.content.Context;
 import android.text.TextUtils;
+import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
@@ -11,6 +12,7 @@ import androidx.work.Data;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkInfo;
+import androidx.work.WorkInfo.State;
 import androidx.work.WorkManager;
 import androidx.work.WorkRequest;
 import com.bluechilli.flutteruploader.plugin.StatusListener;
@@ -56,36 +58,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     this.statusListener = listener;
   }
 
-  static class UploadProgressObserver implements Observer<UploadProgress> {
-
+  static class UploadObserver implements Observer<List<WorkInfo>> {
     private final WeakReference<MethodCallHandlerImpl> plugin;
 
-    UploadProgressObserver(MethodCallHandlerImpl plugin) {
-      this.plugin = new WeakReference<>(plugin);
-    }
-
-    @Override
-    public void onChanged(UploadProgress uploadProgress) {
-      MethodCallHandlerImpl plugin = this.plugin.get();
-
-      if (plugin == null) {
-        return;
-      }
-
-      String id = uploadProgress.getTaskId();
-      int progress = uploadProgress.getProgress();
-      int status = uploadProgress.getStatus();
-
-      plugin.statusListener.onUpdateProgress(plugin.tasks.get(id), id, status, progress);
-    }
-  }
-
-  @Nullable private UploadProgressObserver uploadProgressObserver;
-
-  static class UploadCompletedObserver implements Observer<List<WorkInfo>> {
-    private final WeakReference<MethodCallHandlerImpl> plugin;
-
-    UploadCompletedObserver(MethodCallHandlerImpl plugin) {
+    UploadObserver(MethodCallHandlerImpl plugin) {
       this.plugin = new WeakReference<>(plugin);
     }
 
@@ -100,6 +76,17 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       for (WorkInfo info : workInfoList) {
         String id = info.getId().toString();
         final String tag = plugin.tasks.get(id);
+
+        if (info.getState() == State.RUNNING) {
+          Data progress = info.getProgress();
+          Log.d(TAG, "progress update: " + progress.toString());
+          Log.d(TAG, "progress update tag: " + info.getTags());
+          plugin.statusListener.onUpdateProgress(
+              null,
+              info.getId().toString(),
+              progress.getInt("status", -1),
+              progress.getInt("progress", -1));
+        }
 
         if (!plugin.completedTasks.containsKey(id)) {
           if (info.getState().isFinished()) {
@@ -170,11 +157,14 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     }
   }
 
-  @Nullable private UploadCompletedObserver uploadCompletedObserver;
+  @Nullable private UploadObserver uploadObserver;
 
   @Override
   public void onMethodCall(MethodCall call, @NonNull Result result) {
     switch (call.method) {
+      case "setBackgroundHandler":
+        setBackgroundHandler(call, result);
+        break;
       case "enqueue":
         enqueue(call, result);
         break;
@@ -193,27 +183,26 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     }
   }
 
-  void startObservers() {
-    uploadProgressObserver = new UploadProgressObserver(this);
-    UploadProgressReporter.getInstance().observeForever(uploadProgressObserver);
+  void setBackgroundHandler(MethodCall call, MethodChannel.Result result) {
+    Long callbackHandle = call.argument("callbackHandle");
+    if (callbackHandle != null) {
+      SharedPreferenceHelper.saveCallbackDispatcherHandleKey(context, callbackHandle);
+    }
 
-    uploadCompletedObserver = new UploadCompletedObserver(this);
-    WorkManager.getInstance(context)
-        .getWorkInfosByTagLiveData(TAG)
-        .observeForever(uploadCompletedObserver);
+    result.success(null);
+  }
+
+  void startObservers() {
+    uploadObserver = new UploadObserver(this);
+    WorkManager.getInstance(context).getWorkInfosByTagLiveData(TAG).observeForever(uploadObserver);
   }
 
   void stopObservers() {
-    if (uploadProgressObserver != null) {
-      UploadProgressReporter.getInstance().removeObserver(uploadProgressObserver);
-      uploadProgressObserver = null;
-    }
-
-    if (uploadCompletedObserver != null) {
+    if (uploadObserver != null) {
       WorkManager.getInstance(context)
           .getWorkInfosByTagLiveData(TAG)
-          .removeObserver(uploadCompletedObserver);
-      uploadCompletedObserver = null;
+          .removeObserver(uploadObserver);
+      uploadObserver = null;
     }
   }
 
