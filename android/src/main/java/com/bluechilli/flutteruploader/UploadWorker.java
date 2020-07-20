@@ -16,9 +16,6 @@ import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.embedding.engine.dart.DartExecutor;
-import io.flutter.plugin.common.MethodCall;
-import io.flutter.plugin.common.MethodChannel;
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.view.FlutterCallbackInformation;
 import io.flutter.view.FlutterMain;
 import java.io.File;
@@ -44,8 +41,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class UploadWorker extends ListenableWorker
-    implements CountProgressListener, MethodCallHandler {
+public class UploadWorker extends ListenableWorker implements CountProgressListener {
   public static final String ARG_URL = "url";
   public static final String ARG_METHOD = "method";
   public static final String ARG_HEADERS = "headers";
@@ -81,12 +77,6 @@ public class UploadWorker extends ListenableWorker
   }
 
   @Nullable private static FlutterEngine engine;
-
-  @Nullable private MethodChannel backgroundChannel;
-
-  private static final String BACKGROUND_CHANNEL_NAME =
-      "com.bluechilli.flutteruploader/background_channel_uploader";
-  private static final String BACKGROUND_CHANNEL_INITIALIZED = "backgroundChannelInitialized";
 
   private Executor backgroundExecutor = Executors.newSingleThreadExecutor();
 
@@ -374,19 +364,11 @@ public class UploadWorker extends ListenableWorker
           .getDartExecutor()
           .executeDartCallback(
               new DartExecutor.DartCallback(context.getAssets(), dartBundlePath, callbackInfo));
-
-      backgroundChannel = new MethodChannel(engine.getDartExecutor(), BACKGROUND_CHANNEL_NAME);
-      backgroundChannel.setMethodCallHandler(this);
     }
   }
 
   private void stopEngine() {
     Log.d(TAG, "Destroying worker engine.");
-
-    if (backgroundChannel != null) {
-      backgroundChannel.setMethodCallHandler(null);
-      backgroundChannel = null;
-    }
 
     if (engine != null) {
       try {
@@ -530,10 +512,5 @@ public class UploadWorker extends ListenableWorker
     }
 
     return output.toArray(new String[0]);
-  }
-
-  @Override
-  public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
-    // To be considered - if we actually need a background engine, for anything.
   }
 }
