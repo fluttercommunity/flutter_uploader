@@ -1,9 +1,13 @@
 package com.bluechilli.flutteruploader;
 
+import static com.bluechilli.flutteruploader.MethodCallHandlerImpl.FLUTTER_UPLOAD_WORK_TAG;
+
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.work.WorkManager;
 import com.bluechilli.flutteruploader.plugin.StatusListener;
+import com.bluechilli.flutteruploader.plugin.UploadObserver;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
@@ -27,6 +31,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
   private MethodChannel channel;
   private MethodCallHandlerImpl methodCallHandler;
+  private UploadObserver uploadObserver;
 
   private EventChannel progressEventChannel;
   @Nullable private EventSink progressEventSink;
@@ -48,7 +53,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    stopListening();
+    stopListening(binding.getApplicationContext());
   }
 
   private void startListening(Context context, BinaryMessenger messenger) {
@@ -56,7 +61,12 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
     channel = new MethodChannel(messenger, CHANNEL_NAME);
     methodCallHandler = new MethodCallHandlerImpl(context, timeout, this);
-    methodCallHandler.startObservers();
+
+    uploadObserver = new UploadObserver(this);
+    WorkManager.getInstance(context)
+        .getWorkInfosByTagLiveData(FLUTTER_UPLOAD_WORK_TAG)
+        .observeForever(uploadObserver);
+
     channel.setMethodCallHandler(methodCallHandler);
 
     progressEventChannel = new EventChannel(messenger, PROGRESS_EVENT_CHANNEL_NAME);
@@ -100,11 +110,17 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
         });
   }
 
-  private void stopListening() {
+  private void stopListening(Context context) {
     channel.setMethodCallHandler(null);
     channel = null;
 
-    methodCallHandler.stopObservers();
+    if (uploadObserver != null) {
+      WorkManager.getInstance(context)
+          .getWorkInfosByTagLiveData(FLUTTER_UPLOAD_WORK_TAG)
+          .removeObserver(uploadObserver);
+      uploadObserver = null;
+    }
+
     methodCallHandler = null;
 
     progressEventChannel.setStreamHandler(null);
@@ -144,7 +160,9 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     args.put("message", message);
     args.put(
         "details",
-        details != null ? new ArrayList<>(Arrays.asList(details)) : Collections.<String>emptyList());
+        details != null
+            ? new ArrayList<>(Arrays.asList(details))
+            : Collections.<String>emptyList());
 
     if (resultEventSink != null) {
       resultEventSink.success(args);
@@ -155,7 +173,11 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
   @Override
   public void onCompleted(
-      String id, int status, int statusCode, String response, @Nullable Map<String, String> headers) {
+      String id,
+      int status,
+      int statusCode,
+      String response,
+      @Nullable Map<String, String> headers) {
     Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);
     args.put("status", status);
