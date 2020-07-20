@@ -294,7 +294,7 @@ public class UploadWorker extends Worker implements CountProgressListener {
         builder.putString(EXTRA_RESPONSE, null);
 
         File responseFile = writeResponseToTemporaryFile(context, responseString);
-        if(responseFile != null) {
+        if (responseFile != null) {
           builder.putString(EXTRA_RESPONSE_FILE, responseFile.getAbsolutePath());
         }
 
