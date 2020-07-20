@@ -44,6 +44,11 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
   public static void registerWith(Registrar registrar) {
     final FlutterUploaderPlugin plugin = new FlutterUploaderPlugin();
     plugin.startListening(registrar.context(), registrar.messenger());
+    registrar.addViewDestroyListener(
+        view -> {
+          plugin.stopListening(registrar.context());
+          return false;
+        });
   }
 
   @Override
