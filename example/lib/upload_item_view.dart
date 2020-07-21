@@ -53,8 +53,17 @@ class UploadItemView extends StatelessWidget {
               if (item.status == UploadTaskStatus.running)
                 LinearProgressIndicator(value: item.progress.toDouble() / 100),
               if (item.status == UploadTaskStatus.complete ||
-                  item.status == UploadTaskStatus.failed)
+                  item.status == UploadTaskStatus.failed) ...[
                 Text('HTTP status code: ${item.response.statusCode}'),
+                if (item.response.response.isNotEmpty)
+                  Text(
+                    item.response.response,
+                    style: Theme.of(context)
+                        .textTheme
+                        .caption
+                        .copyWith(fontFamily: 'monospace'),
+                  ),
+              ]
             ],
           ),
         ),

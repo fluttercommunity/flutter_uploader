@@ -12,6 +12,7 @@ class ServerBehavior {
 
   static List<ServerBehavior> all = [
     defaultOk200,
+    ServerBehavior._('OK - 200, add random data', 'ok200randomdata'),
     ServerBehavior._('OK - 201', 'ok201'),
     ServerBehavior._('Error - 401', 'error401'),
     ServerBehavior._('Error - 403', 'error403'),

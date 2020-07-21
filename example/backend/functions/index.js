@@ -51,26 +51,34 @@ const formUploadHandler = (req, res) => {
   });
   busboy.on("finish", () => {
     const statusCode = statusCodeForSimulation(simulate);
+    let response = {
+      uploads: uploads,
+      fields: fields,
+      headers: req.headers,
+      method: req.method,
+    };
 
-    res.status(statusCode).json({
-      message: "Successfully uploaded",
-      request: {
-        uploads: uploads,
-        fields: fields,
-        headers: req.headers,
-        method: req.method,
-        // Simple random data added to each request to test for issue https://github.com/BlueChilli/flutter_uploader/issues/53.
-        random: crypto.randomBytes(10240).toString('hex'),
-      }
-    });
-    res.end();
+    // Simple random data added to each request to test for issue https://github.com/BlueChilli/flutter_uploader/issues/53.
+    if (simulate === 'ok200randomdata') {
+      response.random = crypto.randomBytes(10240).toString('hex');
+    }
+
+    res
+      .status(statusCode)
+      .json({
+        message: "Successfully uploaded",
+        request: response
+      })
+      .end();
   });
   busboy.on("error", error => {
-    res.status(500).json({
-      errorMessage: error.toString(),
-      error: error
-    });
-    res.end();
+    res
+      .status(500)
+      .json({
+        errorMessage: error.toString(),
+        error: error
+      })
+      .end();
   });
   busboy.end(req.rawBody);
   return req.pipe(busboy);
@@ -111,6 +119,7 @@ const binaryUploadHandler = async (req, res) => {
 function statusCodeForSimulation(simulation) {
   switch (simulation) {
     case 'ok200':
+    case 'ok200randomdata':
       return 200;
     case 'ok201':
       return 201;
