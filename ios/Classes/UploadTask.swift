@@ -17,7 +17,7 @@ struct UploadTask {
     let progress: Int
     let tag: String?
 
-    init(taskId: String, status: UploadTaskStatus, progress: Int, tag: String?) {
+    init(taskId: String, status: UploadTaskStatus, progress: Int, tag: String? = nil) {
         self.taskId = taskId
         self.status = status
         self.progress = progress
