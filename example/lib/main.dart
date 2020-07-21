@@ -198,18 +198,20 @@ class _UploadScreenState extends State<UploadScreen> {
       });
     });
 
-    imagePicker.getLostData().then((lostData) {
-      if (lostData == null) {
-        return;
-      }
+    if (Platform.isAndroid) {
+      imagePicker.getLostData().then((lostData) {
+        if (lostData == null) {
+          return;
+        }
 
-      if (lostData.type == RetrieveType.image) {
-        _handleFileUpload(lostData.file, MediaType.Image);
-      }
-      if (lostData.type == RetrieveType.video) {
-        _handleFileUpload(lostData.file, MediaType.Video);
-      }
-    });
+        if (lostData.type == RetrieveType.image) {
+          _handleFileUpload(lostData.file, MediaType.Image);
+        }
+        if (lostData.type == RetrieveType.video) {
+          _handleFileUpload(lostData.file, MediaType.Video);
+        }
+      });
+    }
   }
 
   @override
