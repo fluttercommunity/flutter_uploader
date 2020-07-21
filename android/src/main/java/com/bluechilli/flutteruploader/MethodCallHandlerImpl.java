@@ -90,7 +90,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       method = "POST";
     }
 
-    if (tag == null || files == null || files.isEmpty()) {
+    if (files == null || files.isEmpty()) {
       result.error("invalid_call", "Invalid call parameters passed", null);
       return;
     }
