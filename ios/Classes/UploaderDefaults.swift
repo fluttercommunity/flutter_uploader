@@ -9,9 +9,9 @@ import Foundation
 
 class UploaderDefaults: NSObject {
     static let shared = UploaderDefaults()
-    
+
     private static let prefCallbackHandle = "flutter_uploader.callbackHandle"
-    
+
     var callbackHandle: Int? {
         set {
             if let value = newValue {
@@ -28,7 +28,7 @@ class UploaderDefaults: NSObject {
             }
         }
     }
-    
+
     private override init() {
     }
 }

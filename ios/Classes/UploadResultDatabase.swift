@@ -7,31 +7,31 @@
 
 import Foundation
 
-class UploadResultDatabase : UploaderDelegate {
+class UploadResultDatabase: UploaderDelegate {
     static let shared = UploadResultDatabase()
 
     private init() {
         if let plist = try? loadPropertyList(completedPListURL) {
             for c in plist {
-                if let map = c as? [String:Any] {
+                if let map = c as? [String: Any] {
                     self.completed.append(map)
                 }
             }
         }
-        
+
         if let plist = try? loadPropertyList(failedPListURL) {
             for c in plist {
-                if let map = c as? [String:Any] {
+                if let map = c as? [String: Any] {
                     self.failed.append(map)
                 }
             }
         }
     }
-    
+
     public func clear() {
         completed.removeAll()
         failed.removeAll()
-        
+
         do {
             try savePropertyList(completedPListURL, [])
             try savePropertyList(failedPListURL, [])
@@ -39,29 +39,29 @@ class UploadResultDatabase : UploaderDelegate {
             print("error write \(error)")
         }
     }
-    
-    var completed: [[String:Any]] = []
-    var failed: [[String:Any]] = []
-    
+
+    var completed: [[String: Any]] = []
+    var failed: [[String: Any]] = []
+
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
         // No need to store in-flight.
     }
-    
-    func uploadCompleted(taskId: String, message: String, statusCode: Int, headers: [String : Any]) {
+
+    func uploadCompleted(taskId: String, message: String, statusCode: Int, headers: [String: Any]) {
         completed.append([
             "taskId": taskId,
             "message": message,
             "statusCode": statusCode,
             "headers": headers
         ])
-        
+
         do {
             try savePropertyList(completedPListURL, completed)
         } catch {
             print("error write \(error)")
         }
     }
-    
+
     func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String, errorStackTrace: [String]) {
         failed.append([
             "taskId": taskId,
@@ -70,14 +70,14 @@ class UploadResultDatabase : UploaderDelegate {
             "message": errorMessage,
             "details": errorStackTrace
         ])
-        
+
         do {
             try savePropertyList(failedPListURL, failed)
         } catch {
             print("error write \(error)")
         }
     }
-    
+
     private func savePropertyList(_ plistURL: URL, _ plist: Any) throws {
         let plistData = try PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)
         try plistData.write(to: plistURL)
@@ -90,13 +90,13 @@ class UploadResultDatabase : UploaderDelegate {
         }
         return plist
     }
-    
-    private var completedPListURL : URL {
+
+    private var completedPListURL: URL {
         let documentDirectoryURL = try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         return documentDirectoryURL.appendingPathComponent("flutter_uploader-completed.plist")
     }
-    
-    private var failedPListURL : URL {
+
+    private var failedPListURL: URL {
         let documentDirectoryURL = try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
         return documentDirectoryURL.appendingPathComponent("flutter_uploader-failed.plist")
     }
