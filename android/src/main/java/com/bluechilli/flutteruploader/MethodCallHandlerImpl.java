@@ -1,6 +1,7 @@
 package com.bluechilli.flutteruploader;
 
 import android.content.Context;
+import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.Observer;
@@ -19,6 +20,8 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -129,18 +132,41 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 int status = outputData.getInt(UploadWorker.EXTRA_STATUS, UploadStatus.COMPLETE);
                 Map<String, String> headers = null;
                 Type type = new TypeToken<Map<String, String>>() {}.getType();
-                String headerJson = info.getOutputData().getString(UploadWorker.EXTRA_HEADERS);
+                String headerJson = outputData.getString(UploadWorker.EXTRA_HEADERS);
                 if (headerJson != null) {
                   headers = plugin.gson.fromJson(headerJson, type);
                 }
 
-                String response = info.getOutputData().getString(UploadWorker.EXTRA_RESPONSE);
+                String response = extractResponse(outputData);
                 plugin.statusListener.onCompleted(tag, id, status, response, headers);
                 break;
             }
           }
         }
       }
+    }
+
+    String extractResponse(Data outputData) {
+      String response = outputData.getString(UploadWorker.EXTRA_RESPONSE);
+      if (TextUtils.isEmpty(response)) {
+        String responseFile = outputData.getString(UploadWorker.EXTRA_RESPONSE_FILE);
+        if (!TextUtils.isEmpty(responseFile)) {
+          StringBuilder buffer = new StringBuilder();
+
+          try (BufferedReader br = new BufferedReader(new FileReader(responseFile))) {
+            String st;
+            while ((st = br.readLine()) != null) {
+              buffer.append(st);
+            }
+            response = buffer.toString();
+
+          } catch (Throwable ignored) {
+            response = "";
+          }
+        }
+      }
+
+      return response;
     }
   }
 
