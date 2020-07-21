@@ -6,7 +6,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     private static let channelName = "flutter_uploader";
     private static let progressEventChannelName = "flutter_uploader/events/progress";
     private static let resultEventChannelName = "flutter_uploader/events/result";
-
+    
     static let KEY_TASK_ID = "task_id"
     static let KEY_STATUS = "status"
     static let KEY_PROGRESS = "progress"
@@ -24,6 +24,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     
     let resultEventChannel: FlutterEventChannel
     let resultHandler: SimpleStreamHandler
+    
+    public static var registerPlugins: FlutterPluginRegistrantCallback?
     
     let taskQueue: DispatchQueue
 
@@ -59,6 +61,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         switch call.method {
         case "setBackgroundHandler":
             setBackgroundHandler(call, result)
+        case "clearUploads":
+            result(nil)
         case "enqueue":
             enqueueMethodCall(call, result)
         case "enqueueBinary":
@@ -73,6 +77,10 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     }
 
     private func setBackgroundHandler(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        if let args = call.arguments as? [String:Any] {
+            UploaderDefaults.shared.callbackHandle = args["callbackHandle"] as? Int
+        }
+        
         result(nil)
     }
 

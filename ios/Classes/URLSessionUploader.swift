@@ -43,18 +43,21 @@ class URLSessionUploader: NSObject {
         
         let uploadTask = session.uploadTask(with: request as URLRequest, fromFile: URL(fileURLWithPath: path))
         
-        uploadTask.taskDescription = "\(path)"
-        uploadTask.resume()
+        // Create a random UUID as task description (& ID).
+        uploadTask.taskDescription = UUID().uuidString
         
         let taskId = identifierForTask(uploadTask)
+
+        uploadTask.resume()
         self.runningTaskById[taskId] = UploadTask(taskId: taskId, status: .enqueue, progress: 0)
 
         return uploadTask
     }
     
-    /// Return a human-readable version instead of a simple number, for a given task.
+    ///
+    /// The description on URLSessionTask.taskIdentifier explains how the task is only unique within a session.
     public func identifierForTask(_ task: URLSessionUploadTask) -> String {
-        return  "\(self.session?.configuration.identifier ?? "chillisoure.flutter_uploader").\(task.taskIdentifier)"
+        return  "\(self.session?.configuration.identifier ?? "chillisoure.flutter_uploader").\(task.taskDescription!)"
     }
     
     /// Cancel a task by ID. Complete with `true`/`false` depending on whether the task was running.
@@ -95,6 +98,8 @@ class URLSessionUploader: NSObject {
     
     private override init() {
         super.init()
+        
+        self.delegates.append(EngineManager())
 
         self.queue.name = "chillisource.flutter_uploader.queue"
         
@@ -160,7 +165,7 @@ extension URLSessionUploader : URLSessionTaskDelegate {
             self.uploadedData[taskId] = udata
         }
     }
-    
+        
     public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
         NSLog("URLSessionDidBecomeInvalidWithError:")
     }

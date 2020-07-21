@@ -8,6 +8,10 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 
 ## iOS integration
 
+### Configure plugin registrant callback
+
+The plugin supports 
+
 ### Note: This is written in swift when you create the flutter project use -i swift option
 
 - Enable background mode.

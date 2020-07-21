@@ -32,35 +32,37 @@ void backgroundHandler() {
   SharedPreferences.getInstance().then((preferences) {
     List<String> processed = preferences.getStringList('processed') ?? [];
 
-    uploader.progress.listen((progress) {
-      print("In ISOLATE: ID: ${progress.taskId}");
+    if (Platform.isAndroid) {
+      uploader.progress.listen((progress) {
+        print("In ISOLATE: ID: ${progress.taskId}");
 
-      if (processed.contains(progress.taskId)) {
-        return;
-      }
+        if (processed.contains(progress.taskId)) {
+          return;
+        }
 
-      notifications.show(
-        progress.taskId.hashCode,
-        'FlutterUploader Example',
-        'Upload in Progress',
-        NotificationDetails(
-          AndroidNotificationDetails(
-            'FlutterUploader.Example',
-            'FlutterUploader',
-            'Installed when you activate the Flutter Uploader Example',
-            progress: progress.progress,
-            icon: 'ic_upload',
-            enableVibration: false,
-            importance: Importance.Low,
-            showProgress: true,
-            onlyAlertOnce: true,
-            maxProgress: 100,
-            channelShowBadge: false,
+        notifications.show(
+          progress.taskId.hashCode,
+          'FlutterUploader Example',
+          'Upload in Progress',
+          NotificationDetails(
+            AndroidNotificationDetails(
+              'FlutterUploader.Example',
+              'FlutterUploader',
+              'Installed when you activate the Flutter Uploader Example',
+              progress: progress.progress,
+              icon: 'ic_upload',
+              enableVibration: false,
+              importance: Importance.Low,
+              showProgress: true,
+              onlyAlertOnce: true,
+              maxProgress: 100,
+              channelShowBadge: false,
+            ),
+            IOSNotificationDetails(),
           ),
-          IOSNotificationDetails(),
-        ),
-      );
-    });
+        );
+      });
+    }
 
     uploader.result.listen((result) {
       print(
@@ -99,9 +101,13 @@ void backgroundHandler() {
                 ? Importance.High
                 : Importance.Min,
           ),
-          IOSNotificationDetails(),
+          IOSNotificationDetails(
+            presentAlert: true,
+          ),
         ),
-      );
+      ).catchError((e, stack) {
+        print('error while showing noticiation: $e, $stack');
+      });
     });
   });
 }
@@ -122,6 +128,28 @@ class _AppState extends State<App> {
     super.initState();
 
     _uploader.setBackgroundHandler(backgroundHandler);
+
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+        FlutterLocalNotificationsPlugin();
+    var initializationSettingsAndroid =
+        AndroidInitializationSettings('app_icon');
+    var initializationSettingsIOS = IOSInitializationSettings(
+      requestSoundPermission: false,
+      requestBadgePermission: false,
+      requestAlertPermission: true,
+      onDidReceiveLocalNotification:
+          (int id, String title, String body, String payload) async {
+        //
+      },
+    );
+    var initializationSettings = InitializationSettings(
+        initializationSettingsAndroid, initializationSettingsIOS);
+    flutterLocalNotificationsPlugin.initialize(
+      initializationSettings,
+      onSelectNotification: (payload) async {
+//
+      },
+    );
   }
 
   @override
