@@ -99,7 +99,9 @@ class URLSessionUploader: NSObject {
     private override init() {
         super.init()
         
-        self.delegates.append(EngineManager())
+        delegates.append(EngineManager())
+        
+        delegates.append(UploadResultDatabase.shared)
 
         self.queue.name = "chillisource.flutter_uploader.queue"
         
@@ -315,5 +317,4 @@ extension URLSessionUploader : URLSessionTaskDelegate {
     private func isRequestSuccessful(_ statusCode: Int) -> Bool {
         return statusCode >= 200 && statusCode <= 299
     }
-
 }

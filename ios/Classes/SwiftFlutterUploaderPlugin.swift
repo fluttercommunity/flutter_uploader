@@ -54,6 +54,29 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         self.taskQueue = DispatchQueue(label: "chillisource.flutter_uploader.dispatch.queue")
         super.init()
         
+        
+        let resultDatabase = UploadResultDatabase.shared
+        for map in resultDatabase.completed {
+            resultHandler.add([
+                SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
+                SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
+                "message": map["message"] as! String,
+                "statusCode": map["statusCode"] as! Int,
+                "headers": map["headers"] as! [String:Any],
+                //            "tag": tag ?? NSNull()
+            ])
+        }
+                
+        for map in resultDatabase.failed {
+            resultHandler.add([
+                SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
+                SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
+                "statusCode": map["statusCode"] as! Int,
+                "code": map["code"] as! String,
+                "details": map["details"] as! [String]
+            ])
+        }
+        
         urlSessionUploader.addDelegate(self)
     }
 
@@ -62,6 +85,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         case "setBackgroundHandler":
             setBackgroundHandler(call, result)
         case "clearUploads":
+            UploadResultDatabase.shared.clear()
             result(nil)
         case "enqueue":
             enqueueMethodCall(call, result)
