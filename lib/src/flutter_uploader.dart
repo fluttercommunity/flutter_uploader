@@ -72,7 +72,7 @@ class FlutterUploader {
                 EventSink<UploadTaskResponse> sink) {
               String id = value['task_id'];
               String message = value['message'];
-              String code = value['code'];
+              // String code = value['code'];
               int status = value["status"];
               int statusCode = value["statusCode"];
               Map<String, dynamic> headers = value['headers'] != null

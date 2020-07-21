@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:e2e/e2e.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter_uploader/flutter_uploader.dart';

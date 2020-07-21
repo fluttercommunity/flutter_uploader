@@ -5,8 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:flutter_uploader_example/server_behavior.dart';
-import 'package:flutter_uploader_example/upload_item.dart';
-import 'package:flutter_uploader_example/upload_item_view.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -197,7 +195,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
     print('URL: $url');
 
-    var taskId = binary
+    binary
         ? await widget.uploader.enqueueBinary(
             url: url.toString(),
             file: FileItem(path: paths.first, field: "file"),
@@ -211,12 +209,5 @@ class _UploadScreenState extends State<UploadScreen> {
             method: UploadMethod.POST,
             tag: tag,
           );
-
-    // setState(() {
-    //   _tasks.putIfAbsent(
-    //     taskId,
-    //     () => UploadItem(taskId, status: UploadTaskStatus.enqueued),
-    //   );
-    // });
   }
 }

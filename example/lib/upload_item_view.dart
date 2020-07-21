@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flutter_uploader/flutter_uploader.dart';
@@ -80,49 +77,49 @@ class UploadItemView extends StatelessWidget {
     );
   }
 
-  Text _compareMd5(String localPath, String remoteHash) {
-    final File file = File(localPath);
-    if (!file.existsSync()) {
-      return Text(
-        'File ƒ',
-        style: TextStyle(color: Colors.grey),
-      );
-    }
+  // Text _compareMd5(String localPath, String remoteHash) {
+  //   final File file = File(localPath);
+  //   if (!file.existsSync()) {
+  //     return Text(
+  //       'File ƒ',
+  //       style: TextStyle(color: Colors.grey),
+  //     );
+  //   }
 
-    var digest = md5.convert(file.readAsBytesSync());
-    if (digest.toString().toLowerCase() == remoteHash) {
-      return Text(
-        'Hash $digest √',
-        style: TextStyle(color: Colors.green),
-      );
-    } else {
-      return Text(
-        'Hash $digest vs $remoteHash ƒ',
-        style: TextStyle(color: Colors.red),
-      );
-    }
-  }
+  //   var digest = md5.convert(file.readAsBytesSync());
+  //   if (digest.toString().toLowerCase() == remoteHash) {
+  //     return Text(
+  //       'Hash $digest √',
+  //       style: TextStyle(color: Colors.green),
+  //     );
+  //   } else {
+  //     return Text(
+  //       'Hash $digest vs $remoteHash ƒ',
+  //       style: TextStyle(color: Colors.red),
+  //     );
+  //   }
+  // }
 
-  Text _compareSize(String localPath, int remoteSize) {
-    final File file = File(localPath);
-    if (!file.existsSync()) {
-      return Text(
-        'File ƒ',
-        style: TextStyle(color: Colors.grey),
-      );
-    }
+  // Text _compareSize(String localPath, int remoteSize) {
+  //   final File file = File(localPath);
+  //   if (!file.existsSync()) {
+  //     return Text(
+  //       'File ƒ',
+  //       style: TextStyle(color: Colors.grey),
+  //     );
+  //   }
 
-    final length = file.lengthSync();
-    if (length == remoteSize) {
-      return Text(
-        'Length $length √',
-        style: TextStyle(color: Colors.green),
-      );
-    } else {
-      return Text(
-        'Length $length vs $remoteSize ƒ',
-        style: TextStyle(color: Colors.red),
-      );
-    }
-  }
+  //   final length = file.lengthSync();
+  //   if (length == remoteSize) {
+  //     return Text(
+  //       'Length $length √',
+  //       style: TextStyle(color: Colors.green),
+  //     );
+  //   } else {
+  //     return Text(
+  //       'Length $length vs $remoteSize ƒ',
+  //       style: TextStyle(color: Colors.red),
+  //     );
+  //   }
+  // }
 }

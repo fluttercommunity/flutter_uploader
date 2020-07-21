@@ -1,17 +1,9 @@
-import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:flutter_uploader_example/responses_screen.dart';
-import 'package:flutter_uploader_example/server_behavior.dart';
-import 'package:flutter_uploader_example/upload_item.dart';
-import 'package:flutter_uploader_example/upload_item_view.dart';
 import 'package:flutter_uploader_example/upload_screen.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:meta/meta.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -174,8 +166,8 @@ class _AppState extends State<App> {
                 uploadURL: uploadURL,
               )
             : ResponsesScreen(
-              uploader: _uploader,
-            ),
+                uploader: _uploader,
+              ),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
