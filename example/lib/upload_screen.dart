@@ -198,7 +198,7 @@ class _UploadScreenState extends State<UploadScreen> {
     binary
         ? await widget.uploader.enqueueBinary(
             url: url.toString(),
-            file: FileItem(path: paths.first, field: "file"),
+            path: paths.first,
             method: UploadMethod.POST,
             tag: tag,
           )

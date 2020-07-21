@@ -118,7 +118,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
   private void enqueueBinary(MethodCall call, MethodChannel.Result result) {
     String url = call.argument("url");
     String method = call.argument("method");
-    Map<String, String> files = call.argument("file");
+    String path = call.argument("path");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
 
@@ -126,7 +126,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       method = "POST";
     }
 
-    if (tag == null || files == null || files.isEmpty()) {
+    if (path == null) {
       result.error("invalid_call", "Invalid call parameters passed", null);
       return;
     }
@@ -141,7 +141,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
             new UploadTask(
                 url,
                 method,
-                Collections.singletonList(FileItem.fromJson(files)),
+                Collections.singletonList(new FileItem(path)),
                 headers,
                 Collections.emptyMap(),
                 connectionTimeout,

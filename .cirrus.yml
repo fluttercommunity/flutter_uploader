@@ -9,12 +9,10 @@ code_style_task:
 #    - git fetch origin master
 #  activate_script: pub global activate flutter_plugin_tools
   matrix:
-    - name: test+format
-#      install_script:
-#        - wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-#        - sudo apt-add-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-7 main"
-#        - sudo apt-get update
-#        - sudo apt-get install -y --allow-unauthenticated clang-format-7
+    - name: test
+      test_script:
+        - flutter test
+    - name: format
       format_script: script/format.sh
     - name: analyze
       script:
@@ -78,6 +76,8 @@ ios_task:
     - xcrun simctl create Flutter-iPhone com.apple.CoreSimulator.SimDeviceType.iPhone-X com.apple.CoreSimulator.SimRuntime.iOS-13-5 | xargs xcrun simctl boot
   install_swiftlint_script:
     - brew install swiftlint
+  test_script:
+    - flutter test
   build_script:
     - pod repo update
     - cd example && flutter build ios --release --no-codesign

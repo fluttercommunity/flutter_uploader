@@ -7,13 +7,17 @@ public class FileItem {
   private String fieldname;
   private String path;
 
-  public FileItem(String fieldname, String path) {
+  public FileItem(String path) {
+    this.path = path;
+  }
+
+  public FileItem(String path, String fieldname) {
     this.fieldname = fieldname;
     this.path = path;
   }
 
   public static FileItem fromJson(Map<String, String> map) {
-    return new FileItem(map.get("fieldname"), map.get("path"));
+    return new FileItem(map.get("path"), map.get("fieldname"));
   }
 
   public String getFieldname() {

@@ -111,13 +111,11 @@ class FlutterUploader {
   /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
   /// * `headers`: HTTP headers
   /// * `data`: additional data to be uploaded together with file
-  /// upload progress and success or failure of upload task (Android only), otherwise will disable
-  /// this feature. The default value is `false`
   /// * `tag`: name of the upload request (only used on Android)
+  ///
   /// **return:**
   ///
   /// an unique identifier of the new upload task
-  ///
   Future<String> enqueue({
     @required String url,
     @required List<FileItem> files,
@@ -147,19 +145,17 @@ class FlutterUploader {
   /// **parameters:**
   ///
   /// * `url`: upload link
-  /// * `file`: single file to upload
+  /// * `path`: single file to upload
   /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
   /// * `headers`: HTTP headers
-  /// upload progress and success or failure of upload task (Android only), otherwise will disable
-  /// this feature. The default value is `false`
   /// * `tag`: name of the upload request (only used on Android)
+  ///
   /// **return:**
   ///
   /// an unique identifier of the new upload task
-  ///
   Future<String> enqueueBinary({
     @required String url,
-    @required FileItem file,
+    @required String path,
     UploadMethod method = UploadMethod.POST,
     Map<String, String> headers,
     String tag,
@@ -169,7 +165,7 @@ class FlutterUploader {
     return await _platform.invokeMethod<String>('enqueueBinary', {
       'url': url,
       'method': describeEnum(method),
-      'file': file.toJson(),
+      'path': path,
       'headers': headers,
       'tag': tag
     });
