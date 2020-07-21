@@ -8,10 +8,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 const String title = "FileUpload Sample app";
-final Uri uploadURL =
-    // Uri.parse("https://us-central1-flutteruploader.cloudfunctions.net/upload");
-    Uri.parse(
-        "http://192.168.1.148:5000/flutteruploadertest/us-central1/upload");
+final Uri uploadURL = Uri.parse(
+    "https://us-central1-flutteruploadertest.cloudfunctions.net/upload");
 
 FlutterUploader _uploader = FlutterUploader();
 
