@@ -76,6 +76,8 @@ ios_task:
   create_simulator_script:
     - xcrun simctl list
     - xcrun simctl create Flutter-iPhone com.apple.CoreSimulator.SimDeviceType.iPhone-X com.apple.CoreSimulator.SimRuntime.iOS-13-5 | xargs xcrun simctl boot
+  install_swiftlint_script:
+    - brew install swiftlint
   build_script:
     - pod repo update
     - cd example && flutter build ios --release --no-codesign

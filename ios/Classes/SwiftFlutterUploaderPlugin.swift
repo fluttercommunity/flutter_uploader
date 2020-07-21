@@ -519,29 +519,14 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
         let dataString = String(data: data, encoding: String.Encoding.utf8)
         let message = dataString == nil ? "" : dataString!
         if error == nil && !hasResponseError {
-            NSLog("URLSessionDidCompleteWithError: response: \(message), task: \(getTaskStatusText(uploadTask.state))")
+            NSLog("URLSessionDidCompleteWithError: response: \(message), task: \(uploadTask.state.statusText())")
             self.sendUploadSuccessForTaskId(taskId, inStatus: .completed, message: message, statusCode: response?.statusCode ?? 200, headers: responseHeaders, tag: tag)
         } else if hasResponseError {
-            NSLog("URLSessionDidCompleteWithError: task: \(getTaskStatusText(uploadTask.state)) statusCode: \(response?.statusCode ?? -1), error:\(message), response:\(String(describing: response))")
+            NSLog("URLSessionDidCompleteWithError: task: \(uploadTask.state.statusText()) statusCode: \(response?.statusCode ?? -1), error:\(message), response:\(String(describing: response))")
             self.sendUploadFailedForTaskId(taskId, inStatus: .failed, statusCode: statusCode, error: FlutterError(code: "upload_error", message: message, details: Thread.callStackSymbols), tag: tag)
         } else {
-            NSLog("URLSessionDidCompleteWithError: task: \(getTaskStatusText(uploadTask.state)) statusCode: \(response?.statusCode ?? -1), error:\(error?.localizedDescription ?? "none")")
+            NSLog("URLSessionDidCompleteWithError: task: \(uploadTask.state.statusText()) statusCode: \(response?.statusCode ?? -1), error:\(error?.localizedDescription ?? "none")")
             self.sendUploadFailedForTaskId(taskId, inStatus: .failed, statusCode: statusCode, error: FlutterError(code: "upload_error", message: error?.localizedDescription, details: Thread.callStackSymbols), tag: tag)
-        }
-    }
-
-    private func getTaskStatusText(_ state: URLSessionTask.State) -> String {
-        switch(state) {
-        case .running:
-            return "running"
-        case .canceling:
-            return "canceling"
-        case .completed:
-            return "completed"
-        case .suspended:
-            return "suspended"
-        default:
-            return "unknown"
         }
     }
 
@@ -632,12 +617,9 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin, URLSessionTask
                     self.backgroundTransferCompletionHander = nil
 
                     OperationQueue.main.addOperation({
-                        [weak self] in
                         completionHandler()
 
-                        let localNotification = UILocalNotification()
-                        localNotification.alertBody = self?.allFileUploadedMessage
-                        UIApplication.shared.presentLocalNotificationNow(localNotification)
+                        //
                     })
                 }
             }
