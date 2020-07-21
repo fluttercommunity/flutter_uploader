@@ -50,7 +50,7 @@ class URLSessionUploader: NSObject {
 
         uploadTask.resume()
         self.runningTaskById[taskId] = UploadTask(taskId: taskId, status: .enqueue, progress: 0)
-
+        
         return uploadTask
     }
     
@@ -141,8 +141,16 @@ class URLSessionUploader: NSObject {
     }
 }
 
-extension URLSessionUploader : URLSessionTaskDelegate {
-    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+extension URLSessionUploader : URLSessionDelegate, URLSessionDataDelegate, URLSessionTaskDelegate {
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        completionHandler(.allow)
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        completionHandler(.performDefaultHandling, nil)
+    }
+    
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         NSLog("URLSessionDidReceiveData:")
         
         guard let uploadTask = dataTask as? URLSessionUploadTask else {
@@ -168,11 +176,11 @@ extension URLSessionUploader : URLSessionTaskDelegate {
         }
     }
         
-    public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
         NSLog("URLSessionDidBecomeInvalidWithError:")
     }
     
-    public func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
+    func urlSession(_ session: URLSession, taskIsWaitingForConnectivity task: URLSessionTask) {
         NSLog("URLSessionTaskIsWaitingForConnectivity:")
     }
     
@@ -226,8 +234,6 @@ extension URLSessionUploader : URLSessionTaskDelegate {
         }
 
         let taskId = identifierForTask(uploadTask)
-        let runningTask = self.runningTaskById[taskId]
-        let tag = runningTask?.tag
 
         if error != nil {
             NSLog("URLSessionDidCompleteWithError: \(taskId) failed with \(error!.localizedDescription)")
@@ -261,21 +267,6 @@ extension URLSessionUploader : URLSessionTaskDelegate {
 
         NSLog("URLSessionDidCompleteWithError: upload completed")
 
-        if let pathDescription = uploadTask.taskDescription {
-            let split = pathDescription.split(separator: ",")
-
-            if split.count == 2 {
-                let path = String(split[0])
-                if split[1] == "DELETE" && FileManager.default.fileExists(atPath: path) {
-                    do {
-                        try FileManager.default.removeItem(atPath: path)
-                    } catch {
-                        NSLog("URLSessionDidCompleteWithError: Failed to delete file in path \(path)")
-                    }
-                }
-            }
-        }
-
         let headers = response?.allHeaderFields
         var responseHeaders = [String: Any]()
         if headers != nil {
@@ -288,13 +279,8 @@ extension URLSessionUploader : URLSessionTaskDelegate {
 
         var data: Data = Data()
 
-        if uploadedData.contains(where: { (key, _) in
-            return key == taskId
-        }) {
-            let d = uploadedData[taskId]
-            if d != nil {
-                data = d!
-            }
+        if let entry = uploadedData.first(where: { $0.key == taskId }) {
+            data = entry.value
         }
 
         self.uploadedData.removeValue(forKey: taskId)

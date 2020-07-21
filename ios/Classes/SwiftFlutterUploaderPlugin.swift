@@ -226,7 +226,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, path: file.path), nil)
     }
 
-    private func uploadTaskWithURLWithCompletion(url: URL, files: [Any],
+    private func uploadTaskWithURLWithCompletion(url: URL,
+                                                 files: [Any],
                                                  method: String,
                                                  headers: [String: Any?]?,
                                                  parameters data: [String: Any?]?,
@@ -239,7 +240,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             let formData = MultipartFormData()
             let tempDirectory = NSURL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
 
-            if(data != nil) {
+            if data != nil {
                 data?.forEach({ (key, value) in
                     if let v = value as? String {
                         formData.append(v.data(using: .utf8)!, withName: key)
@@ -302,7 +303,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             }
     }
 
-    private func makeRequest(_ path: String, _ url: URL, _ method: String, _ headers: [String: Any?]?, _ contentType: String, _ contentLength: UInt64, completion completionHandler: (URLSessionUploadTask?, FlutterError?) -> Void) {
+    private func makeRequest(_ path: String, _ url: URL, _ method: String, _ headers: [String: Any?]? = [:], _ contentType: String, _ contentLength: UInt64, completion completionHandler: (URLSessionUploadTask?, FlutterError?) -> Void) {
 
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = method
@@ -310,8 +311,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         request.setValue("\(contentType)", forHTTPHeaderField: "Content-Type")
         request.setValue("\(contentLength)", forHTTPHeaderField: "Content-Length")
 
-        if headers != nil {
-            headers!.forEach { (key, value) in
+        if let headers = headers {
+            headers.forEach { (key, value) in
                 if let v = value as? String {
                     request.setValue(v, forHTTPHeaderField: key)
                 }
