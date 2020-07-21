@@ -48,34 +48,36 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         progressEventChannel.setStreamHandler(progressHandler)
         
         self.resultEventChannel = resultEventChannel
-        self.resultHandler = SimpleStreamHandler()
+        self.resultHandler = SimpleStreamHandler(onListen: { (handler) in
+            let resultDatabase = UploadResultDatabase.shared
+            for map in resultDatabase.completed {
+                handler.add([
+                    SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
+                    SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
+                    "message": map["message"] as! String,
+                    "statusCode": map["statusCode"] as! Int,
+                    "headers": map["headers"] as! [String:Any],
+                    //            "tag": tag ?? NSNull()
+                ])
+            }
+                    
+            for map in resultDatabase.failed {
+                handler.add([
+                    SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
+                    SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
+                    "statusCode": map["statusCode"] as! Int,
+                    "code": map["code"] as! String,
+                    "details": map["details"] as! [String]
+                ])
+            }
+
+        })
         resultEventChannel.setStreamHandler(resultHandler)
                 
         self.taskQueue = DispatchQueue(label: "chillisource.flutter_uploader.dispatch.queue")
         super.init()
         
         
-        let resultDatabase = UploadResultDatabase.shared
-        for map in resultDatabase.completed {
-            resultHandler.add([
-                SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
-                SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
-                "message": map["message"] as! String,
-                "statusCode": map["statusCode"] as! Int,
-                "headers": map["headers"] as! [String:Any],
-                //            "tag": tag ?? NSNull()
-            ])
-        }
-                
-        for map in resultDatabase.failed {
-            resultHandler.add([
-                SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
-                SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
-                "statusCode": map["statusCode"] as! Int,
-                "code": map["code"] as! String,
-                "details": map["details"] as! [String]
-            ])
-        }
         
         urlSessionUploader.addDelegate(self)
     }
