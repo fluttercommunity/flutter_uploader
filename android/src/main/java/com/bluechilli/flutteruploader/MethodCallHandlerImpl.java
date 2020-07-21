@@ -1,6 +1,7 @@
 package com.bluechilli.flutteruploader;
 
 import android.content.Context;
+import android.text.TextUtils;
 import androidx.annotation.NonNull;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
