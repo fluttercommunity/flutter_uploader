@@ -54,7 +54,7 @@ exports.upload = functions.https.onRequest(async (req, res) => {
   busboy.on("finish", () => {
     const statusCode = statusCodeForSimulation(simulate);
 
-    if (statusCode == 201) {
+    if (statusCode === 201) {
       return res.status(statusCode).end();
     }
 
@@ -116,7 +116,7 @@ exports.uploadBinary = functions.https.onRequest(async (req, res) => {
 
   const statusCode = statusCodeForSimulation(simulate);
 
-  if (statusCode == 201) {
+  if (statusCode === 201) {
     return res.status(statusCode).end();
   }
 
