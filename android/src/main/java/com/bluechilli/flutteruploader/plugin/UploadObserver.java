@@ -25,9 +25,9 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
 
   @Override
   public void onChanged(List<WorkInfo> workInfoList) {
-    StatusListener plugin = this.listener.get();
+    StatusListener listener = this.listener.get();
 
-    if (plugin == null) {
+    if (listener == null) {
       return;
     }
 
@@ -35,11 +35,15 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
       String id = info.getId().toString();
 
       switch (info.getState()) {
+        case ENQUEUED:
+          {
+            listener.onEnqueued(info.getId().toString());
+          }
         case RUNNING:
           {
             Data progress = info.getProgress();
 
-            plugin.onUpdateProgress(
+            listener.onUpdateProgress(
                 info.getId().toString(),
                 progress.getInt("status", -1),
                 progress.getInt("progress", -1));
@@ -54,11 +58,11 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
             String errorMessage = outputData.getString(UploadWorker.EXTRA_ERROR_MESSAGE);
             String[] details = outputData.getStringArray(UploadWorker.EXTRA_ERROR_DETAILS);
 
-            plugin.onFailed(id, failedStatus, statusCode, code, errorMessage, details);
+            listener.onFailed(id, failedStatus, statusCode, code, errorMessage, details);
           }
           break;
         case CANCELLED:
-          plugin.onFailed(id, UploadStatus.CANCELED, 500, "flutter_upload_cancelled", null, null);
+          listener.onFailed(id, UploadStatus.CANCELED, 500, "flutter_upload_cancelled", null, null);
           break;
         case SUCCEEDED:
           {
@@ -71,9 +75,8 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
             if (headerJson != null) {
               headers = gson.fromJson(headerJson, type);
             }
-
             String response = extractResponse(outputData);
-            plugin.onCompleted(id, status, statusCode, response, headers);
+            listener.onCompleted(id, status, statusCode, response, headers);
           }
           break;
       }

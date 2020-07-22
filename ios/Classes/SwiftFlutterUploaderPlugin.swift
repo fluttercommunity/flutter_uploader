@@ -344,6 +344,13 @@ extension SwiftFlutterUploaderPlugin {
 }
 
 extension SwiftFlutterUploaderPlugin: UploaderDelegate {
+    func uploadEnqueued(taskId: String) {
+        progressHandler.add([
+            SwiftFlutterUploaderPlugin.KEY_TASK_ID: taskId,
+            SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.enqueue.rawValue,
+        ]);
+    }
+
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
         progressHandler.add([
             SwiftFlutterUploaderPlugin.KEY_TASK_ID: taskId,

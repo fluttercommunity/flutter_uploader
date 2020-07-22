@@ -66,36 +66,30 @@ class FlutterUploader {
         .receiveBroadcastStream()
         .map<Map<String, dynamic>>((event) => Map<String, dynamic>.from(event))
         .transform(
-          StreamTransformer<Map<String, dynamic>,
-              UploadTaskResponse>.fromHandlers(
-            handleData: (Map<String, dynamic> value,
-                EventSink<UploadTaskResponse> sink) {
-              String id = value['task_id'];
-              String message = value['message'];
-              // String code = value['code'];
-              int status = value["status"];
-              int statusCode = value["statusCode"];
-              Map<String, dynamic> headers = value['headers'] != null
-                  ? Map<String, dynamic>.from(value['headers'])
-                  : {};
+      StreamTransformer<Map<String, dynamic>, UploadTaskResponse>.fromHandlers(
+        handleData:
+            (Map<String, dynamic> value, EventSink<UploadTaskResponse> sink) {
+          String id = value['task_id'];
+          String message = value['message'];
+          // String code = value['code'];
+          int status = value["status"];
+          int statusCode = value["statusCode"];
+          Map<String, dynamic> headers = value['headers'] != null
+              ? Map<String, dynamic>.from(value['headers'])
+              : {};
 
-              final r = UploadTaskResponse(
-                taskId: id,
-                status: UploadTaskStatus.from(status),
-                statusCode: statusCode,
-                headers: headers,
-                response: message,
-              );
+          final r = UploadTaskResponse(
+            taskId: id,
+            status: UploadTaskStatus.from(status),
+            statusCode: statusCode,
+            headers: headers,
+            response: message,
+          );
 
-              sink.add(r);
-            },
-            handleError: (error, stackTrace, sink) {
-              print('error: $error, stack: $stackTrace');
-
-              sink.addError(error, stackTrace);
-            },
-          ),
-        );
+          sink.add(r);
+        },
+      ),
+    );
   }
 
   void dispose() {

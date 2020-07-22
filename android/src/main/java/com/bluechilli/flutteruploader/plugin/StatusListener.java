@@ -4,6 +4,8 @@ import androidx.annotation.Nullable;
 import java.util.Map;
 
 public interface StatusListener {
+  void onEnqueued(String id);
+
   void onUpdateProgress(String id, int status, int progress);
 
   void onFailed(

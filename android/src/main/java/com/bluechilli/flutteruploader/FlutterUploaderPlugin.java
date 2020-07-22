@@ -136,6 +136,19 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
   }
 
   @Override
+  public void onEnqueued(String id) {
+    Map<String, Object> args = new HashMap<>();
+    args.put("task_id", id);
+    args.put("status", UploadStatus.ENQUEUED);
+
+    if (resultEventSink != null) {
+      resultEventSink.success(args);
+    } else {
+      cachedResults.add(args);
+    }
+  }
+
+  @Override
   public void onUpdateProgress(String id, int status, int progress) {
     final Map<String, Object> args = new HashMap<>();
     args.put("task_id", id);

@@ -46,6 +46,9 @@ class EngineManager {
 }
 
 extension EngineManager: UploaderDelegate {
+    func uploadEnqueued(taskId: String) {
+    }
+    
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
         startEngineIfNeeded()
     }

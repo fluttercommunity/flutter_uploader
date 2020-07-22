@@ -47,6 +47,8 @@ class URLSessionUploader: NSObject {
         uploadTask.taskDescription = UUID().uuidString
 
         let taskId = identifierForTask(uploadTask)
+        
+        delegates.uploadEnqueued(taskId: taskId)
 
         uploadTask.resume()
         self.runningTaskById[taskId] = UploadTask(taskId: taskId, status: .enqueue, progress: 0)

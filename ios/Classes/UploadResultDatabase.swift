@@ -42,6 +42,9 @@ class UploadResultDatabase: UploaderDelegate {
 
     var completed: [[String: Any]] = []
     var failed: [[String: Any]] = []
+    
+    func uploadEnqueued(taskId: String) {
+    }
 
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
         // No need to store in-flight.
