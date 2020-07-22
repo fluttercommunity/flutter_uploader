@@ -13,10 +13,12 @@ class UploadScreen extends StatefulWidget {
     Key key,
     @required this.uploader,
     @required this.uploadURL,
+    @required this.onUploadStarted,
   }) : super(key: key);
 
   final FlutterUploader uploader;
   final Uri uploadURL;
+  final VoidCallback onUploadStarted;
 
   @override
   _UploadScreenState createState() => _UploadScreenState();
@@ -215,5 +217,7 @@ class _UploadScreenState extends State<UploadScreen> {
             method: UploadMethod.POST,
             tag: tag,
           );
+
+    widget.onUploadStarted();
   }
 }

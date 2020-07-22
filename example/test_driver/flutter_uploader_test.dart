@@ -10,7 +10,7 @@ import 'package:flutter_uploader/flutter_uploader.dart';
 
 final baseUrl = Uri.parse(
   'https://us-central1-flutteruploadertest.cloudfunctions.net/upload',
-).replace(queryParameters: {'simulate': 'ok200'});
+);
 
 void main() {
   E2EWidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +65,26 @@ void main() {
 
       expect(json['message'], 'Successfully uploaded');
       expect(res.statusCode, 200);
+      expect(res.status, UploadTaskStatus.complete);
+    });
+
+    testWidgets("handles 201 empty body", (WidgetTester tester) async {
+      var fileItem = FileItem(path: await _tmpFile(), field: "file");
+
+      final taskId = await uploader.enqueue(
+        url: url.replace(queryParameters: {
+          'simulate': 'ok201',
+        }).toString(),
+        files: [fileItem],
+      );
+
+      expect(taskId, isNotNull);
+
+      final res = await uploader.result
+          .firstWhere((element) => element.taskId == taskId);
+
+      expect(res.response, isNull);
+      expect(res.statusCode, 201);
       expect(res.status, UploadTaskStatus.complete);
     });
 

@@ -52,7 +52,7 @@ class UploadItemView extends StatelessWidget {
               if (item.status == UploadTaskStatus.complete ||
                   item.status == UploadTaskStatus.failed) ...[
                 Text('HTTP status code: ${item.response.statusCode}'),
-                if (item.response.response.isNotEmpty)
+                if (item.response.response != null)
                   Text(
                     item.response.response,
                     style: Theme.of(context)

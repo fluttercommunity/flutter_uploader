@@ -154,6 +154,9 @@ class _AppState extends State<App> {
             ? UploadScreen(
                 uploader: _uploader,
                 uploadURL: uploadURL,
+                onUploadStarted: () {
+                  setState(() => _currentIndex = 1);
+                },
               )
             : ResponsesScreen(
                 uploader: _uploader,
