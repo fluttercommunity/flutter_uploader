@@ -9,7 +9,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 const String title = "FileUpload Sample app";
 final Uri uploadURL = Uri.parse(
-    "https://us-central1-flutteruploadertest.cloudfunctions.net/upload");
+  "https://us-central1-flutteruploadertest.cloudfunctions.net/upload",
+);
 
 FlutterUploader _uploader = FlutterUploader();
 
@@ -28,8 +29,6 @@ void backgroundHandler() {
 
     if (Platform.isAndroid) {
       uploader.progress.listen((progress) {
-        print("In ISOLATE: ID: ${progress.taskId}");
-
         if (processed.contains(progress.taskId)) {
           return;
         }
@@ -59,9 +58,6 @@ void backgroundHandler() {
     }
 
     uploader.result.listen((result) {
-      print(
-          'In ISOLATE: Result: ${result.taskId}, ${result.status.description}');
-
       if (processed.contains(result.taskId)) {
         return;
       }
@@ -102,7 +98,7 @@ void backgroundHandler() {
         ),
       )
           .catchError((e, stack) {
-        print('error while showing noticiation: $e, $stack');
+        print('error while showing notification: $e, $stack');
       });
     });
   });
@@ -130,23 +126,19 @@ class _AppState extends State<App> {
     FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
         FlutterLocalNotificationsPlugin();
     var initializationSettingsAndroid =
-        AndroidInitializationSettings('app_icon');
+        AndroidInitializationSettings('ic_upload');
     var initializationSettingsIOS = IOSInitializationSettings(
       requestSoundPermission: false,
       requestBadgePermission: false,
       requestAlertPermission: true,
       onDidReceiveLocalNotification:
-          (int id, String title, String body, String payload) async {
-        //
-      },
+          (int id, String title, String body, String payload) async {},
     );
     var initializationSettings = InitializationSettings(
         initializationSettingsAndroid, initializationSettingsIOS);
     flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
-      onSelectNotification: (payload) async {
-//
-      },
+      onSelectNotification: (payload) async {},
     );
   }
 
@@ -169,12 +161,12 @@ class _AppState extends State<App> {
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              title: Text('Home'),
+              icon: Icon(Icons.cloud_upload),
+              title: Text('Upload'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.business),
-              title: Text('Business'),
+              icon: Icon(Icons.receipt),
+              title: Text('Responses'),
             ),
           ],
           onTap: (newIndex) {
