@@ -31,10 +31,10 @@ void main() {
     tempFilePaths.clear();
   });
 
-  group('multipart/form-data', () {
+  group('multipart/form-data uploads', () {
     final url = baseUrl;
 
-    testWidgets("uploads single file", (WidgetTester tester) async {
+    testWidgets("single file", (WidgetTester tester) async {
       var fileItem = FileItem(path: await _tmpFile(), field: "file");
 
       final taskId =
@@ -51,7 +51,7 @@ void main() {
       expect(res.status, UploadTaskStatus.complete);
     });
 
-    testWidgets("uploads multiple files", (WidgetTester tester) async {
+    testWidgets("multiple files", (WidgetTester tester) async {
       final taskId = await uploader.enqueue(url: url.toString(), files: [
         FileItem(path: await _tmpFile(256), field: "file1"),
         FileItem(path: await _tmpFile(257), field: "file2"),
@@ -85,10 +85,10 @@ void main() {
     });
   });
 
-  group('binary', () {
+  group('binary uploads', () {
     final url = baseUrl.replace(path: baseUrl.path + 'Binary');
 
-    testWidgets("uploads single file", (WidgetTester tester) async {
+    testWidgets("single file", (WidgetTester tester) async {
       final taskId = await uploader.enqueueBinary(
         url: url.toString(),
         path: await _tmpFile(),

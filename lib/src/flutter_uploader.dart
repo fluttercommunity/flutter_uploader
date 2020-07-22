@@ -25,11 +25,11 @@ class FlutterUploader {
         _resultChannel = resultChannel;
 
   /// This call is required to receive background notifications.
-  /// [callbackDispatcher] is a top level function which will be invoked by Android
-  Future<void> setBackgroundHandler(final Function callbackDispatcher) async {
-    final callback = PluginUtilities.getCallbackHandle(callbackDispatcher);
+  /// [backgroundHandler] is a top level function which will be invoked by Android
+  Future<void> setBackgroundHandler(final Function backgroundHandler) async {
+    final callback = PluginUtilities.getCallbackHandle(backgroundHandler);
     assert(callback != null,
-        "The callbackDispatcher needs to be either a static function or a top level function to be accessible as a Flutter entry point.");
+        "The backgroundHandler needs to be either a static function or a top level function to be accessible as a Flutter entry point.");
     final int handle = callback.toRawHandle();
     await _platform.invokeMethod<void>('setBackgroundHandler', {
       'callbackHandle': handle,
