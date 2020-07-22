@@ -26,7 +26,7 @@ exports.upload = functions.https.onRequest(async (req, res) => {
 
     file.on("data", data => {
       console.log("File [" + fieldname + "] got " + data.length + " bytes");
-      length = data.length ;
+      length = data.length;
     });
     file.on("end", () => {
       console.log("File [" + fieldname + "] Finished");
@@ -53,6 +53,11 @@ exports.upload = functions.https.onRequest(async (req, res) => {
   });
   busboy.on("finish", () => {
     const statusCode = statusCodeForSimulation(simulate);
+
+    if (statusCode == 201) {
+      return res.status(statusCode).end();
+    }
+
     let response = {
       uploads: uploads,
       fields: fields,
@@ -66,7 +71,7 @@ exports.upload = functions.https.onRequest(async (req, res) => {
     }
 
     res.status(statusCode).json({
-      message: "Successfully uploaded",
+      message: jsonMessageForSimulation(simulate),
       request: response
     }).end();
   });
@@ -111,6 +116,10 @@ exports.uploadBinary = functions.https.onRequest(async (req, res) => {
 
   const statusCode = statusCodeForSimulation(simulate);
 
+  if (statusCode == 201) {
+    return res.status(statusCode).end();
+  }
+
   return res.status(statusCode).json({
     message: "Successfully uploaded",
     length: fileSizeInBytes,
@@ -138,6 +147,19 @@ function statusCodeForSimulation(simulation) {
     default:
       console.error('Unknown simulation, returning 500');
       return 500;
+  }
+}
+
+function jsonMessageForSimulation(simulation) {
+  switch (simulation) {
+    case 'error401':
+      return 401;
+    case 'error403':
+      return 403;
+    case 'error500':
+      return 500;
+    default:
+      return "Successfully uploaded"
   }
 }
 
