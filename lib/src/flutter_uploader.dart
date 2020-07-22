@@ -190,8 +190,8 @@ class FlutterUploader {
   }
 
   /// Clears all previously downloaded files from the database.
-  /// Normally, the uploader, through it's various platform implementations,
-  /// will keep a list of successfully uploaded files (or failed uploads).
+  /// The uploader, through it's various platform implementations, will keep
+  /// a list of successfully uploaded files (or failed uploads).
   ///
   /// Be careful, clearing this list will clear this list and you won't have access to it anymore.
   Future<void> clearUploads() async {

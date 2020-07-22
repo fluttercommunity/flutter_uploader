@@ -1,3 +1,14 @@
+## next
+
+- Runs a Flutter isolate in the background while a upload is running. The entry point can be set using `setBackgroundHandler`.
+- Notification handling has been removed from this plugin entirely. Developers can use `FlutterLocalNotifications` using the new isolate mechanism.
+- Extends the example & test backend with simulations for various HTTP responses, status codes etc.
+- Adds multi-file picking support to the example.
+- Adds E2E tests including CI config for iOS/Android
+- Adds basic unit tests to confirm message passing Dart <-> Native
+- Android: Support Androids Flutters V2 embedding
+- Simplify FileItem and replace the `savedDir`/`filename` parameters with `path`
+
 ## 1.2.0
 
 - iOS: fix multipartform upload to be able upload large files
