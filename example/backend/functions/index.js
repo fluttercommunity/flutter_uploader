@@ -18,7 +18,7 @@ const formUploadHandler = (req, res) => {
     });
   }
 
-  const simulate = req.query.simulate !== null ? req.query.simulate : 'ok200';
+  const simulate = req.query.simulate !== undefined ? req.query.simulate : 'ok200';
 
   const busboy = new Busboy({ headers: req.headers, highWaterMark: 2 * 1024 });
 
@@ -92,7 +92,7 @@ const binaryUploadHandler = async (req, res) => {
     });
   }
 
-  const simulate = req.query.simulate !== null ? req.query.simulate : 'ok200';
+  const simulate = req.query.simulate !== undefined ? req.query.simulate : 'ok200';
 
   const filename = [...Array(10)].map(i => (~~(Math.random() * 36)).toString(36)).join('');
   const filepath = path.join(os.tmpdir(), filename);
