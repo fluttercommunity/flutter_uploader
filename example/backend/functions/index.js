@@ -70,7 +70,7 @@ exports.upload = functions.https.onRequest(async (req, res) => {
       response.random = crypto.randomBytes(10240).toString('hex');
     }
 
-    res.status(statusCode).json({
+    return res.status(statusCode).json({
       message: jsonMessageForSimulation(simulate),
       request: response
     }).end();
