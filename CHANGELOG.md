@@ -8,6 +8,7 @@
 - Adds basic unit tests to confirm message passing Dart <-> Native
 - Android: Support Androids Flutters V2 embedding
 - Simplify FileItem and replace the `savedDir`/`filename` parameters with `path`
+- Uploads with unknown mime type will default to `application/octet-stream`
 
 ## 1.2.0
 

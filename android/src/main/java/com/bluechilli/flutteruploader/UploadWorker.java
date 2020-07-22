@@ -396,7 +396,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
   }
 
   private String GetMimeType(String url) {
-    String type = "*/*";
+    String type = "application/octet-stream";
     String extension = MimeTypeMap.getFileExtensionFromUrl(url);
     try {
       if (extension != null && !extension.isEmpty()) {
