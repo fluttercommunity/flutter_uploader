@@ -159,22 +159,14 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
             NSLog("URLSessionDidReceiveData: not an uplaod task")
             return
         }
-        let taskId = identifierForTask(uploadTask)
 
-        if uploadedData.contains(where: { (key, _) in
-            return key == taskId
-        }) {
-            NSLog("URLSessionDidReceiveData: existing data with \(taskId)")
-            if data.count > 0 {
-                self.uploadedData[taskId]?.append(data)
+        if data.count > 0 {
+            let taskId = identifierForTask(uploadTask)
+            if var existing = uploadedData[taskId] {
+                existing.append(data)
+            } else {
+                uploadedData[taskId] = Data(data)
             }
-        } else {
-            var udata = Data()
-            if(data.count > 0) {
-                udata.append(data)
-            }
-
-            self.uploadedData[taskId] = udata
         }
     }
 
@@ -279,16 +271,16 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
             }
         }
 
-        var data: Data = Data()
-
-        if let entry = uploadedData.first(where: { $0.key == taskId }) {
-            data = entry.value
-        }
-
         self.uploadedData.removeValue(forKey: taskId)
         self.runningTaskById.removeValue(forKey: taskId)
 
-        let message = String(data: data, encoding: String.Encoding.utf8)
+        let message: String?
+        if let data = uploadedData[taskId] {
+            message = String(data: data, encoding: String.Encoding.utf8)
+        } else {
+            message = nil
+        }
+
         if error == nil && !hasResponseError {
             NSLog("URLSessionDidCompleteWithError: response: \(message ?? "null"), task: \(uploadTask.state.statusText())")
             self.delegates.uploadCompleted(taskId: taskId, message: message, statusCode: response?.statusCode ?? 200, headers: responseHeaders)
