@@ -31,6 +31,17 @@ void main() {
     tempFilePaths.clear();
   });
 
+  Function(UploadTaskResponse) isCompleted(String taskId) {
+    return (response) =>
+        response.taskId == taskId &&
+        response.status == UploadTaskStatus.complete;
+  }
+
+  Function(UploadTaskResponse) isFailed(String taskId) {
+    return (response) =>
+        response.taskId == taskId && response.status == UploadTaskStatus.failed;
+  }
+
   group('multipart/form-data uploads', () {
     final url = baseUrl;
 
@@ -42,8 +53,7 @@ void main() {
 
       expect(taskId, isNotNull);
 
-      final res = await uploader.result
-          .firstWhere((element) => element.taskId == taskId);
+      final res = await uploader.result.firstWhere(isCompleted(taskId));
       final json = jsonDecode(res.response);
 
       expect(json['message'], 'Successfully uploaded');
@@ -59,8 +69,7 @@ void main() {
 
       expect(taskId, isNotNull);
 
-      final res = await uploader.result
-          .firstWhere((element) => element.taskId == taskId);
+      final res = await uploader.result.firstWhere(isCompleted(taskId));
       final json = jsonDecode(res.response);
 
       expect(json['message'], 'Successfully uploaded');
@@ -80,8 +89,7 @@ void main() {
 
       expect(taskId, isNotNull);
 
-      final res = await uploader.result
-          .firstWhere((element) => element.taskId == taskId);
+      final res = await uploader.result.firstWhere(isCompleted(taskId));
 
       expect(res.response, isNull);
       expect(res.statusCode, 201);
@@ -98,8 +106,7 @@ void main() {
 
       expect(taskId, isNotNull);
 
-      final res = await uploader.result
-          .firstWhere((element) => element.taskId == taskId);
+      final res = await uploader.result.firstWhere(isFailed(taskId));
       expect(res.statusCode, 500);
       expect(res.status, UploadTaskStatus.failed);
     });
@@ -116,8 +123,7 @@ void main() {
 
       expect(taskId, isNotNull);
 
-      final res = await uploader.result
-          .firstWhere((element) => element.taskId == taskId);
+      final res = await uploader.result.firstWhere(isCompleted(taskId));
 
       final json = jsonDecode(res.response);
 
@@ -134,8 +140,7 @@ void main() {
 
       expect(taskId, isNotNull);
 
-      final res = await uploader.result
-          .firstWhere((element) => element.taskId == taskId);
+      final res = await uploader.result.firstWhere(isFailed(taskId));
       expect(res.statusCode, 500);
       expect(res.status, UploadTaskStatus.failed);
     });
