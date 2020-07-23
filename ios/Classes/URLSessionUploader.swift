@@ -271,9 +271,6 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
             }
         }
 
-        self.uploadedData.removeValue(forKey: taskId)
-        self.runningTaskById.removeValue(forKey: taskId)
-
         let message: String?
         if let data = uploadedData[taskId] {
             message = String(data: data, encoding: String.Encoding.utf8)
@@ -291,6 +288,9 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
             NSLog("URLSessionDidCompleteWithError: task: \(uploadTask.state.statusText()) statusCode: \(response?.statusCode ?? -1), error:\(error?.localizedDescription ?? "none")")
             delegates.uploadFailed(taskId: taskId, inStatus: .failed, statusCode: statusCode, errorCode: "upload_error", errorMessage: error?.localizedDescription ?? "", errorStackTrace: Thread.callStackSymbols)
         }
+
+        self.uploadedData.removeValue(forKey: taskId)
+        self.runningTaskById.removeValue(forKey: taskId)
     }
 
     private func isRequestSuccessful(_ statusCode: Int) -> Bool {
