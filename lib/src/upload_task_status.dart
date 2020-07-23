@@ -30,7 +30,7 @@ class UploadTaskStatus {
       case 5:
         return "Cancelled";
       default:
-        return "Undefined";
+        return "Undefined ($value)";
     }
   }
 

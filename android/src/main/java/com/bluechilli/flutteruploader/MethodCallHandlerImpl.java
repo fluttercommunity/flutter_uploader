@@ -155,7 +155,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
   }
 
   private void cancel(MethodCall call, MethodChannel.Result result) {
-    String taskId = call.argument("task_id");
+    String taskId = call.argument("taskId");
     WorkManager.getInstance(context).cancelWorkById(UUID.fromString(taskId));
     result.success(null);
   }

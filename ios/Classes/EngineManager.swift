@@ -53,11 +53,11 @@ extension EngineManager: UploaderDelegate {
         startEngineIfNeeded()
     }
 
-    func uploadCompleted(taskId: String, message: String, statusCode: Int, headers: [String: Any]) {
+    func uploadCompleted(taskId: String, message: String?, statusCode: Int, headers: [String: Any]) {
         startEngineIfNeeded()
     }
 
-    func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String, errorStackTrace: [String]) {
+    func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String?, errorStackTrace: [String]) {
         startEngineIfNeeded()
     }
 }

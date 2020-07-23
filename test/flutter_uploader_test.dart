@@ -117,7 +117,7 @@ void main() {
 
         expect(log, <Matcher>[
           isMethodCall('cancel', arguments: <String, dynamic>{
-            'task_id': 'task123',
+            'taskId': 'task123',
           }),
         ]);
       });

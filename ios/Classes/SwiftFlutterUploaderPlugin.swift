@@ -2,17 +2,13 @@ import Flutter
 import UIKit
 import Alamofire
 
+private let validHttpMethods = ["POST", "PUT", "PATCH"]
+
 public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     private static let channelName = "flutter_uploader"
     private static let progressEventChannelName = "flutter_uploader/events/progress"
     private static let resultEventChannelName = "flutter_uploader/events/result"
 
-    static let KEY_TASK_ID = "task_id"
-    static let KEY_STATUS = "status"
-    static let KEY_PROGRESS = "progress"
-
-    static let KEY_FIELD_NAME = "fieldname"
-    static let KEY_PATH = "path"
     static let STEP_UPDATE = 0
     static let DEFAULT_TIMEOUT = 3600.0
 
@@ -20,10 +16,10 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
 
     let channel: FlutterMethodChannel
     let progressEventChannel: FlutterEventChannel
-    let progressHandler: SimpleStreamHandler
+    let progressHandler: CachingStreamHandler<[String:Any]>
 
     let resultEventChannel: FlutterEventChannel
-    let resultHandler: SimpleStreamHandler
+    let resultHandler: CachingStreamHandler<[String:Any]>
 
     public static var registerPlugins: FlutterPluginRegistrantCallback?
 
@@ -44,35 +40,19 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         self.channel = channel
 
         self.progressEventChannel = progressEventChannel
-        self.progressHandler = SimpleStreamHandler()
+        self.progressHandler = CachingStreamHandler()
         progressEventChannel.setStreamHandler(progressHandler)
 
         self.resultEventChannel = resultEventChannel
-        self.resultHandler = SimpleStreamHandler(onListen: { (handler) in
-            let resultDatabase = UploadResultDatabase.shared
-            for map in resultDatabase.completed {
-                handler.add([
-                    SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
-                    SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
-                    "message": map["message"] as! String,
-                    "statusCode": map["statusCode"] as! Int,
-                    "headers": map["headers"] as! [String: Any]
-                    //            "tag": tag ?? NSNull()
-                ])
-            }
-
-            for map in resultDatabase.failed {
-                handler.add([
-                    SwiftFlutterUploaderPlugin.KEY_TASK_ID: map["taskId"] as! String,
-                    SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
-                    "statusCode": map["statusCode"] as! Int,
-                    "code": map["code"] as! String,
-                    "details": map["details"] as! [String]
-                ])
-            }
-
-        })
+        self.resultHandler = CachingStreamHandler()
         resultEventChannel.setStreamHandler(resultHandler)
+        
+        // load entries from database into StreamHandlers, which cache the values.
+        let resultDatabase = UploadResultDatabase.shared
+        for map in resultDatabase.results {
+            let taskId = map[Key.taskId] as! String
+            resultHandler.add(taskId, map)
+        }
 
         self.taskQueue = DispatchQueue(label: "chillisource.flutter_uploader.dispatch.queue")
         super.init()
@@ -86,6 +66,9 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             setBackgroundHandler(call, result)
         case "clearUploads":
             UploadResultDatabase.shared.clear()
+            resultHandler.clear()
+            progressHandler.clear()
+            
             result(nil)
         case "enqueue":
             enqueueMethodCall(call, result)
@@ -117,7 +100,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         let files = args["files"] as? [Any]
         let tag = args["tag"] as? String
 
-        let validHttpMethods = ["POST", "PUT", "PATCH"]
         let httpMethod = method.uppercased()
 
         if (!validHttpMethods.contains(httpMethod)) {
@@ -140,8 +122,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
                 result(error!)
             } else if let uploadTask = task {
                 result(self.urlSessionUploader.identifierForTask(uploadTask))
-
-//                self.sendUpdateProgressForTaskId(taskId, inStatus: .enqueue, andProgress: 0, andTag: tag)
             }
         })
     }
@@ -153,7 +133,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         let headers = args["headers"] as? [String: Any?]
         let tag = args["tag"] as? String
 
-        let validHttpMethods = ["POST", "PUT", "PATCH"]
         let httpMethod = method.uppercased()
 
         if (!validHttpMethods.contains(httpMethod)) {
@@ -189,7 +168,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
 
     private func cancelMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         let args = call.arguments as! [String: Any?]
-        let taskId = args[SwiftFlutterUploaderPlugin.KEY_TASK_ID] as! String
+        let taskId = args[Key.taskId] as! String
 
         urlSessionUploader.cancelWithTaskId(taskId)
 
@@ -246,8 +225,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             for file in files {
                 let f = file as! [String: Any]
 
-                let fieldname = f[SwiftFlutterUploaderPlugin.KEY_FIELD_NAME] as! String
-                let path = f[SwiftFlutterUploaderPlugin.KEY_PATH] as! String
+                let fieldname = f[Key.fieldname] as! String
+                let path = f[Key.path] as! String
 
                 var isDir: ObjCBool = false
 
@@ -345,41 +324,39 @@ extension SwiftFlutterUploaderPlugin {
 
 extension SwiftFlutterUploaderPlugin: UploaderDelegate {
     func uploadEnqueued(taskId: String) {
-        progressHandler.add([
-            SwiftFlutterUploaderPlugin.KEY_TASK_ID: taskId,
-            SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.enqueue.rawValue,
+        resultHandler.add(taskId, [
+            Key.taskId: taskId,
+            Key.status: UploadTaskStatus.enqueue.rawValue,
         ]);
     }
 
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
-        progressHandler.add([
-            SwiftFlutterUploaderPlugin.KEY_TASK_ID: taskId,
-            SwiftFlutterUploaderPlugin.KEY_STATUS: inStatus.rawValue,
-            SwiftFlutterUploaderPlugin.KEY_PROGRESS: progress
-//            "tag": (tag ?? NSNull()) as Any
+        progressHandler.add(taskId, [
+            Key.taskId: taskId,
+            Key.status: inStatus.rawValue,
+            Key.progress: progress
         ])
     }
 
-    func uploadCompleted(taskId: String, message: String, statusCode: Int, headers: [String: Any]) {
-        resultHandler.add([
-            SwiftFlutterUploaderPlugin.KEY_TASK_ID: taskId,
-            SwiftFlutterUploaderPlugin.KEY_STATUS: UploadTaskStatus.completed.rawValue,
-            "message": message,
-            "statusCode": statusCode,
-            "headers": headers
-//            "tag": tag ?? NSNull()
+    func uploadCompleted(taskId: String, message: String?, statusCode: Int, headers: [String: Any]) {
+        resultHandler.add(taskId, [
+            Key.taskId: taskId,
+            Key.status: UploadTaskStatus.completed.rawValue,
+            Key.message: message ?? NSNull(),
+            Key.statusCode: statusCode,
+            Key.headers: headers
         ])
 
     }
 
-    func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String, errorStackTrace: [String]) {
-        resultHandler.add([
-            SwiftFlutterUploaderPlugin.KEY_TASK_ID: taskId,
-            SwiftFlutterUploaderPlugin.KEY_STATUS: inStatus.rawValue,
-            "statusCode": NSNumber(integerLiteral: statusCode),
-            "code": errorCode,
-            "message": errorMessage,
-            "details": errorStackTrace
+    func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String?, errorStackTrace: [String]) {
+        resultHandler.add(taskId, [
+            Key.taskId: taskId,
+            Key.status: inStatus.rawValue,
+            Key.statusCode: statusCode,
+            Key.code: errorCode,
+            Key.message: errorMessage ?? NSNull(),
+            Key.details: errorStackTrace
         ])
     }
 

@@ -6,20 +6,18 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.work.WorkManager;
+import com.bluechilli.flutteruploader.plugin.CachingStreamHandler;
 import com.bluechilli.flutteruploader.plugin.StatusListener;
 import com.bluechilli.flutteruploader.plugin.UploadObserver;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
 import io.flutter.plugin.common.BinaryMessenger;
 import io.flutter.plugin.common.EventChannel;
-import io.flutter.plugin.common.EventChannel.EventSink;
-import io.flutter.plugin.common.EventChannel.StreamHandler;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /** FlutterUploaderPlugin */
@@ -34,12 +32,12 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
   private UploadObserver uploadObserver;
 
   private EventChannel progressEventChannel;
-  @Nullable private EventSink progressEventSink;
-  List<Map<String, Object>> cachedProgress = new ArrayList<>();
+  private final CachingStreamHandler<Map<String, Object>> progressStreamHandler =
+      new CachingStreamHandler<>();
 
   private EventChannel resultEventChannel;
-  @Nullable private EventSink resultEventSink;
-  List<Map<String, Object>> cachedResults = new ArrayList<>();
+  private final CachingStreamHandler<Map<String, Object>> resultStreamHandler =
+      new CachingStreamHandler<>();
 
   public static void registerWith(Registrar registrar) {
     final FlutterUploaderPlugin plugin = new FlutterUploaderPlugin();
@@ -75,44 +73,10 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     channel.setMethodCallHandler(methodCallHandler);
 
     progressEventChannel = new EventChannel(messenger, PROGRESS_EVENT_CHANNEL_NAME);
-    progressEventChannel.setStreamHandler(
-        new StreamHandler() {
-          @Override
-          public void onListen(Object arguments, EventSink events) {
-            progressEventSink = events;
-            if (!cachedProgress.isEmpty()) {
-              for (Map<String, Object> item : cachedProgress) {
-                events.success(item);
-              }
-              cachedProgress.clear();
-            }
-          }
-
-          @Override
-          public void onCancel(Object arguments) {
-            progressEventSink = null;
-          }
-        });
+    progressEventChannel.setStreamHandler(progressStreamHandler);
 
     resultEventChannel = new EventChannel(messenger, RESULT_EVENT_CHANNEL_NAME);
-    resultEventChannel.setStreamHandler(
-        new StreamHandler() {
-          @Override
-          public void onListen(Object arguments, EventSink events) {
-            resultEventSink = events;
-            if (!cachedResults.isEmpty()) {
-              for (Map<String, Object> item : cachedResults) {
-                events.success(item);
-              }
-              cachedResults.clear();
-            }
-          }
-
-          @Override
-          public void onCancel(Object arguments) {
-            resultEventSink = null;
-          }
-        });
+    resultEventChannel.setStreamHandler(resultStreamHandler);
   }
 
   private void stopListening(Context context) {
@@ -133,33 +97,28 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
     resultEventChannel.setStreamHandler(null);
     resultEventChannel = null;
+
+    progressStreamHandler.clear();
+    resultStreamHandler.clear();
   }
 
   @Override
   public void onEnqueued(String id) {
     Map<String, Object> args = new HashMap<>();
-    args.put("task_id", id);
+    args.put("taskId", id);
     args.put("status", UploadStatus.ENQUEUED);
 
-    if (resultEventSink != null) {
-      resultEventSink.success(args);
-    } else {
-      cachedResults.add(args);
-    }
+    resultStreamHandler.add(id, args);
   }
 
   @Override
   public void onUpdateProgress(String id, int status, int progress) {
     final Map<String, Object> args = new HashMap<>();
-    args.put("task_id", id);
+    args.put("taskId", id);
     args.put("status", status);
     args.put("progress", progress);
 
-    if (progressEventSink != null) {
-      progressEventSink.success(args);
-    } else {
-      cachedProgress.add(args);
-    }
+    progressStreamHandler.add(id, args);
   }
 
   @Override
@@ -171,7 +130,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
       String message,
       @Nullable String[] details) {
     Map<String, Object> args = new HashMap<>();
-    args.put("task_id", id);
+    args.put("taskId", id);
     args.put("status", status);
     args.put("statusCode", statusCode);
     args.put("code", code);
@@ -182,11 +141,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
             ? new ArrayList<>(Arrays.asList(details))
             : Collections.<String>emptyList());
 
-    if (resultEventSink != null) {
-      resultEventSink.success(args);
-    } else {
-      cachedResults.add(args);
-    }
+    resultStreamHandler.add(id, args);
   }
 
   @Override
@@ -197,16 +152,12 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
       String response,
       @Nullable Map<String, String> headers) {
     Map<String, Object> args = new HashMap<>();
-    args.put("task_id", id);
+    args.put("taskId", id);
     args.put("status", status);
     args.put("statusCode", statusCode);
     args.put("message", response);
     args.put("headers", headers != null ? headers : Collections.<String, Object>emptyMap());
 
-    if (resultEventSink != null) {
-      resultEventSink.success(args);
-    } else {
-      cachedResults.add(args);
-    }
+    resultStreamHandler.add(id, args);
   }
 }

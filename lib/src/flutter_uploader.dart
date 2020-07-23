@@ -47,7 +47,7 @@ class FlutterUploader {
             UploadTaskProgress>.fromHandlers(
       handleData:
           (Map<String, dynamic> map, EventSink<UploadTaskProgress> sink) {
-        String id = map['task_id'];
+        String id = map['taskId'];
         int status = map['status'];
         int uploadProgress = map['progress'];
         final t = UploadTaskProgress(
@@ -69,7 +69,7 @@ class FlutterUploader {
       StreamTransformer<Map<String, dynamic>, UploadTaskResponse>.fromHandlers(
         handleData:
             (Map<String, dynamic> value, EventSink<UploadTaskResponse> sink) {
-          String id = value['task_id'];
+          String id = value['taskId'];
           String message = value['message'];
           // String code = value['code'];
           int status = value["status"];
@@ -173,7 +173,7 @@ class FlutterUploader {
   /// * `taskId`: unique identifier of the upload task
   ///
   Future<void> cancel({@required String taskId}) async {
-    await _platform.invokeMethod<void>('cancel', {'task_id': taskId});
+    await _platform.invokeMethod<void>('cancel', {'taskId': taskId});
   }
 
   ///

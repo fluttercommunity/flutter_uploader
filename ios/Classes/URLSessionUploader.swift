@@ -288,13 +288,12 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
         self.uploadedData.removeValue(forKey: taskId)
         self.runningTaskById.removeValue(forKey: taskId)
 
-        let dataString = String(data: data, encoding: String.Encoding.utf8)
-        let message = dataString == nil ? "" : dataString!
+        let message = String(data: data, encoding: String.Encoding.utf8)
         if error == nil && !hasResponseError {
-            NSLog("URLSessionDidCompleteWithError: response: \(message), task: \(uploadTask.state.statusText())")
+            NSLog("URLSessionDidCompleteWithError: response: \(message ?? "null"), task: \(uploadTask.state.statusText())")
             self.delegates.uploadCompleted(taskId: taskId, message: message, statusCode: response?.statusCode ?? 200, headers: responseHeaders)
         } else if hasResponseError {
-            NSLog("URLSessionDidCompleteWithError: task: \(uploadTask.state.statusText()) statusCode: \(response?.statusCode ?? -1), error:\(message), response:\(String(describing: response))")
+            NSLog("URLSessionDidCompleteWithError: task: \(uploadTask.state.statusText()) statusCode: \(response?.statusCode ?? -1), error:\(message ?? "null"), response:\(String(describing: response))")
             self.delegates.uploadFailed(taskId: taskId, inStatus: .failed, statusCode: statusCode, errorCode: "upload_error", errorMessage: message, errorStackTrace: Thread.callStackSymbols)
         } else {
             NSLog("URLSessionDidCompleteWithError: task: \(uploadTask.state.statusText()) statusCode: \(response?.statusCode ?? -1), error:\(error?.localizedDescription ?? "none")")

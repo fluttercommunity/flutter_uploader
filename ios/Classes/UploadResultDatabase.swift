@@ -7,75 +7,78 @@
 
 import Foundation
 
+/// A helper class which stores the upload results for later retrieval by the plugin.
+/// This mimics the behavior of the workmanager LiveData on Android, which allows a limited retrieval of completed work.
 class UploadResultDatabase: UploaderDelegate {
     static let shared = UploadResultDatabase()
 
     private init() {
-        if let plist = try? loadPropertyList(completedPListURL) {
+        if let plist = try? loadPropertyList(resultsPListURL) {
             for c in plist {
                 if let map = c as? [String: Any] {
-                    self.completed.append(map)
-                }
-            }
-        }
-
-        if let plist = try? loadPropertyList(failedPListURL) {
-            for c in plist {
-                if let map = c as? [String: Any] {
-                    self.failed.append(map)
+                    self.results.append(map)
                 }
             }
         }
     }
 
     public func clear() {
-        completed.removeAll()
-        failed.removeAll()
+        results.removeAll()
 
         do {
-            try savePropertyList(completedPListURL, [])
-            try savePropertyList(failedPListURL, [])
+            try savePropertyList(resultsPListURL, [])
         } catch {
             print("error write \(error)")
         }
     }
 
-    var completed: [[String: Any]] = []
-    var failed: [[String: Any]] = []
+    var results: [[String: Any]] = []
     
     func uploadEnqueued(taskId: String) {
+        results.append([
+            Key.taskId: taskId,
+            Key.status: UploadTaskStatus.enqueue.rawValue,
+        ])
+
+        do {
+            try savePropertyList(resultsPListURL, results)
+        } catch {
+            print("error write \(error)")
+        }
     }
 
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
         // No need to store in-flight.
     }
 
-    func uploadCompleted(taskId: String, message: String, statusCode: Int, headers: [String: Any]) {
-        completed.append([
-            "taskId": taskId,
-            "message": message,
-            "statusCode": statusCode,
-            "headers": headers
+    func uploadCompleted(taskId: String, message: String?, statusCode: Int, headers: [String: Any]) {
+        results.append([
+            Key.taskId: taskId,
+            Key.status: UploadTaskStatus.completed.rawValue,
+            Key.message: message ?? NSNull(),
+            Key.statusCode: statusCode,
+            Key.headers: headers
         ])
 
         do {
-            try savePropertyList(completedPListURL, completed)
+            try savePropertyList(resultsPListURL, results)
         } catch {
             print("error write \(error)")
         }
     }
 
-    func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String, errorStackTrace: [String]) {
-        failed.append([
-            "taskId": taskId,
-            "statusCode": statusCode,
-            "code": errorCode,
-            "message": errorMessage,
-            "details": errorStackTrace
+    func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String?, errorStackTrace: [String]) {
+        results.append([
+            Key.taskId: taskId,
+            Key.status: inStatus.rawValue,
+            Key.statusCode: statusCode,
+            Key.code: errorCode,
+            Key.message: errorMessage ?? NSNull(),
+            Key.details: errorStackTrace
         ])
 
         do {
-            try savePropertyList(failedPListURL, failed)
+            try savePropertyList(resultsPListURL, results)
         } catch {
             print("error write \(error)")
         }
@@ -94,13 +97,8 @@ class UploadResultDatabase: UploaderDelegate {
         return plist
     }
 
-    private var completedPListURL: URL {
+    private var resultsPListURL: URL {
         let documentDirectoryURL = try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        return documentDirectoryURL.appendingPathComponent("flutter_uploader-completed.plist")
-    }
-
-    private var failedPListURL: URL {
-        let documentDirectoryURL = try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        return documentDirectoryURL.appendingPathComponent("flutter_uploader-failed.plist")
+        return documentDirectoryURL.appendingPathComponent("flutter_uploader-results.plist")
     }
 }
