@@ -11,6 +11,12 @@ dependencies:
   flutter:
     sdk: flutter
 
+dev_dependencies:
+  mockito: ^4.1.0
+  pedantic: ^1.0.0
+  flutter_test:
+    sdk: flutter
+
 flutter:
   plugin:
     androidPackage: com.bluechilli.flutteruploader

@@ -4,7 +4,6 @@ class UploadException extends Equatable implements Exception {
   final String taskId;
   final int statusCode;
   final UploadTaskStatus status;
-  final String tag;
   final String message;
   final String code;
 
@@ -12,7 +11,6 @@ class UploadException extends Equatable implements Exception {
     this.taskId,
     this.statusCode,
     this.status,
-    this.tag,
     this.message,
     this.code,
   });
@@ -26,7 +24,6 @@ class UploadException extends Equatable implements Exception {
       taskId,
       statusCode,
       status,
-      tag,
       message,
       code,
     ];
