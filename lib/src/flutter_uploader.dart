@@ -5,6 +5,9 @@ class FlutterUploader {
   final EventChannel _progressChannel;
   final EventChannel _resultChannel;
 
+  Stream<UploadTaskProgress> _progressStream;
+  Stream<UploadTaskResponse> _resultStream;
+
   static FlutterUploader _instance;
 
   factory FlutterUploader() {
@@ -40,7 +43,7 @@ class FlutterUploader {
   /// stream to listen on upload progress
   ///
   Stream<UploadTaskProgress> get progress {
-    return _progressChannel
+    return _progressStream ??= _progressChannel
         .receiveBroadcastStream()
         .map<Map<String, dynamic>>((event) => Map<String, dynamic>.from(event))
         .transform(StreamTransformer<Map<String, dynamic>,
@@ -62,7 +65,7 @@ class FlutterUploader {
   /// stream to listen on upload result
   ///
   Stream<UploadTaskResponse> get result {
-    return _resultChannel
+    return _resultStream ??= _resultChannel
         .receiveBroadcastStream()
         .map<Map<String, dynamic>>((event) => Map<String, dynamic>.from(event))
         .transform(
