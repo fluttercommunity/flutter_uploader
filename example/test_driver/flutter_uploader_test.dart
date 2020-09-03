@@ -48,8 +48,9 @@ void main() {
     testWidgets("single file", (WidgetTester tester) async {
       var fileItem = FileItem(path: await _tmpFile(), field: "file");
 
-      final taskId =
-          await uploader.enqueue(url: url.toString(), files: [fileItem]);
+      final taskId = await uploader.enqueue(
+        MultipartFormDataUpload(url: url.toString(), files: [fileItem]),
+      );
 
       expect(taskId, isNotNull);
 
@@ -62,10 +63,12 @@ void main() {
     });
 
     testWidgets("multiple files", (WidgetTester tester) async {
-      final taskId = await uploader.enqueue(url: url.toString(), files: [
-        FileItem(path: await _tmpFile(256), field: "file1"),
-        FileItem(path: await _tmpFile(257), field: "file2"),
-      ]);
+      final taskId = await uploader.enqueue(
+        MultipartFormDataUpload(url: url.toString(), files: [
+          FileItem(path: await _tmpFile(256), field: "file1"),
+          FileItem(path: await _tmpFile(257), field: "file2"),
+        ]),
+      );
 
       expect(taskId, isNotNull);
 
@@ -81,10 +84,12 @@ void main() {
       var fileItem = FileItem(path: await _tmpFile(), field: "file");
 
       final taskId = await uploader.enqueue(
-        url: url.replace(queryParameters: {
-          'simulate': 'ok201',
-        }).toString(),
-        files: [fileItem],
+        MultipartFormDataUpload(
+          url: url.replace(queryParameters: {
+            'simulate': 'ok201',
+          }).toString(),
+          files: [fileItem],
+        ),
       );
 
       expect(taskId, isNotNull);
@@ -100,8 +105,11 @@ void main() {
       var fileItem = FileItem(path: await _tmpFile(), field: "file");
 
       final taskId = await uploader.enqueue(
-        url: url.replace(queryParameters: {'simulate': 'error500'}).toString(),
-        files: [fileItem],
+        MultipartFormDataUpload(
+          url:
+              url.replace(queryParameters: {'simulate': 'error500'}).toString(),
+          files: [fileItem],
+        ),
       );
 
       expect(taskId, isNotNull);
@@ -116,9 +124,11 @@ void main() {
     final url = baseUrl.replace(path: baseUrl.path + 'Binary');
 
     testWidgets("single file", (WidgetTester tester) async {
-      final taskId = await uploader.enqueueBinary(
-        url: url.toString(),
-        path: await _tmpFile(),
+      final taskId = await uploader.enqueue(
+        RawUpload(
+          url: url.toString(),
+          path: await _tmpFile(),
+        ),
       );
 
       expect(taskId, isNotNull);
@@ -133,9 +143,12 @@ void main() {
     });
 
     testWidgets("fowards errors", (WidgetTester tester) async {
-      final taskId = await uploader.enqueueBinary(
-        url: url.replace(queryParameters: {'simulate': 'error500'}).toString(),
-        path: await _tmpFile(),
+      final taskId = await uploader.enqueue(
+        RawUpload(
+          url:
+              url.replace(queryParameters: {'simulate': 'error500'}).toString(),
+          path: await _tmpFile(),
+        ),
       );
 
       expect(taskId, isNotNull);
