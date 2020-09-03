@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
@@ -16,6 +18,9 @@ void main() {
   EventChannel progressChannel;
   EventChannel resultChannel;
 
+  StreamController<Map<String, dynamic>> progressController;
+  StreamController<Map<String, dynamic>> resultController;
+
   final List<MethodCall> log = <MethodCall>[];
 
   setUp(() {
@@ -27,10 +32,23 @@ void main() {
     progressChannel = MockEventChannel();
     resultChannel = MockEventChannel();
 
+    progressController = StreamController();
+    resultController = StreamController();
+
+    when(progressChannel.receiveBroadcastStream())
+        .thenAnswer((_) => progressController.stream.asBroadcastStream());
+    when(resultChannel.receiveBroadcastStream())
+        .thenAnswer((_) => resultController.stream.asBroadcastStream());
+
     uploader =
         FlutterUploader.private(methodChannel, progressChannel, resultChannel);
 
     log.clear();
+  });
+
+  tearDown(() {
+    progressController.close();
+    resultController.close();
   });
 
   group('FlutterUploader', () {
@@ -141,6 +159,50 @@ void main() {
           isMethodCall('clearUploads', arguments: null),
         ]);
       });
+    });
+    group("progress stream", () {
+      testWidgets("supports multiple subscriptions",
+          (WidgetTester tester) async {
+        const fakeTaskId = '123123';
+
+        final Completer<String> c1 = Completer();
+        final Completer<String> c2 = Completer();
+
+        uploader.progress.take(1).listen((event) => c1.complete(event.taskId));
+        uploader.progress.take(1).listen((event) => c2.complete(event.taskId));
+
+        progressController.add({
+          'taskId': fakeTaskId,
+          'message': '123',
+          'status': 200,
+          'statusCode': 120,
+        });
+
+        expect(await c1.future, fakeTaskId);
+        expect(await c2.future, fakeTaskId);
+      });
+    });
+  });
+
+  group("result stream", () {
+    testWidgets("supports multiple subscriptions", (WidgetTester tester) async {
+      const fakeTaskId = '123123';
+
+      final Completer<String> c1 = Completer();
+      final Completer<String> c2 = Completer();
+
+      uploader.result.take(1).listen((event) => c1.complete(event.taskId));
+      uploader.result.take(1).listen((event) => c2.complete(event.taskId));
+
+      resultController.add({
+        'taskId': fakeTaskId,
+        'message': '123',
+        'status': 200,
+        'statusCode': 120,
+      });
+
+      expect(await c1.future, fakeTaskId);
+      expect(await c2.future, fakeTaskId);
     });
   });
 }
