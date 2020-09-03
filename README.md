@@ -137,24 +137,28 @@ To see how it all works, check out the example.
 
 ``` dart
 final taskId = await FlutterUploader().enqueue(
-  url: "your upload link", //required: url to upload to
-  files: [FileItem(path: '/path/to/file', fieldname:"file")], // required: list of files that you want to upload
-  method: UploadMethod.POST, // HTTP method  (POST or PUT or PATCH)
-  headers: {"apikey": "api_123456", "userkey": "userkey_123456"},
-  data: {"name": "john"}, // any data you want to send in upload request
-  tag: 'my tag', // custom tag which is returned in result/progress
+  MultipartFormDataUpload(
+    url: "your upload link", //required: url to upload to
+    files: [FileItem(path: '/path/to/file', fieldname:"file")], // required: list of files that you want to upload
+    method: UploadMethod.POST, // HTTP method  (POST or PUT or PATCH)
+    headers: {"apikey": "api_123456", "userkey": "userkey_123456"},
+    data: {"name": "john"}, // any data you want to send in upload request
+    tag: 'my tag', // custom tag which is returned in result/progress
+  ),
 );
 ```
 
 **binary uploads:**
 
 ``` dart
-final taskId = await FlutterUploader().enqueueBinary(
-  url: "your upload link", // required: url to upload to
-  path: '/path/to/file', // required: list of files that you want to upload
-  method: UploadMethod.POST, // HTTP method  (POST or PUT or PATCH)
-  headers: {"apikey": "api_123456", "userkey": "userkey_123456"},
-  tag: 'my tag', // custom tag which is returned in result/progress
+final taskId = await FlutterUploader().enqueue(
+  RawUpload(
+    url: "your upload link", // required: url to upload to
+    path: '/path/to/file', // required: list of files that you want to upload
+    method: UploadMethod.POST, // HTTP method  (POST or PUT or PATCH)
+    headers: {"apikey": "api_123456", "userkey": "userkey_123456"},
+    tag: 'my tag', // custom tag which is returned in result/progress
+  ),
 );
 ```
 
