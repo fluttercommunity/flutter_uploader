@@ -93,73 +93,31 @@ class FlutterUploader {
     _platform.setMethodCallHandler(null);
   }
 
-  /// Create a new multipart/form-data upload task
+  /// Enqueues a new upload task described by [upload].
   ///
-  /// **parameters:**
-  ///
-  /// * `url`: upload link
-  /// * `files`: files to be uploaded
-  /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
-  /// * `headers`: HTTP headers
-  /// * `data`: additional data to be uploaded together with file
-  /// * `tag`: name of the upload request (only used on Android)
-  ///
-  /// **return:**
-  ///
-  /// an unique identifier of the new upload task
-  Future<String> enqueue({
-    @required String url,
-    @required List<FileItem> files,
-    UploadMethod method = UploadMethod.POST,
-    Map<String, String> headers,
-    Map<String, String> data,
-    String tag,
-  }) async {
-    assert(method != null);
+  /// See [MultipartFormDataUpload], [RawUpload] for available configuration.
+  Future<String> enqueue(Upload upload) async {
+    if (upload is MultipartFormDataUpload) {
+      return await _platform.invokeMethod<String>('enqueue', {
+        'url': upload.url,
+        'method': describeEnum(upload.method),
+        'files': (upload.files ?? []).map((e) => e.toJson()).toList(),
+        'headers': upload.headers,
+        'data': upload.data,
+        'tag': upload.tag,
+      });
+    }
+    if (upload is RawUpload) {
+      return await _platform.invokeMethod<String>('enqueueBinary', {
+        'url': upload.url,
+        'method': describeEnum(upload.method),
+        'path': upload.path,
+        'headers': upload.headers,
+        'tag': upload.tag
+      });
+    }
 
-    List f = files != null && files.length > 0
-        ? files.map((f) => f.toJson()).toList()
-        : [];
-
-    return await _platform.invokeMethod<String>('enqueue', {
-      'url': url,
-      'method': describeEnum(method),
-      'files': f,
-      'headers': headers,
-      'data': data,
-      'tag': tag
-    });
-  }
-
-  /// Create a new binary data upload task
-  ///
-  /// **parameters:**
-  ///
-  /// * `url`: upload link
-  /// * `path`: single file to upload
-  /// * `method`: HTTP method to use for upload (POST,PUT,PATCH)
-  /// * `headers`: HTTP headers
-  /// * `tag`: name of the upload request (only used on Android)
-  ///
-  /// **return:**
-  ///
-  /// an unique identifier of the new upload task
-  Future<String> enqueueBinary({
-    @required String url,
-    @required String path,
-    UploadMethod method = UploadMethod.POST,
-    Map<String, String> headers,
-    String tag,
-  }) async {
-    assert(method != null);
-
-    return await _platform.invokeMethod<String>('enqueueBinary', {
-      'url': url,
-      'method': describeEnum(method),
-      'path': path,
-      'headers': headers,
-      'tag': tag
-    });
+    throw 'Invalid upload type';
   }
 
   ///

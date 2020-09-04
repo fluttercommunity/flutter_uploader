@@ -68,15 +68,17 @@ void main() {
     group('enqueue', () {
       test('passes the arguments correctly', () async {
         await uploader.enqueue(
-          url: 'http://www.somewhere.com',
-          files: [
-            FileItem(path: '/path/to/file1'),
-            FileItem(path: '/path/to/file2', field: 'field2'),
-          ],
-          method: UploadMethod.PATCH,
-          headers: {'header1': 'value1'},
-          data: {'data1': 'value1'},
-          tag: 'tag1',
+          MultipartFormDataUpload(
+            url: 'http://www.somewhere.com',
+            files: [
+              FileItem(path: '/path/to/file1'),
+              FileItem(path: '/path/to/file2', field: 'field2'),
+            ],
+            method: UploadMethod.PATCH,
+            headers: {'header1': 'value1'},
+            data: {'data1': 'value1'},
+            tag: 'tag1',
+          ),
         );
 
         expect(log, <Matcher>[
@@ -107,12 +109,14 @@ void main() {
 
     group('enqueueBinary', () {
       test('passes the arguments correctly', () async {
-        await uploader.enqueueBinary(
-          url: 'http://www.somewhere.com',
-          path: '/path/to/file1',
-          method: UploadMethod.PATCH,
-          headers: {'header1': 'value1'},
-          tag: 'tag1',
+        await uploader.enqueue(
+          RawUpload(
+            url: 'http://www.somewhere.com',
+            path: '/path/to/file1',
+            method: UploadMethod.PATCH,
+            headers: {'header1': 'value1'},
+            tag: 'tag1',
+          ),
         );
 
         expect(log, <Matcher>[
