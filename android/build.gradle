@@ -54,4 +54,6 @@ dependencies {
     implementation "androidx.core:core:$core_version"
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     implementation "com.google.code.gson:gson:$gson_version"
+
+    implementation 'com.microsoft.azure.android:azure-storage-android:2.0.0@aar'
 }

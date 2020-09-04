@@ -117,6 +117,12 @@ class FlutterUploader {
       });
     }
 
+    if (upload is AzureUpload) {
+      return await _platform.invokeMethod<String>('enqueueAzure', {
+        'path': upload.path,
+      });
+    }
+
     throw 'Invalid upload type';
   }
 

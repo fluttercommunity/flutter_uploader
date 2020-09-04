@@ -1,7 +1,11 @@
 part of flutter_uploader;
 
-abstract class Upload {
-  const Upload({
+class Upload {
+  const Upload();
+}
+
+abstract class HttpUpload extends Upload {
+  const HttpUpload({
     @required this.url,
     @required this.method,
     this.headers = const {},
@@ -22,7 +26,7 @@ abstract class Upload {
   final String tag;
 }
 
-class MultipartFormDataUpload extends Upload {
+class MultipartFormDataUpload extends HttpUpload {
   MultipartFormDataUpload({
     @required String url,
     UploadMethod method = UploadMethod.POST,
@@ -48,7 +52,7 @@ class MultipartFormDataUpload extends Upload {
   final Map<String, String> data;
 }
 
-class RawUpload extends Upload {
+class RawUpload extends HttpUpload {
   const RawUpload({
     @required String url,
     UploadMethod method = UploadMethod.POST,
@@ -63,5 +67,14 @@ class RawUpload extends Upload {
         );
 
   /// single file to upload
+  final String path;
+}
+
+class AzureUpload extends Upload {
+  AzureUpload({
+    @required this.path,
+  });
+
+  // single file to upload
   final String path;
 }

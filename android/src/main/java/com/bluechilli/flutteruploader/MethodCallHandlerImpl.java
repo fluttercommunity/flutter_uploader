@@ -53,6 +53,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       case "enqueueBinary":
         enqueueBinary(call, result);
         break;
+      case "enqueueAzure":
+        enqueueAzure(call, result);
+        break;
       case "cancel":
         cancel(call, result);
         break;
@@ -156,6 +159,24 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 connectionTimeout,
                 tag),
             true);
+    WorkManager.getInstance(context).enqueue(request);
+    String taskId = request.getId().toString();
+
+    result.success(taskId);
+    statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+  }
+
+  private void enqueueAzure(MethodCall call, MethodChannel.Result result) {
+    String path = call.argument("path");
+
+    WorkRequest request =
+        new OneTimeWorkRequest.Builder(AzureUploadWorker.class)
+            .setConstraints(
+                new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .addTag(FLUTTER_UPLOAD_WORK_TAG)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
+            .build();
+
     WorkManager.getInstance(context).enqueue(request);
     String taskId = request.getId().toString();
 

@@ -43,6 +43,12 @@
       android:theme="@style/LaunchTheme"
       android:windowSoftInputMode="adjustResize" />
 
+    <provider
+      android:name="androidx.work.impl.WorkManagerInitializer"
+      android:authorities="${applicationId}.workmanager-init"
+      android:exported="false"
+      tools:node="remove" />
+
     <meta-data
       android:name="flutterEmbedding"
       android:value="2" />
