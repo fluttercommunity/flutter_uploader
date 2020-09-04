@@ -13,10 +13,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
-import io.flutter.embedding.engine.FlutterEngine;
-import io.flutter.embedding.engine.dart.DartExecutor;
-import io.flutter.view.FlutterCallbackInformation;
-import io.flutter.view.FlutterMain;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -67,14 +63,12 @@ public abstract class UploadWorker extends ListenableWorker implements CountProg
     super(appContext, workerParams);
   }
 
-  @Nullable private static FlutterEngine engine;
-
   private Executor backgroundExecutor = Executors.newSingleThreadExecutor();
 
   @NonNull
   @Override
   public ListenableFuture<Result> startWork() {
-    startEngine();
+    FlutterEngineHelper.start(getApplicationContext());
 
     return CallbackToFutureAdapter.getFuture(
         completer -> {
@@ -288,40 +282,6 @@ public abstract class UploadWorker extends ListenableWorker implements CountProg
     }
 
     return null;
-  }
-
-  private void startEngine() {
-    final Context context = getApplicationContext();
-    long callbackHandle = SharedPreferenceHelper.getCallbackHandle(context);
-
-    Log.d(TAG, "callbackHandle: " + callbackHandle);
-
-    if (callbackHandle != -1L && engine == null) {
-      engine = new FlutterEngine(context);
-      FlutterMain.ensureInitializationComplete(context, null);
-
-      FlutterCallbackInformation callbackInfo =
-          FlutterCallbackInformation.lookupCallbackInformation(callbackHandle);
-      String dartBundlePath = FlutterMain.findAppBundlePath();
-
-      engine
-          .getDartExecutor()
-          .executeDartCallback(
-              new DartExecutor.DartCallback(context.getAssets(), dartBundlePath, callbackInfo));
-    }
-  }
-
-  private void stopEngine() {
-    Log.d(TAG, "Destroying worker engine.");
-
-    if (engine != null) {
-      try {
-        engine.destroy();
-      } catch (Throwable e) {
-        Log.e(TAG, "Can not destroy engine", e);
-      }
-      engine = null;
-    }
   }
 
   private Result handleException(Exception ex, String code) {
