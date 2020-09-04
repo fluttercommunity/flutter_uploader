@@ -60,10 +60,8 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
   }
 
   private void startListening(Context context, BinaryMessenger messenger) {
-    final int timeout = FlutterUploaderInitializer.getConnectionTimeout(context);
-
     channel = new MethodChannel(messenger, CHANNEL_NAME);
-    methodCallHandler = new MethodCallHandlerImpl(context, timeout, this);
+    methodCallHandler = new MethodCallHandlerImpl(context, this);
 
     uploadObserver = new UploadObserver(this);
     WorkManager.getInstance(context)

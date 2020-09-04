@@ -25,20 +25,19 @@ import java.util.concurrent.TimeUnit;
 
 public class MethodCallHandlerImpl implements MethodCallHandler {
 
+  private static final int DEFAULT_CONNECTION_TIMEOUT = 3600;
+
   /** The generic {@link WorkManager} tag which matches any upload. */
   public static final String FLUTTER_UPLOAD_WORK_TAG = "flutter_upload_task";
 
   private final Context context;
 
-  private int connectionTimeout;
-
   @NonNull private final StatusListener statusListener;
 
   private static final List<String> VALID_HTTP_METHODS = Arrays.asList("POST", "PUT", "PATCH");
 
-  MethodCallHandlerImpl(Context context, int timeout, @NonNull StatusListener listener) {
+  MethodCallHandlerImpl(Context context, @NonNull StatusListener listener) {
     this.context = context;
-    this.connectionTimeout = timeout;
     this.statusListener = listener;
   }
 
@@ -85,6 +84,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     Map<String, String> parameters = call.argument("data");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
+    Integer connectionTimeout = call.argument("timeout");
 
     if (method == null) {
       method = "POST";
@@ -98,6 +98,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     if (!VALID_HTTP_METHODS.contains(method.toUpperCase())) {
       result.error("invalid_method", "Method must be either POST | PUT | PATCH", null);
       return;
+    }
+
+    if (connectionTimeout == null) {
+      connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
     }
 
     List<FileItem> items = new ArrayList<>();
@@ -121,6 +125,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     String path = call.argument("path");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
+    Integer connectionTimeout = call.argument("timeout");
 
     if (method == null) {
       method = "POST";
@@ -134,6 +139,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     if (!VALID_HTTP_METHODS.contains(method.toUpperCase())) {
       result.error("invalid_method", "Method must be either POST | PUT | PATCH", null);
       return;
+    }
+
+    if (connectionTimeout == null) {
+      connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
     }
 
     WorkRequest request =
