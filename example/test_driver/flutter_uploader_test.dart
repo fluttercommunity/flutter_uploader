@@ -58,7 +58,23 @@ void main() {
 
       expect(json['message'], 'Successfully uploaded');
       expect(res.statusCode, 200);
+      expect(json['request']['headers']['accept'], '*/*');
       expect(res.status, UploadTaskStatus.complete);
+    });
+
+    testWidgets("can overwrite 'Accept' header", (WidgetTester tester) async {
+      var fileItem = FileItem(path: await _tmpFile(), field: "file");
+
+      final taskId = await uploader.enqueue(
+        url: url.toString(),
+        files: [fileItem],
+        headers: {'Accept': 'application/json, charset=utf-8'},
+      );
+      final res = await uploader.result.firstWhere(isCompleted(taskId));
+      final json = jsonDecode(res.response);
+
+      expect(json['request']['headers']['accept'],
+          'application/json, charset=utf-8');
     });
 
     testWidgets("multiple files", (WidgetTester tester) async {
@@ -129,9 +145,21 @@ void main() {
 
       expect(json['message'], 'Successfully uploaded');
       expect(res.statusCode, 200);
+      expect(json['headers']['accept'], '*/*');
       expect(res.status, UploadTaskStatus.complete);
     });
 
+    testWidgets("can overwrite 'Accept' header", (WidgetTester tester) async {
+      final taskId = await uploader.enqueueBinary(
+        url: url.toString(),
+        path: await _tmpFile(),
+        headers: {'Accept': 'application/json, charset=utf-8'},
+      );
+      final res = await uploader.result.firstWhere(isCompleted(taskId));
+      final json = jsonDecode(res.response);
+
+      expect(json['headers']['accept'], 'application/json, charset=utf-8');
+    });
     testWidgets("fowards errors", (WidgetTester tester) async {
       final taskId = await uploader.enqueueBinary(
         url: url.replace(queryParameters: {'simulate': 'error500'}).toString(),
