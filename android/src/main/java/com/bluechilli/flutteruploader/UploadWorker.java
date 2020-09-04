@@ -2,7 +2,6 @@ package com.bluechilli.flutteruploader;
 
 import android.content.Context;
 import android.util.Log;
-import android.webkit.MimeTypeMap;
 import android.webkit.URLUtil;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,24 +32,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Headers;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class UploadWorker extends ListenableWorker implements CountProgressListener {
+public abstract class UploadWorker extends ListenableWorker implements CountProgressListener {
   public static final String ARG_URL = "url";
   public static final String ARG_METHOD = "method";
   public static final String ARG_HEADERS = "headers";
   public static final String ARG_DATA = "data";
   public static final String ARG_FILES = "files";
   public static final String ARG_REQUEST_TIMEOUT = "requestTimeout";
-  public static final String ARG_BINARY_UPLOAD = "binaryUpload";
   public static final String ARG_UPLOAD_REQUEST_TAG = "tag";
-  public static final String ARG_ID = "primaryId";
   public static final String EXTRA_STATUS_CODE = "statusCode";
   public static final String EXTRA_STATUS = "status";
   public static final String EXTRA_ERROR_MESSAGE = "errorMessage";
@@ -68,12 +63,8 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
   private Call call;
   private boolean isCancelled = false;
 
-  private Context context;
-
-  public UploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-    super(context, workerParams);
-
-    this.context = context;
+  public UploadWorker(@NonNull Context appContext, @NonNull WorkerParameters workerParams) {
+    super(appContext, workerParams);
   }
 
   @Nullable private static FlutterEngine engine;
@@ -106,14 +97,11 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
   }
 
   @NonNull
-  public Result doWorkInternal() {
+  private Result doWorkInternal() {
     String url = getInputData().getString(ARG_URL);
     String method = getInputData().getString(ARG_METHOD);
     int timeout = getInputData().getInt(ARG_REQUEST_TIMEOUT, 3600);
-    boolean isBinaryUpload = getInputData().getBoolean(ARG_BINARY_UPLOAD, false);
     String headersJson = getInputData().getString(ARG_HEADERS);
-    String parametersJson = getInputData().getString(ARG_DATA);
-    String filesJson = getInputData().getString(ARG_FILES);
     tag = getInputData().getString(ARG_UPLOAD_REQUEST_TAG);
 
     if (tag == null) {
@@ -124,72 +112,23 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
 
     try {
       Map<String, String> headers = null;
-      Map<String, String> parameters = null;
-      List<FileItem> files = new ArrayList<>();
-      Gson gson = new Gson();
-      Type type = new TypeToken<Map<String, String>>() {}.getType();
-      Type fileItemType = new TypeToken<List<FileItem>>() {}.getType();
+      final Gson gson = new Gson();
+      final Type mapStringStringType = new TypeToken<Map<String, String>>() {}.getType();
 
       if (headersJson != null) {
-        headers = gson.fromJson(headersJson, type);
+        headers = gson.fromJson(headersJson, mapStringStringType);
       }
 
-      if (parametersJson != null) {
-        parameters = gson.fromJson(parametersJson, type);
-      }
+      final RequestBody innerRequestBody = buildRequestBody();
 
-      if (filesJson != null) {
-        files = gson.fromJson(filesJson, fileItemType);
-      }
-
-      final RequestBody innerRequestBody;
-
-      if (isBinaryUpload) {
-        final FileItem item = files.get(0);
-        File file = new File(item.getPath());
-
-        if (!file.exists()) {
-          return Result.failure(
-              createOutputErrorData(
-                  UploadStatus.FAILED,
-                  DEFAULT_ERROR_STATUS_CODE,
-                  "invalid_files",
-                  "There are no items to upload",
-                  null));
-        }
-
-        String mimeType = GetMimeType(item.getPath());
-        MediaType contentType = MediaType.parse(mimeType);
-        innerRequestBody = RequestBody.create(file, contentType);
-      } else {
-        MultipartBody.Builder formRequestBuilder = prepareRequest(parameters, null);
-        int fileExistsCount = 0;
-        for (FileItem item : files) {
-          File file = new File(item.getPath());
-          Log.d(TAG, "attaching file: " + item.getPath());
-
-          if (file.exists() && file.isFile()) {
-            fileExistsCount++;
-            String mimeType = GetMimeType(item.getPath());
-            MediaType contentType = MediaType.parse(mimeType);
-            RequestBody fileBody = RequestBody.create(file, contentType);
-            formRequestBuilder.addFormDataPart(item.getFieldname(), file.getName(), fileBody);
-          } else {
-            Log.d(TAG, "File does not exists -> file:" + item.getPath());
-          }
-        }
-
-        if (fileExistsCount <= 0) {
-          return Result.failure(
-              createOutputErrorData(
-                  UploadStatus.FAILED,
-                  DEFAULT_ERROR_STATUS_CODE,
-                  "invalid_files",
-                  "There are no items to upload",
-                  null));
-        }
-
-        innerRequestBody = formRequestBuilder.build();
+      if (innerRequestBody == null) {
+        return Result.failure(
+            createOutputErrorData(
+                UploadStatus.FAILED,
+                DEFAULT_ERROR_STATUS_CODE,
+                "invalid_parameters",
+                "There are no items to upload",
+                null));
       }
 
       RequestBody requestBody = new CountingRequestBody(innerRequestBody, getId().toString(), this);
@@ -300,7 +239,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
             "IllegalStateException while building a outputData object. Replace response with on-disk reference.");
         builder.putString(EXTRA_RESPONSE, null);
 
-        File responseFile = writeResponseToTemporaryFile(context, responseString);
+        File responseFile = writeResponseToTemporaryFile(responseString);
         if (responseFile != null) {
           builder.putString(EXTRA_RESPONSE_FILE, responseFile.getAbsolutePath());
         }
@@ -313,24 +252,28 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
       if (isCancelled) {
         return Result.failure();
       }
-      return handleException(context, ex, "protocol");
+      return handleException(ex, "protocol");
     } catch (JsonIOException ex) {
-      return handleException(context, ex, "json_error");
+      return handleException(ex, "json_error");
     } catch (UnknownHostException ex) {
-      return handleException(context, ex, "unknown_host");
+      return handleException(ex, "unknown_host");
     } catch (IOException ex) {
-      return handleException(context, ex, "io_error");
+      return handleException(ex, "io_error");
     } catch (Exception ex) {
-      return handleException(context, ex, "upload error");
+      return handleException(ex, "upload error");
     } finally {
       call = null;
     }
   }
 
-  private File writeResponseToTemporaryFile(Context context, String body) {
+  @Nullable
+  abstract RequestBody buildRequestBody();
+
+  private File writeResponseToTemporaryFile(String body) {
+    final File cacheDir = getApplicationContext().getCacheDir();
     FileOutputStream fos = null;
     try {
-      File tempFile = File.createTempFile("flutter_uploader", null, context.getCacheDir());
+      File tempFile = File.createTempFile("flutter_uploader", null, cacheDir);
       fos = new FileOutputStream(tempFile);
       fos.write(body.getBytes());
       fos.close();
@@ -348,6 +291,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
   }
 
   private void startEngine() {
+    final Context context = getApplicationContext();
     long callbackHandle = SharedPreferenceHelper.getCallbackHandle(context);
 
     Log.d(TAG, "callbackHandle: " + callbackHandle);
@@ -380,7 +324,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
     }
   }
 
-  private Result handleException(Context context, Exception ex, String code) {
+  private Result handleException(Exception ex, String code) {
     Log.e(TAG, "exception encountered", ex);
 
     int finalStatus = isCancelled ? UploadStatus.CANCELED : UploadStatus.FAILED;
@@ -395,42 +339,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
             getStacktraceAsStringList(ex.getStackTrace())));
   }
 
-  private String GetMimeType(String url) {
-    String type = "application/octet-stream";
-    String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-    try {
-      if (extension != null && !extension.isEmpty()) {
-        type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
-      }
-    } catch (Exception ex) {
-      Log.d(TAG, "UploadWorker - GetMimeType", ex);
-    }
-
-    return type;
-  }
-
-  private MultipartBody.Builder prepareRequest(Map<String, String> parameters, String boundary) {
-
-    MultipartBody.Builder requestBodyBuilder =
-        boundary != null && !boundary.isEmpty()
-            ? new MultipartBody.Builder(boundary)
-            : new MultipartBody.Builder();
-
-    requestBodyBuilder.setType(MultipartBody.FORM);
-
-    if (parameters == null) return requestBodyBuilder;
-
-    for (String key : parameters.keySet()) {
-      String parameter = parameters.get(key);
-      if (parameter != null) {
-        requestBodyBuilder.addFormDataPart(key, parameter);
-      }
-    }
-
-    return requestBodyBuilder;
-  }
-
-  private void sendUpdateProcessEvent(Context context, int status, int progress) {
+  private void sendUpdateProcessEvent(int status, int progress) {
     setProgressAsync(
         new Data.Builder().putInt("status", status).putInt("progress", progress).build());
   }
@@ -466,7 +375,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
             + ", progress: "
             + progress);
 
-    sendUpdateProcessEvent(context, UploadStatus.RUNNING, progress);
+    sendUpdateProcessEvent(UploadStatus.RUNNING, progress);
   }
 
   @Override
@@ -497,7 +406,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
             + code
             + ", error: "
             + message);
-    sendUpdateProcessEvent(context, UploadStatus.FAILED, -1);
+    sendUpdateProcessEvent(UploadStatus.FAILED, -1);
   }
 
   private String[] getStacktraceAsStringList(StackTraceElement[] stacktrace) {
