@@ -57,6 +57,7 @@ public class AzureUploadWorker extends ListenableWorker {
   private Result doWorkInternal() throws Throwable {
     final String connectionString = getInputData().getString("connectionString");
     final String containerName = getInputData().getString("container");
+    final String blobName = getInputData().getString("blobName");
     final String path = getInputData().getString("path");
 
     CloudStorageAccount account = CloudStorageAccount.parse(connectionString);
@@ -75,10 +76,9 @@ public class AzureUploadWorker extends ListenableWorker {
     // Create the container if it does not exist
     container.createIfNotExists(options, opContext);
 
-    CloudAppendBlob appendBlob = container.getAppendBlobReference("AppendBlob");
+    CloudAppendBlob appendBlob = container.getAppendBlobReference(blobName);
     appendBlob.createOrReplace();
-
-    appendBlob.appendText("sample contents");
+    appendBlob.appendFromFile(path);
 
     return Result.success();
   }

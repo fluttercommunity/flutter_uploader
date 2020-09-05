@@ -167,12 +167,22 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
   }
 
   private void enqueueAzure(MethodCall call, MethodChannel.Result result) {
-    String path = call.argument("path");
+    final String path = call.argument("path");
+    final String connectionString = call.argument("connectionString");
+    final String container = call.argument("container");
+    final String blobName = call.argument("blobName");
 
     WorkRequest request =
         new OneTimeWorkRequest.Builder(AzureUploadWorker.class)
             .setConstraints(
                 new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setInputData(
+                new Data.Builder()
+                    .putString("path", path)
+                    .putString("connectionString", connectionString)
+                    .putString("container", container)
+                    .putString("blobName", blobName)
+                    .build())
             .addTag(FLUTTER_UPLOAD_WORK_TAG)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
             .build();

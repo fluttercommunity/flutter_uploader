@@ -230,7 +230,9 @@ class _UploadScreenState extends State<UploadScreen> {
     final tag = "upload";
 
     if (type == _UploadType.azure) {
-      return AzureUpload(path: paths.first);
+      return AzureUpload(
+        path: paths.first,
+      );
     }
 
     final bool binary = type == _UploadType.binary;

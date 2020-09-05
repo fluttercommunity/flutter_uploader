@@ -73,8 +73,22 @@ class RawUpload extends HttpUpload {
 class AzureUpload extends Upload {
   AzureUpload({
     @required this.path,
+    @required this.connectionString,
+    @required this.container,
+    @required this.blobName,
   });
 
-  // single file to upload
+  /// Single file to upload
   final String path;
+
+  /// Azure connection string, following the documentation on https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string?toc=/azure/storage/blobs/toc.json
+  final String connectionString;
+
+  /// A container name for this file. The container will be created if it does not exist.
+  final String container;
+
+  /// The name of the blob within the [container] specified above.
+  final String blobName;
+
+  // TODO: Block/Chunk size
 }
