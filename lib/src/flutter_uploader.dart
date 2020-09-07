@@ -120,6 +120,9 @@ class FlutterUploader {
     if (upload is AzureUpload) {
       return await _platform.invokeMethod<String>('enqueueAzure', {
         'path': upload.path,
+        'connectionString': upload.connectionString,
+        'container': upload.container,
+        'blobName': upload.blobName
       });
     }
 

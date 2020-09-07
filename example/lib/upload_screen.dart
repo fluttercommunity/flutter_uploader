@@ -143,6 +143,14 @@ class _UploadScreenState extends State<UploadScreen> {
                       onPressed: () => getImage(_UploadType.azure),
                       child: Text("upload image"),
                     ),
+                    RaisedButton(
+                      onPressed: () => getVideo(_UploadType.azure),
+                      child: Text("upload video"),
+                    ),
+                    RaisedButton(
+                      onPressed: () => getMultiple(_UploadType.azure),
+                      child: Text("upload multi"),
+                    ),
                   ],
                 ),
                 Divider(height: 40),
@@ -232,6 +240,9 @@ class _UploadScreenState extends State<UploadScreen> {
     if (type == _UploadType.azure) {
       return AzureUpload(
         path: paths.first,
+        blobName: paths.first.split('/').last,
+        container: 'seb-test',
+        connectionString: '',
       );
     }
 
