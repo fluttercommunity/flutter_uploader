@@ -207,6 +207,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
   private void clearUploads(MethodCall call, MethodChannel.Result result) {
     WorkManager.getInstance(context).pruneWork();
+    statusListener.onCleared();
+
     result.success(null);
   }
 

@@ -158,4 +158,9 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
     resultStreamHandler.add(id, args);
   }
+
+	@Override
+	public void onCleared() {
+		resultStreamHandler.clear();
+	}
 }

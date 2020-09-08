@@ -41,6 +41,6 @@ public class CachingStreamHandler<T> implements StreamHandler {
   }
 
   public void clear() {
-    cache.clear();
-  }
+		cache.clear();
+	}
 }
