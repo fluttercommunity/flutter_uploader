@@ -24,4 +24,6 @@ public interface StatusListener {
       @Nullable Map<String, String> headers);
 
   void onCleared();
+
+  void onPaused(String id);
 }

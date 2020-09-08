@@ -13,6 +13,7 @@ import androidx.work.Data;
 import androidx.work.ListenableWorker;
 import androidx.work.WorkerParameters;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.microsoft.azure.storage.AccessCondition;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.OperationContext;
 import com.microsoft.azure.storage.blob.BlobRequestOptions;
@@ -74,72 +75,76 @@ public class AzureUploadWorker extends ListenableWorker {
         getApplicationContext().getSharedPreferences("AzureUploadWorker", Context.MODE_PRIVATE);
     final String bytesWrittenKey = "bytesWritten." + getId();
 
-    Log.d(TAG, "bytesWrittenKey: " + bytesWrittenKey);
+    //    Log.d(TAG, "bytesWrittenKey: " + bytesWrittenKey);
 
-    int bytesWritten = preferences.getInt(bytesWrittenKey, 0);
+    long bytesWritten = preferences.getInt(bytesWrittenKey, 0);
 
-    Log.d(TAG, "bytesWritten   : " + bytesWritten);
+    //    Log.d(TAG, "bytesWritten   : " + bytesWritten);
 
-    final RandomAccessFile file;
-    try {
-      file = new RandomAccessFile(path, "r");
+    CloudStorageAccount account = CloudStorageAccount.parse(connectionString);
+    CloudBlobClient blobClient = account.createCloudBlobClient();
+
+    final CloudBlobContainer container = blobClient.getContainerReference(containerName);
+
+    final OperationContext opContext = new OperationContext();
+    final BlobRequestOptions options = new BlobRequestOptions();
+    options.setTimeoutIntervalInMs(1000);
+
+    // Create the container if it does not exist
+    container.createIfNotExists(options, opContext);
+
+    final CloudAppendBlob appendBlob = container.getAppendBlobReference(blobName);
+
+    final int blockSize = 1024 * 1024; // 1 MB
+    if (bytesWritten == 0) {
+      appendBlob.createOrReplace();
+    }
+
+    try (final RandomAccessFile file = new RandomAccessFile(path, "r");
+        final InputStream is = Channels.newInputStream(file.getChannel())) {
+      final long contentLength = file.length();
+
+      Log.d(TAG, "file contentLength: " + contentLength + ", blockSize: " + blockSize);
+      if (bytesWritten != 0) {
+        if (is.skip(bytesWritten) != bytesWritten) {
+          throw new IllegalArgumentException("source file length mismatch?");
+        }
+      }
+
+      while (bytesWritten < contentLength && !isStopped()) {
+        final long thisBlock = Math.min(contentLength - bytesWritten, blockSize);
+
+        Log.d(TAG, "Appending block at " + bytesWritten + ", thisBlock: " + thisBlock);
+
+        appendBlob.append(
+            is, thisBlock, AccessCondition.generateEmptyCondition(), options, opContext);
+
+        bytesWritten += thisBlock;
+
+        double p = ((double) bytesWritten / (double) contentLength) * 100;
+        int progress = (int) Math.round(p);
+
+        if (!isStopped()) {
+          setProgressAsync(
+              new Data.Builder()
+                  .putInt("status", UploadStatus.RUNNING)
+                  .putInt("progress", progress)
+                  .build());
+        }
+
+        preferences.edit().putInt(bytesWrittenKey, (int) bytesWritten).apply();
+      }
+    } catch (IllegalArgumentException e) {
+      return Result.failure();
     } catch (FileNotFoundException e) {
       Log.e(TAG, "Source path not found: " + path, e);
       return Result.failure();
     } catch (SecurityException e) {
       Log.e(TAG, "Permission denied: " + path, e);
       return Result.failure();
+    } finally {
+      preferences.edit().remove(bytesWrittenKey).apply();
     }
-
-    CloudStorageAccount account = CloudStorageAccount.parse(connectionString);
-
-    CloudBlobClient blobClient = account.createCloudBlobClient();
-
-    CloudBlobContainer container = blobClient.getContainerReference(containerName);
-
-    container.createIfNotExists();
-
-    OperationContext opContext = new OperationContext();
-
-    BlobRequestOptions options = new BlobRequestOptions();
-    options.setTimeoutIntervalInMs(1000);
-
-    // Create the container if it does not exist
-    container.createIfNotExists(options, opContext);
-
-    CloudAppendBlob appendBlob = container.getAppendBlobReference(blobName);
-    appendBlob.createOrReplace();
-
-    InputStream is = Channels.newInputStream(file.getChannel());
-
-    int blockSize = 1024 * 1024; // 1 MB
-
-    final long contentLength = file.length();
-
-    Log.d(TAG, "file contentLength: " + contentLength);
-
-    while (bytesWritten + blockSize < contentLength && !isStopped()) {
-      Log.d(TAG, "Appending block at bytesWritten " + bytesWritten + ", blockSize: " + blockSize);
-
-      appendBlob.append(is, blockSize);
-
-      bytesWritten += blockSize;
-
-      double p = ((double) bytesWritten / (double) contentLength) * 100;
-      int progress = (int) Math.round(p);
-
-      if (!isStopped()) {
-        setProgressAsync(
-            new Data.Builder()
-                .putInt("status", UploadStatus.RUNNING)
-                .putInt("progress", progress)
-                .build());
-      }
-
-      preferences.edit().putInt(bytesWrittenKey, bytesWritten).apply();
-    }
-
-    preferences.edit().remove(bytesWrittenKey).apply();
 
     final Data.Builder output =
         new Data.Builder()

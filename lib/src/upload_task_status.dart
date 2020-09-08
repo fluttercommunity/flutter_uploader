@@ -14,7 +14,9 @@ class UploadTaskStatus {
 
   operator ==(status) => status._value == this._value;
 
-  toString() => 'UploadTaskStatus($_value)';
+  toString() => 'UploadTaskStatus($_value: $description)';
+
+  bool get isFinite => this == failed || this == complete || this == canceled;
 
   String get description {
     if (value == null) return "Undefined";
@@ -29,6 +31,8 @@ class UploadTaskStatus {
         return "Failed";
       case 5:
         return "Cancelled";
+      case 6:
+        return "Paused";
       default:
         return "Undefined ($value)";
     }

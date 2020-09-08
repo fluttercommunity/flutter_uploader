@@ -4,10 +4,12 @@ description: Demonstrates how to use the flutter_uploader plugin.
 publish_to: "none"
 
 dependencies:
+  bloc: ^6.0.3
   crypto: ^2.1.4
   flutter:
     sdk: flutter
   file_picker: ^1.13.0
+  flutter_bloc: ^6.0.5
   path_provider: ^1.6.11
   image_picker: ^0.6.7+4
   shared_preferences: ^0.5.8

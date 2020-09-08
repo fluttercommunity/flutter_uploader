@@ -1,9 +1,11 @@
 package com.bluechilli.flutteruploader.plugin;
 
 import android.text.TextUtils;
+import android.util.Log;
 import androidx.lifecycle.Observer;
 import androidx.work.Data;
 import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 import com.bluechilli.flutteruploader.UploadStatus;
 import com.bluechilli.flutteruploader.UploadWorker;
 import com.google.gson.Gson;
@@ -16,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 
 public class UploadObserver implements Observer<List<WorkInfo>> {
+  private static final String TAG = "UploadObserver";
+
   private final WeakReference<StatusListener> listener;
   private final Gson gson = new Gson();
 
@@ -32,22 +36,21 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
     }
 
     for (WorkInfo info : workInfoList) {
-      String id = info.getId().toString();
+      final String id = info.getId().toString();
+
+//      Log.d(TAG, "ID: " + id + ", " + info.getState());
 
       switch (info.getState()) {
         case ENQUEUED:
-          {
-            listener.onEnqueued(info.getId().toString());
-          }
+          listener.onEnqueued(id);
+          break;
         case RUNNING:
-          {
-            Data progress = info.getProgress();
+          Data progress = info.getProgress();
 
-            listener.onUpdateProgress(
-                info.getId().toString(),
-                progress.getInt("status", -1),
-                progress.getInt("progress", -1));
-          }
+          listener.onUpdateProgress(
+              info.getId().toString(),
+              progress.getInt("status", UploadStatus.RUNNING),
+              progress.getInt("progress", -1));
           break;
         case FAILED:
           {
@@ -60,6 +63,9 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
 
             listener.onFailed(id, failedStatus, statusCode, code, errorMessage, details);
           }
+          break;
+        case BLOCKED:
+          listener.onPaused(id);
           break;
         case CANCELLED:
           listener.onFailed(id, UploadStatus.CANCELED, 500, "flutter_upload_cancelled", null, null);
