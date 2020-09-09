@@ -28,7 +28,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class AzureUploadWorker extends ListenableWorker {
+
   private static final String TAG = "AzureUploadWorker";
+
   /**
    * @param appContext The application {@link Context}
    * @param workerParams Parameters to setup the internal state of this worker
@@ -68,6 +70,7 @@ public class AzureUploadWorker extends ListenableWorker {
   private Result doWorkInternal() throws Throwable {
     final String connectionString = getInputData().getString("connectionString");
     final String containerName = getInputData().getString("container");
+    final boolean createContainer = getInputData().getBoolean("createContainer", false);
     final String blobName = getInputData().getString("blobName");
     final String path = getInputData().getString("path");
 
@@ -87,17 +90,20 @@ public class AzureUploadWorker extends ListenableWorker {
     final CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
     final OperationContext opContext = new OperationContext();
+    opContext.setLogLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.WARN);
+
     final BlobRequestOptions options = new BlobRequestOptions();
     options.setTimeoutIntervalInMs(1000);
 
-    // Create the container if it does not exist
-    container.createIfNotExists(options, opContext);
+    if (createContainer) {
+      container.createIfNotExists(options, opContext);
+    }
 
     final CloudAppendBlob appendBlob = container.getAppendBlobReference(blobName);
 
     final int blockSize = 1024 * 1024; // 1 MB
     if (bytesWritten == 0) {
-      appendBlob.createOrReplace();
+      appendBlob.createOrReplace(AccessCondition.generateEmptyCondition(), options, opContext);
     }
 
     try (final RandomAccessFile file = new RandomAccessFile(path, "r");
