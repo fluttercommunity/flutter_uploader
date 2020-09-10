@@ -191,6 +191,12 @@ class _UploadScreenState extends State<UploadScreen> {
     final prefs = await SharedPreferences.getInstance();
     final binary = prefs.getBool('binary') ?? false;
 
+    await widget.uploader.enqueue(_buildUpload(binary, paths));
+
+    widget.onUploadStarted();
+  }
+
+  Upload _buildUpload(bool binary, List<String> paths) {
     final tag = "upload";
 
     Uri url = binary
@@ -201,23 +207,21 @@ class _UploadScreenState extends State<UploadScreen> {
       'simulate': _serverBehavior.name,
     });
 
-    print('URL: $url');
-
-    binary
-        ? await widget.uploader.enqueueBinary(
-            url: url.toString(),
-            path: paths.first,
-            method: UploadMethod.POST,
-            tag: tag,
-          )
-        : await widget.uploader.enqueue(
-            url: url.toString(),
-            data: {"name": "john"},
-            files: paths.map((e) => FileItem(path: e, field: 'file')).toList(),
-            method: UploadMethod.POST,
-            tag: tag,
-          );
-
-    widget.onUploadStarted();
+    if (binary) {
+      return RawUpload(
+        url: url.toString(),
+        path: paths.first,
+        method: UploadMethod.POST,
+        tag: tag,
+      );
+    } else {
+      return MultipartFormDataUpload(
+        url: url.toString(),
+        data: {"name": "john"},
+        files: paths.map((e) => FileItem(path: e, field: 'file')).toList(),
+        method: UploadMethod.POST,
+        tag: tag,
+      );
+    }
   }
 }
