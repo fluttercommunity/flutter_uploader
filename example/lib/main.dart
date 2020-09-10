@@ -12,6 +12,9 @@ final Uri uploadURL = Uri.parse(
   "https://us-central1-flutteruploadertest.cloudfunctions.net/upload",
 );
 
+final azureConnectionString = '';
+final azureContainer = '';
+
 FlutterUploader _uploader = FlutterUploader();
 
 void backgroundHandler() {
@@ -162,6 +165,8 @@ class _AppState extends State<App> {
                 uploader: _uploader,
                 uploadURL: uploadURL,
                 onUploadStarted: () => setState(() => _currentIndex = 1),
+                azureConnectionString: azureConnectionString,
+                azureContainer: azureContainer,
               )
             : ResponsesScreen(uploader: _uploader),
         bottomNavigationBar: BottomNavigationBar(

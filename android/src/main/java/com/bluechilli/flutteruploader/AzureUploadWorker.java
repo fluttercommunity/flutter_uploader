@@ -16,11 +16,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.microsoft.azure.storage.AccessCondition;
 import com.microsoft.azure.storage.CloudStorageAccount;
 import com.microsoft.azure.storage.OperationContext;
+import com.microsoft.azure.storage.RetryNoRetry;
 import com.microsoft.azure.storage.blob.BlobRequestOptions;
 import com.microsoft.azure.storage.blob.CloudAppendBlob;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.channels.Channels;
@@ -93,7 +95,7 @@ public class AzureUploadWorker extends ListenableWorker {
     opContext.setLogLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.WARN);
 
     final BlobRequestOptions options = new BlobRequestOptions();
-    options.setTimeoutIntervalInMs(1000);
+    options.setRetryPolicyFactory(new RetryNoRetry());
 
     if (createContainer) {
       container.createIfNotExists(options, opContext);
@@ -140,16 +142,16 @@ public class AzureUploadWorker extends ListenableWorker {
 
         preferences.edit().putInt(bytesWrittenKey, (int) bytesWritten).apply();
       }
-    } catch (IllegalArgumentException e) {
-      return Result.failure();
     } catch (FileNotFoundException e) {
       Log.e(TAG, "Source path not found: " + path, e);
-      return Result.failure();
-    } catch (SecurityException e) {
-      Log.e(TAG, "Permission denied: " + path, e);
-      return Result.failure();
-    } finally {
       preferences.edit().remove(bytesWrittenKey).apply();
+      return Result.failure();
+    } catch (IOException e) {
+      return Result.retry();
+    } catch (Exception e) {
+      Log.e(TAG, "Unrecoverable exception: " + e);
+      preferences.edit().remove(bytesWrittenKey).apply();
+      return Result.failure();
     }
 
     final Data.Builder output =

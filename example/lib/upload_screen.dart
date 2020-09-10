@@ -20,11 +20,15 @@ class UploadScreen extends StatefulWidget {
     @required this.uploader,
     @required this.uploadURL,
     @required this.onUploadStarted,
+    @required this.azureConnectionString,
+    @required this.azureContainer,
   }) : super(key: key);
 
   final FlutterUploader uploader;
   final Uri uploadURL;
   final VoidCallback onUploadStarted;
+  final String azureConnectionString;
+  final String azureContainer;
 
   @override
   _UploadScreenState createState() => _UploadScreenState();
@@ -241,8 +245,8 @@ class _UploadScreenState extends State<UploadScreen> {
       return AzureUpload(
         path: paths.first,
         blobName: paths.first.split('/').last,
-        container: 'seb-test',
-        connectionString: '',
+        container: widget.azureContainer,
+        connectionString: widget.azureConnectionString,
       );
     }
 
