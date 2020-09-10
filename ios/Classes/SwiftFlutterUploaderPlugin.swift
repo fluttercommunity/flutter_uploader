@@ -2,6 +2,8 @@ import Flutter
 import UIKit
 import Alamofire
 
+import AZSClient
+
 private let validHttpMethods = ["POST", "PUT", "PATCH"]
 
 public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
@@ -74,6 +76,8 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             enqueueMethodCall(call, result)
         case "enqueueBinary":
             enqueueBinaryMethodCall(call, result)
+        case "enqueueAzure":
+            enqueueAzureMethodCall(call, result)
         case "cancel":
             cancelMethodCall(call, result)
         case "cancelAll":
@@ -164,6 +168,14 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
                 result(self.urlSessionUploader.identifierForTask(uploadTask))
             }
         })
+    }
+    
+    private func enqueueAzureMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
+        let args = call.arguments as! [String: Any?]
+        let path = args["path"]
+        let connectionString = args["connectionString"]
+        let container = args["container"]
+        let blobName = args["blobName"]
     }
 
     private func cancelMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
