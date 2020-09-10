@@ -29,3 +29,11 @@ firebase deploy
 ```
 
 6. run example app
+
+## Driver tests
+
+Run the current end to end test suite:
+
+```
+flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
+```
