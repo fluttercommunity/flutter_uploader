@@ -5,6 +5,9 @@ class FlutterUploader {
   final EventChannel _progressChannel;
   final EventChannel _resultChannel;
 
+  Stream<UploadTaskProgress> _progressStream;
+  Stream<UploadTaskResponse> _resultStream;
+
   static FlutterUploader _instance;
 
   factory FlutterUploader() {
@@ -40,55 +43,49 @@ class FlutterUploader {
   /// stream to listen on upload progress
   ///
   Stream<UploadTaskProgress> get progress {
-    return _progressChannel
+    return _progressStream ??= _progressChannel
         .receiveBroadcastStream()
         .map<Map<String, dynamic>>((event) => Map<String, dynamic>.from(event))
-        .transform(StreamTransformer<Map<String, dynamic>,
-            UploadTaskProgress>.fromHandlers(
-      handleData:
-          (Map<String, dynamic> map, EventSink<UploadTaskProgress> sink) {
-        String id = map['taskId'];
-        int status = map['status'];
-        int uploadProgress = map['progress'];
-        final t = UploadTaskProgress(
-            id, uploadProgress, UploadTaskStatus.from(status));
+        .map(_parseProgress);
+  }
 
-        sink.add(t);
-      },
-    ));
+  UploadTaskProgress _parseProgress(Map<String, dynamic> map) {
+    String id = map['taskId'];
+    int status = map['status'];
+    int uploadProgress = map['progress'];
+
+    return UploadTaskProgress(
+      id,
+      uploadProgress,
+      UploadTaskStatus.from(status),
+    );
   }
 
   ///
   /// stream to listen on upload result
   ///
   Stream<UploadTaskResponse> get result {
-    return _resultChannel
+    return _resultStream ??= _resultChannel
         .receiveBroadcastStream()
         .map<Map<String, dynamic>>((event) => Map<String, dynamic>.from(event))
-        .transform(
-      StreamTransformer<Map<String, dynamic>, UploadTaskResponse>.fromHandlers(
-        handleData:
-            (Map<String, dynamic> value, EventSink<UploadTaskResponse> sink) {
-          String id = value['taskId'];
-          String message = value['message'];
-          // String code = value['code'];
-          int status = value["status"];
-          int statusCode = value["statusCode"];
-          Map<String, dynamic> headers = value['headers'] != null
-              ? Map<String, dynamic>.from(value['headers'])
-              : {};
+        .map(_parseResult);
+  }
 
-          final r = UploadTaskResponse(
-            taskId: id,
-            status: UploadTaskStatus.from(status),
-            statusCode: statusCode,
-            headers: headers,
-            response: message,
-          );
+  UploadTaskResponse _parseResult(Map<String, dynamic> map) {
+    String id = map['taskId'];
+    String message = map['message'];
+    // String code = value['code'];
+    int status = map["status"];
+    int statusCode = map["statusCode"];
+    Map<String, dynamic> headers =
+        map['headers'] != null ? Map<String, dynamic>.from(map['headers']) : {};
 
-          sink.add(r);
-        },
-      ),
+    return UploadTaskResponse(
+      taskId: id,
+      status: UploadTaskStatus.from(status),
+      statusCode: statusCode,
+      headers: headers,
+      response: message,
     );
   }
 
