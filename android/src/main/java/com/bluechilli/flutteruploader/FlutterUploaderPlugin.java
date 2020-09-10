@@ -159,18 +159,18 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     resultStreamHandler.add(id, args);
   }
 
-	@Override
-	public void onPaused(String id) {
-		Map<String, Object> args = new HashMap<>();
-		args.put("taskId", id);
-		args.put("status", UploadStatus.PAUSED);
+  @Override
+  public void onPaused(String id) {
+    Map<String, Object> args = new HashMap<>();
+    args.put("taskId", id);
+    args.put("status", UploadStatus.PAUSED);
 
-		resultStreamHandler.add(id, args);
-	}
+    resultStreamHandler.add(id, args);
+  }
 
-	@Override
-	public void onCleared() {
-  	progressStreamHandler.clear();
-		resultStreamHandler.clear();
-	}
+  @Override
+  public void onCleared() {
+    progressStreamHandler.clear();
+    resultStreamHandler.clear();
+  }
 }
