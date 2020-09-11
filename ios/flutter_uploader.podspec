@@ -16,6 +16,7 @@ A new flutter plugin project.
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
   s.dependency 'AZSClient'
+  s.dependency 'PromiseKit/CorePromise', '~> 6.8'
   s.dependency 'Alamofire', '5.2.2'
   s.ios.deployment_target = '10.0'
   s.swift_version = '5.2'

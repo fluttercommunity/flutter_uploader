@@ -2,8 +2,6 @@ import Flutter
 import UIKit
 import Alamofire
 
-import AZSClient
-
 private let validHttpMethods = ["POST", "PUT", "PATCH"]
 
 public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
@@ -15,6 +13,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     static let DEFAULT_TIMEOUT = 3600.0
 
     let urlSessionUploader = URLSessionUploader.shared
+    let azureUploader = AzureUploader.shared
 
     let channel: FlutterMethodChannel
     let progressEventChannel: FlutterEventChannel
@@ -60,6 +59,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         super.init()
 
         urlSessionUploader.addDelegate(self)
+        azureUploader.addDelegate(self)
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -171,11 +171,23 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     }
     
     private func enqueueAzureMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
-        let args = call.arguments as! [String: Any?]
-        let path = args["path"]
-        let connectionString = args["connectionString"]
-        let container = args["container"]
-        let blobName = args["blobName"]
+        guard let args = call.arguments as? [String: Any?],
+            let connectionString = args["connectionString"] as? String,
+            let containerName = args["container"] as? String,
+            let path = args["path"] as? String,
+            let blobName = args["blobName"] as? String
+            else {
+                result(FlutterError(code: "invalid_params", message: "invalid parameters passed", details: nil))
+                return
+        }
+                
+        azureUploader.upload(connectionString: connectionString, container: containerName, blobName: blobName, path: path) { (error) in
+            if let error = error {
+                result(FlutterError(code: "upload failed", message: "\(error)", details: nil))
+            } else {
+                result(nil)
+            }
+        }
     }
 
     private func cancelMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
@@ -183,12 +195,14 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         let taskId = args[Key.taskId] as! String
 
         urlSessionUploader.cancelWithTaskId(taskId)
+        azureUploader.cancelWithTaskId(taskId)
 
         result(nil)
     }
 
     private func cancelAllMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
         urlSessionUploader.cancelAllTasks()
+        azureUploader.cancelAllTasks()
 
         result(nil)
     }
