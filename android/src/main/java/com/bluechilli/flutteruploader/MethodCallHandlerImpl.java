@@ -5,6 +5,7 @@ import androidx.annotation.NonNull;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.Data.Builder;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -171,18 +172,24 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     final String connectionString = call.argument("connectionString");
     final String container = call.argument("container");
     final String blobName = call.argument("blobName");
+    final Integer blockSize = call.argument("blockSize");
+
+    Builder inputBuilder =
+        new Builder()
+            .putString("path", path)
+            .putString("connectionString", connectionString)
+            .putString("container", container)
+            .putString("blobName", blobName);
+
+    if (blockSize != null) {
+      inputBuilder.putInt("blockSize", blockSize);
+    }
 
     WorkRequest request =
         new OneTimeWorkRequest.Builder(AzureUploadWorker.class)
             .setConstraints(
                 new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .setInputData(
-                new Data.Builder()
-                    .putString("path", path)
-                    .putString("connectionString", connectionString)
-                    .putString("container", container)
-                    .putString("blobName", blobName)
-                    .build())
+            .setInputData(inputBuilder.build())
             .addTag(FLUTTER_UPLOAD_WORK_TAG)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
             .build();

@@ -21,6 +21,7 @@ import com.microsoft.azure.storage.blob.BlobRequestOptions;
 import com.microsoft.azure.storage.blob.CloudAppendBlob;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
+import io.flutter.BuildConfig;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,6 +76,7 @@ public class AzureUploadWorker extends ListenableWorker {
     final boolean createContainer = getInputData().getBoolean("createContainer", false);
     final String blobName = getInputData().getString("blobName");
     final String path = getInputData().getString("path");
+    final int blockSize = getInputData().getInt("blockSize", 1024 * 1024) ;
 
     final SharedPreferences preferences =
         getApplicationContext().getSharedPreferences("AzureUploadWorker", Context.MODE_PRIVATE);
@@ -103,7 +105,6 @@ public class AzureUploadWorker extends ListenableWorker {
 
     final CloudAppendBlob appendBlob = container.getAppendBlobReference(blobName);
 
-    final int blockSize = 1024 * 1024; // 1 MB
     if (bytesWritten == 0) {
       appendBlob.createOrReplace(AccessCondition.generateEmptyCondition(), options, opContext);
     }
@@ -129,7 +130,7 @@ public class AzureUploadWorker extends ListenableWorker {
 
         bytesWritten += thisBlock;
 
-        double p = ((double) bytesWritten / (double) contentLength) * 100;
+        double p = ((double) (bytesWritten + thisBlock) / (double) contentLength) * 100;
         int progress = (int) Math.round(p);
 
         if (!isStopped()) {

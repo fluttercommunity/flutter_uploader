@@ -122,7 +122,8 @@ class FlutterUploader {
         'path': upload.path,
         'connectionString': upload.connectionString,
         'container': upload.container,
-        'blobName': upload.blobName
+        'blobName': upload.blobName,
+        'blockSize': upload.blockSize,
       });
     }
 

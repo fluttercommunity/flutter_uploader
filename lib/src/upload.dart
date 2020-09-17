@@ -76,6 +76,7 @@ class AzureUpload extends Upload {
     @required this.connectionString,
     @required this.container,
     @required this.blobName,
+    this.blockSize = 1024 * 1024,
   });
 
   /// Single file to upload
@@ -90,5 +91,6 @@ class AzureUpload extends Upload {
   /// The name of the blob within the [container] specified above.
   final String blobName;
 
-  // TODO: Block/Chunk size
+  /// The block size in bytes.
+  final int blockSize;
 }
