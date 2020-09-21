@@ -4,33 +4,27 @@ import java.util.Map;
 
 public class FileItem {
 
-  private String _fieldname;
-  private String _filename;
-  private String _savedDir;
+  private String fieldname;
+  private String path;
 
-  public FileItem(String fieldname, String filename, String savedDir) {
-    _fieldname = fieldname;
-    _filename = filename;
-    _savedDir = savedDir;
+  public FileItem(String path) {
+    this.path = path;
+  }
+
+  public FileItem(String path, String fieldname) {
+    this.fieldname = fieldname;
+    this.path = path;
   }
 
   public static FileItem fromJson(Map<String, String> map) {
-    return new FileItem(map.get("fieldname"), map.get("filename"), map.get("savedDir"));
+    return new FileItem(map.get("path"), map.get("fieldname"));
   }
 
   public String getFieldname() {
-    return _fieldname;
-  }
-
-  public String getFilename() {
-    return _filename;
-  }
-
-  public String getSavedDir() {
-    return _savedDir;
+    return fieldname;
   }
 
   public String getPath() {
-    return getSavedDir() + "/" + getFilename();
+    return path;
   }
 }

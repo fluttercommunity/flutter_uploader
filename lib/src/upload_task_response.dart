@@ -5,8 +5,7 @@ class UploadTaskResponse extends Equatable {
   final String response;
   final int statusCode;
   final UploadTaskStatus status;
-  final Map<String, String> headers;
-  final String tag;
+  final Map<String, dynamic> headers;
 
   UploadTaskResponse({
     @required this.taskId,
@@ -14,7 +13,6 @@ class UploadTaskResponse extends Equatable {
     this.statusCode,
     this.status,
     this.headers,
-    this.tag,
   });
 
   @override
@@ -28,7 +26,6 @@ class UploadTaskResponse extends Equatable {
       statusCode,
       status,
       headers,
-      tag,
     ];
   }
 }
