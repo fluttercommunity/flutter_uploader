@@ -174,13 +174,13 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         guard let args = call.arguments as? [String: Any?],
             let connectionString = args["connectionString"] as? String,
             let containerName = args["container"] as? String,
-            let createContainer = args["createContainer"] as? Bool ?? false,
             let path = args["path"] as? String,
             let blobName = args["blobName"] as? String
             else {
                 result(FlutterError(code: "invalid_params", message: "invalid parameters passed", details: nil))
                 return
         }
+        let createContainer = (args["createContainer"] as? Bool) ?? false
                 
         azureUploader.upload(connectionString: connectionString, container: containerName, createContainer: createContainer, blobName: blobName, path: path) { (error) in
             if let error = error {
