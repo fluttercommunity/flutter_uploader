@@ -66,11 +66,11 @@ void main() {
     testWidgets("can overwrite 'Accept' header", (WidgetTester tester) async {
       var fileItem = FileItem(path: await _tmpFile(), field: "file");
 
-      final taskId = await uploader.enqueue(
+      final taskId = await uploader.enqueue(MultipartFormDataUpload(
         url: url.toString(),
         files: [fileItem],
         headers: {'Accept': 'application/json, charset=utf-8'},
-      );
+      ));
       final res = await uploader.result.firstWhere(isCompleted(taskId));
       final json = jsonDecode(res.response);
 
@@ -160,11 +160,11 @@ void main() {
     });
 
     testWidgets("can overwrite 'Accept' header", (WidgetTester tester) async {
-      final taskId = await uploader.enqueueBinary(
+      final taskId = await uploader.enqueue(RawUpload(
         url: url.toString(),
         path: await _tmpFile(),
         headers: {'Accept': 'application/json, charset=utf-8'},
-      );
+      ));
       final res = await uploader.result.firstWhere(isCompleted(taskId));
       final json = jsonDecode(res.response);
 
