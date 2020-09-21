@@ -20,18 +20,18 @@ class AzureUploader {
     static let shared = AzureUploader()
     
     private static let blockSize: UInt64 = 1024 * 512
-//    private static let blockSize: UInt64 = 1024 * 1024 * 2
+    //    private static let blockSize: UInt64 = 1024 * 1024 * 2
     
     private var activeTasks: [String] = []
     
     private var delegates: [UploaderDelegate] = []
-
+    
     // MARK: Public API
-
+    
     func addDelegate(_ delegate: UploaderDelegate) {
         delegates.append(delegate)
     }
-        
+    
     private var opContext: AZSOperationContext {
         let opContext = AZSOperationContext()
         opContext.logLevel = AZSLogLevel.debug
@@ -42,14 +42,14 @@ class AzureUploader {
         return AZSBlobRequestOptions()
     }
     
-    func upload(connectionString: String, container containerName: String, blobName: String, path: String, completion: @escaping ((Error?) -> Void)) {
+    func upload(connectionString: String, container containerName: String, createContainer: Bool, blobName: String, path: String, completion: @escaping ((Error?) -> Void)) {
         let id: String = UUID().uuidString
         delegates.uploadEnqueued(taskId: id)
         
         activeTasks.append(id)
         
         createBlobClient(connectionString: connectionString)
-            .then { blobClient in return self.createContainer(blobClient, containerName) }
+            .then { blobClient in return self.getContainer(blobClient, containerName, create: createContainer) }
             .then { self.createAppendBlob(container: $0, blobName) }
             .then { blob -> Promise<Void> in
                 guard let handle = FileHandle(forReadingAtPath: path) else {
@@ -57,7 +57,7 @@ class AzureUploader {
                 }
                 
                 let contentLength = handle.seekToEndOfFile()
-
+                
                 let promises = Promise<Void>.chainSerially(
                     self.blocks(contentLength).map { block in
                         return { self.handleUpload(taskId: id, blob, handle, block) }
@@ -71,15 +71,15 @@ class AzureUploader {
                         handle.closeFile()
                     }
                 }
-        }
+            }
             .done {
                 completion(nil)
                 self.delegates.uploadCompleted(taskId: id, message: nil, statusCode: 200, headers: [:])
-        }
+            }
             .catch {
                 completion($0)
                 self.delegates.uploadFailed(taskId: id, inStatus: .failed, statusCode: 500, errorCode: "", errorMessage: nil, errorStackTrace: [])
-        }
+            }
     }
     
     func cancelWithTaskId(_ id: String) {
@@ -124,7 +124,7 @@ class AzureUploader {
             let thisBlock = min(contentLength - start, AzureUploader.blockSize)
             
             print("thisBlock: \(thisBlock)")
-
+            
             appendBlob.appendBlock(with: handle.readData(ofLength: Int(thisBlock)), contentMD5: nil, accessCondition: AZSAccessCondition(), requestOptions: options, operationContext: opContext) { (error, offset) in
                 print("upload done, sent to offset: \(offset), with error: \(String(describing: error))")
                 if let error = error {
@@ -161,19 +161,23 @@ class AzureUploader {
         }
     }
     
-    private func createContainer(_ blobClient: AZSCloudBlobClient, _ containerName: String) -> Promise<AZSCloudBlobContainer> {
+    private func getContainer(_ blobClient: AZSCloudBlobClient, _ containerName: String, create: Bool) -> Promise<AZSCloudBlobContainer> {
         let container = blobClient.containerReference(fromName: containerName)
+        
+        if !create {
+            return Promise.value(container)
+        }
         
         return Promise { seal in
             container.createContainerIfNotExists(
                 with: AZSContainerPublicAccessType.off,
                 requestOptions: options,
                 operationContext: opContext) { (error, createdYesNo) in
-                    if let error = error {
-                        seal.reject(error)
-                    } else {
-                        seal.fulfill(container)
-                    }
+                if let error = error {
+                    seal.reject(error)
+                } else {
+                    seal.fulfill(container)
+                }
             }
         }
     }

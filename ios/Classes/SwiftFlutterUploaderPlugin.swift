@@ -174,6 +174,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         guard let args = call.arguments as? [String: Any?],
             let connectionString = args["connectionString"] as? String,
             let containerName = args["container"] as? String,
+            let createContainer = args["createContainer"] as? Bool ?? false,
             let path = args["path"] as? String,
             let blobName = args["blobName"] as? String
             else {
@@ -181,7 +182,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
                 return
         }
                 
-        azureUploader.upload(connectionString: connectionString, container: containerName, blobName: blobName, path: path) { (error) in
+        azureUploader.upload(connectionString: connectionString, container: containerName, createContainer: createContainer, blobName: blobName, path: path) { (error) in
             if let error = error {
                 result(FlutterError(code: "upload failed", message: "\(error)", details: nil))
             } else {
