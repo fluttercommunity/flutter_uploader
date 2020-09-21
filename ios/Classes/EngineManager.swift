@@ -10,6 +10,11 @@ import Foundation
 class EngineManager {
     private var headlessRunner: FlutterEngine?
     public var registerPlugins: FlutterPluginRegistrantCallback?
+    
+    static let shared = EngineManager()
+
+    private init() {
+    }
 
     private func startEngineIfNeeded() {
         guard let callbackHandle = UploaderDefaults.shared.callbackHandle else {

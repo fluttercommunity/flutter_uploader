@@ -42,6 +42,11 @@ class AzureUploader {
         return AZSBlobRequestOptions()
     }
     
+    init() {
+        delegates.append(EngineManager.shared)
+        delegates.append(UploadResultDatabase.shared)
+    }
+    
     func upload(connectionString: String, container containerName: String, createContainer: Bool, blobName: String, path: String, completion: @escaping ((Error?) -> Void)) {
         let id: String = UUID().uuidString
         delegates.uploadEnqueued(taskId: id)
