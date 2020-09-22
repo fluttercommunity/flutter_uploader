@@ -400,7 +400,11 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
     String extension = MimeTypeMap.getFileExtensionFromUrl(url);
     try {
       if (extension != null && !extension.isEmpty()) {
-        type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
+        String mimeType =
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
+        if (mimeType != null && !mimeType.isEmpty()) {
+          type = mimeType;
+        }
       }
     } catch (Exception ex) {
       Log.d(TAG, "UploadWorker - GetMimeType", ex);
