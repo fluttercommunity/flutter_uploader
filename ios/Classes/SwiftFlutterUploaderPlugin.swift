@@ -174,20 +174,16 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         guard let args = call.arguments as? [String: Any?],
             let connectionString = args["connectionString"] as? String,
             let containerName = args["container"] as? String,
-            let createContainer = args["createContainer"] as? Bool ?? false,
             let path = args["path"] as? String,
             let blobName = args["blobName"] as? String
             else {
                 result(FlutterError(code: "invalid_params", message: "invalid parameters passed", details: nil))
                 return
         }
+        let createContainer = (args["createContainer"] as? Bool) ?? false
                 
-        azureUploader.upload(connectionString: connectionString, container: containerName, createContainer: createContainer, blobName: blobName, path: path) { (error) in
-            if let error = error {
-                result(FlutterError(code: "upload failed", message: "\(error)", details: nil))
-            } else {
-                result(nil)
-            }
+        azureUploader.upload(connectionString: connectionString, container: containerName, createContainer: createContainer, blobName: blobName, path: path) { (taskId) in
+            result(taskId)
         }
     }
 
@@ -373,7 +369,6 @@ extension SwiftFlutterUploaderPlugin: UploaderDelegate {
             Key.statusCode: statusCode,
             Key.headers: headers
         ])
-
     }
 
     func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String?, errorStackTrace: [String]) {

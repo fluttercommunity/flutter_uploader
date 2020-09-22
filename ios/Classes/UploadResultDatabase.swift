@@ -73,7 +73,7 @@ class UploadResultDatabase: UploaderDelegate {
             Key.status: inStatus.rawValue,
             Key.statusCode: statusCode,
             Key.code: errorCode,
-            Key.message: errorMessage ?? NSNull(),
+            Key.message: errorMessage ?? "",
             Key.details: errorStackTrace
         ])
 

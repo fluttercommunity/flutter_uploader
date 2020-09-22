@@ -47,11 +47,13 @@ class AzureUploader {
         delegates.append(UploadResultDatabase.shared)
     }
     
-    func upload(connectionString: String, container containerName: String, createContainer: Bool, blobName: String, path: String, completion: @escaping ((Error?) -> Void)) {
+    func upload(connectionString: String, container containerName: String, createContainer: Bool, blobName: String, path: String, completion: @escaping (String) -> Void) {
         let id: String = UUID().uuidString
         delegates.uploadEnqueued(taskId: id)
         
         activeTasks.append(id)
+    
+        completion(id)
         
         createBlobClient(connectionString: connectionString)
             .then { blobClient in return self.getContainer(blobClient, containerName, create: createContainer) }
@@ -78,12 +80,14 @@ class AzureUploader {
                 }
             }
             .done {
-                completion(nil)
                 self.delegates.uploadCompleted(taskId: id, message: nil, statusCode: 200, headers: [:])
             }
-            .catch {
-                completion($0)
-                self.delegates.uploadFailed(taskId: id, inStatus: .failed, statusCode: 500, errorCode: "", errorMessage: nil, errorStackTrace: [])
+            .catch { e in
+                if self.activeTasks.contains(id) {
+                    self.delegates.uploadFailed(taskId: id, inStatus: .failed, statusCode: 500, errorCode: "", errorMessage: nil, errorStackTrace: [])
+                } else {
+                    self.delegates.uploadFailed(taskId: id, inStatus: .canceled, statusCode: 500, errorCode: "", errorMessage: nil, errorStackTrace: [])
+                }
             }
     }
     
@@ -128,18 +132,20 @@ class AzureUploader {
             
             let thisBlock = min(contentLength - start, AzureUploader.blockSize)
             
-            print("thisBlock: \(thisBlock)")
-            
-            appendBlob.appendBlock(with: handle.readData(ofLength: Int(thisBlock)), contentMD5: nil, accessCondition: AZSAccessCondition(), requestOptions: options, operationContext: opContext) { (error, offset) in
-                print("upload done, sent to offset: \(offset), with error: \(String(describing: error))")
-                if let error = error {
-                    seal.reject(error)
-                } else {
-                    let p = (Double(start) / Double(contentLength)) * 100
-                    
-                    self.delegates.uploadProgressed(taskId: taskId, inStatus: .running, progress: Int(round(p)))
-                    seal.fulfill(Void())
+            if thisBlock > 0 {
+                appendBlob.appendBlock(with: handle.readData(ofLength: Int(thisBlock)), contentMD5: nil, accessCondition: AZSAccessCondition(), requestOptions: options, operationContext: opContext) { (error, offset) in
+                    if let error = error {
+                        seal.reject(error)
+                    } else {
+                        let bytesWritten = start + thisBlock
+                        let p = (Double(bytesWritten) / Double(contentLength)) * 100
+                        
+                        self.delegates.uploadProgressed(taskId: taskId, inStatus: .running, progress: Int(round(p)))
+                        seal.fulfill(Void())
+                    }
                 }
+            } else {
+                seal.fulfill(Void())
             }
             
         }
