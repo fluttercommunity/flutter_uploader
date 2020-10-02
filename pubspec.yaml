@@ -4,7 +4,8 @@ version: 2.0.0-beta.1
 homepage: https://github.com/BlueChilli/flutter_uploader
 
 environment:
-  sdk: ">=2.7.0 <3.0.0"
+  sdk: ">=2.1.0 <3.0.0"
+  flutter: ">=1.12.0 <2.0.0"
 
 dependencies:
   equatable: ^1.2.2
@@ -19,5 +20,9 @@ dev_dependencies:
 
 flutter:
   plugin:
-    androidPackage: com.bluechilli.flutteruploader
-    pluginClass: FlutterUploaderPlugin
+    platforms:
+      android:
+        package: com.bluechilli.flutteruploader
+        pluginClass: FlutterUploaderPlugin
+      ios:
+        pluginClass: FlutterUploaderPlugin
