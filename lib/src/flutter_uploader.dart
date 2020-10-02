@@ -77,8 +77,9 @@ class FlutterUploader {
     // String code = value['code'];
     int status = map['status'];
     int statusCode = map['statusCode'];
-    final headers =
-        map['headers'] != null ? Map<String, dynamic>.from(map['headers']) : {};
+    final headers = map['headers'] != null
+        ? Map<String, dynamic>.from(map['headers'])
+        : <String, dynamic>{};
 
     return UploadTaskResponse(
       taskId: id,
