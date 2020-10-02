@@ -9,6 +9,9 @@ code_style_task:
 #    - git fetch origin master
 #  activate_script: pub global activate flutter_plugin_tools
   matrix:
+    - name: publishable
+      test_script:
+        - flutter pub publish -n
     - name: test
       test_script:
         - flutter test
