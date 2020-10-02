@@ -1,8 +1,6 @@
 part of flutter_uploader;
 
-///
 /// A class defines a set of possible statuses of a upload task
-///
 class UploadTaskStatus {
   final int _value;
 
@@ -10,27 +8,30 @@ class UploadTaskStatus {
 
   int get value => _value;
 
-  get hashCode => _value;
+  @override
+  int get hashCode => _value;
 
-  operator ==(status) => status._value == this._value;
+  @override
+  bool operator ==(status) => status._value == _value;
 
-  toString() => 'UploadTaskStatus($_value)';
+  @override
+  String toString() => 'UploadTaskStatus($_value)';
 
   String get description {
-    if (value == null) return "Undefined";
+    if (value == null) return 'Undefined';
     switch (value) {
       case 1:
-        return "Enqueued";
+        return 'Enqueued';
       case 2:
-        return "Running";
+        return 'Running';
       case 3:
-        return "Completed";
+        return 'Completed';
       case 4:
-        return "Failed";
+        return 'Failed';
       case 5:
-        return "Cancelled";
+        return 'Cancelled';
       default:
-        return "Undefined ($value)";
+        return 'Undefined ($value)';
     }
   }
 

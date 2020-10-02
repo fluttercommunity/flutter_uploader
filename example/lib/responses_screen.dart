@@ -31,33 +31,33 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
     _progressSubscription = widget.uploader.progress.listen((progress) {
       final task = _tasks[progress.taskId];
       print(
-          "In MAIN APP: ID: ${progress.taskId}, progress: ${progress.progress}");
+          'In MAIN APP: ID: ${progress.taskId}, progress: ${progress.progress}');
       if (task == null) return;
       if (task.isCompleted()) return;
 
-      Map<String, UploadItem> tmp = <String, UploadItem>{}..addAll(_tasks);
+      var tmp = <String, UploadItem>{}..addAll(_tasks);
       tmp.putIfAbsent(progress.taskId, () => UploadItem(progress.taskId));
       tmp[progress.taskId] =
           task.copyWith(progress: progress.progress, status: progress.status);
       setState(() => _tasks = tmp);
     }, onError: (ex, stacktrace) {
-      print("exception: $ex");
-      print("stacktrace: $stacktrace" ?? "no stacktrace");
+      print('exception: $ex');
+      print('stacktrace: $stacktrace' ?? 'no stacktrace');
     });
 
     _resultSubscription = widget.uploader.result.listen((result) {
       print(
-          "IN MAIN APP: ${result.taskId}, status: ${result.status}, statusCode: ${result.statusCode}, headers: ${result.headers}");
+          'IN MAIN APP: ${result.taskId}, status: ${result.status}, statusCode: ${result.statusCode}, headers: ${result.headers}');
 
-      Map<String, UploadItem> tmp = <String, UploadItem>{}..addAll(_tasks);
+      var tmp = <String, UploadItem>{}..addAll(_tasks);
       tmp.putIfAbsent(result.taskId, () => UploadItem(result.taskId));
       tmp[result.taskId] =
           tmp[result.taskId].copyWith(status: result.status, response: result);
 
       setState(() => _tasks = tmp);
     }, onError: (ex, stacktrace) {
-      print("exception: $ex");
-      print("stacktrace: $stacktrace" ?? "no stacktrace");
+      print('exception: $ex');
+      print('stacktrace: $stacktrace' ?? 'no stacktrace');
       final exp = ex as UploadException;
 
       setState(() {

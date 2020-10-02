@@ -9,11 +9,11 @@ class FileItem {
 
   FileItem({
     @required this.path,
-    this.field = "file",
+    this.field = 'file',
   }) : assert(path != null);
 
   @override
-  String toString() => "FileItem(path: $path fieldname:$field)";
+  String toString() => 'FileItem(path: $path fieldname:$field)';
 
   Map<String, dynamic> toJson() => {'path': path, 'fieldname': field};
 

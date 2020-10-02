@@ -32,8 +32,8 @@ class FlutterUploader {
   Future<void> setBackgroundHandler(final Function backgroundHandler) async {
     final callback = PluginUtilities.getCallbackHandle(backgroundHandler);
     assert(callback != null,
-        "The backgroundHandler needs to be either a static function or a top level function to be accessible as a Flutter entry point.");
-    final int handle = callback.toRawHandle();
+        'The backgroundHandler needs to be either a static function or a top level function to be accessible as a Flutter entry point.');
+    final handle = callback.toRawHandle();
     await _platform.invokeMethod<void>('setBackgroundHandler', {
       'callbackHandle': handle,
     });
@@ -75,9 +75,9 @@ class FlutterUploader {
     String id = map['taskId'];
     String message = map['message'];
     // String code = value['code'];
-    int status = map["status"];
-    int statusCode = map["statusCode"];
-    Map<String, dynamic> headers =
+    int status = map['status'];
+    int statusCode = map['statusCode'];
+    final headers =
         map['headers'] != null ? Map<String, dynamic>.from(map['headers']) : {};
 
     return UploadTaskResponse(
