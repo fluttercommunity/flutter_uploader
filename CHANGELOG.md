@@ -1,4 +1,4 @@
-## next
+## 2.0.0-beta.1
 
 - Runs a Flutter isolate in the background while a upload is running. The entry point can be set using `setBackgroundHandler`.
 - Notification handling has been removed from this plugin entirely. Developers can use `FlutterLocalNotifications` using the new isolate mechanism.
