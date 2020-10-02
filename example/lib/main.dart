@@ -166,11 +166,11 @@ class _AppState extends State<App> {
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.cloud_upload),
-              title: Text('Upload'),
+              label: 'Upload',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.receipt),
-              title: Text('Responses'),
+              label: 'Responses',
             ),
           ],
           onTap: (newIndex) {
