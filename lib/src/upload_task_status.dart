@@ -36,11 +36,11 @@ class UploadTaskStatus {
 
   static UploadTaskStatus from(int value) => UploadTaskStatus._internal(value);
 
-  static const undefined = const UploadTaskStatus._internal(0);
-  static const enqueued = const UploadTaskStatus._internal(1);
-  static const running = const UploadTaskStatus._internal(2);
-  static const complete = const UploadTaskStatus._internal(3);
-  static const failed = const UploadTaskStatus._internal(4);
-  static const canceled = const UploadTaskStatus._internal(5);
-  static const paused = const UploadTaskStatus._internal(6);
+  static const undefined = UploadTaskStatus._internal(0);
+  static const enqueued = UploadTaskStatus._internal(1);
+  static const running = UploadTaskStatus._internal(2);
+  static const complete = UploadTaskStatus._internal(3);
+  static const failed = UploadTaskStatus._internal(4);
+  static const canceled = UploadTaskStatus._internal(5);
+  static const paused = UploadTaskStatus._internal(6);
 }
