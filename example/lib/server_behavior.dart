@@ -8,8 +8,10 @@ class ServerBehavior {
 
   ServerBehavior._(this.title, this.name);
 
+  /// Default behavior
   static ServerBehavior defaultOk200 = ServerBehavior._('OK - 200', 'ok200');
 
+  /// All available server behaviors.
   static List<ServerBehavior> all = [
     defaultOk200,
     ServerBehavior._('OK - 200, add random data', 'ok200randomdata'),

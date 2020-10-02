@@ -12,6 +12,10 @@ code_style_task:
     - name: test
       test_script:
         - flutter test
+    - name: dartfmt
+      test_script:
+        - dartfmt -w .
+        - git diff --quiet || (git diff && exit 1)
     - name: format
       format_script: script/format.sh
     - name: analyze

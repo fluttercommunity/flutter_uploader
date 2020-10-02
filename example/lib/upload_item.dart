@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 import 'package:equatable/equatable.dart';
 
 import 'package:flutter_uploader/flutter_uploader.dart';
@@ -32,9 +34,9 @@ class UploadItem extends Equatable {
   }
 
   bool isCompleted() =>
-      this.status == UploadTaskStatus.canceled ||
-      this.status == UploadTaskStatus.complete ||
-      this.status == UploadTaskStatus.failed;
+      status == UploadTaskStatus.canceled ||
+      status == UploadTaskStatus.complete ||
+      status == UploadTaskStatus.failed;
 
   @override
   List<Object> get props {

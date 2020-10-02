@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -7,9 +9,9 @@ import 'package:flutter_uploader_example/upload_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-const String title = "FileUpload Sample app";
+const String title = 'FileUpload Sample app';
 final Uri uploadURL = Uri.parse(
-  "https://us-central1-flutteruploadertest.cloudfunctions.net/upload",
+  'https://us-central1-flutteruploadertest.cloudfunctions.net/upload',
 );
 
 FlutterUploader _uploader = FlutterUploader();
@@ -18,14 +20,13 @@ void backgroundHandler() {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Notice these instances belong to a forked isolate.
-  FlutterUploader uploader = FlutterUploader();
+  var uploader = FlutterUploader();
 
-  FlutterLocalNotificationsPlugin notifications =
-      FlutterLocalNotificationsPlugin();
+  var notifications = FlutterLocalNotificationsPlugin();
 
   // Only show notifications for unprocessed uploads.
   SharedPreferences.getInstance().then((preferences) {
-    List<String> processed = preferences.getStringList('processed') ?? [];
+    var processed = preferences.getStringList('processed') ?? <String>[];
 
     if (Platform.isAndroid) {
       uploader.progress.listen((progress) {
@@ -67,9 +68,9 @@ void backgroundHandler() {
 
       notifications.cancel(result.taskId.hashCode);
 
-      bool successful = result.status == UploadTaskStatus.complete;
+      final successful = result.status == UploadTaskStatus.complete;
 
-      String title = 'Upload Complete';
+      var title = 'Upload Complete';
       if (result.status == UploadTaskStatus.failed) {
         title = 'Upload Failed';
       } else if (result.status == UploadTaskStatus.canceled) {
@@ -111,6 +112,7 @@ class App extends StatefulWidget {
 
   App({Key key, this.child}) : super(key: key);
 
+  @override
   _AppState createState() => _AppState();
 }
 
@@ -123,8 +125,7 @@ class _AppState extends State<App> {
 
     _uploader.setBackgroundHandler(backgroundHandler);
 
-    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-        FlutterLocalNotificationsPlugin();
+    var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     var initializationSettingsAndroid =
         AndroidInitializationSettings('ic_upload');
     var initializationSettingsIOS = IOSInitializationSettings(

@@ -1,5 +1,8 @@
 part of flutter_uploader;
 
+/// Controls task scheduling and allows developers to observe the status.
+/// The class is designed as a singleton and can therefore be instantiated as
+/// often as needed.
 class FlutterUploader {
   final MethodChannel _platform;
   final EventChannel _progressChannel;
@@ -10,6 +13,7 @@ class FlutterUploader {
 
   static FlutterUploader _instance;
 
+  /// Default constructor which returns the same object on future calls (singleton).
   factory FlutterUploader() {
     return _instance ??= FlutterUploader.private(
       const MethodChannel('flutter_uploader'),
@@ -18,6 +22,7 @@ class FlutterUploader {
     );
   }
 
+  /// Only required for testing.
   @visibleForTesting
   FlutterUploader.private(
     MethodChannel channel,
@@ -32,16 +37,14 @@ class FlutterUploader {
   Future<void> setBackgroundHandler(final Function backgroundHandler) async {
     final callback = PluginUtilities.getCallbackHandle(backgroundHandler);
     assert(callback != null,
-        "The backgroundHandler needs to be either a static function or a top level function to be accessible as a Flutter entry point.");
-    final int handle = callback.toRawHandle();
+        'The backgroundHandler needs to be either a static function or a top level function to be accessible as a Flutter entry point.');
+    final handle = callback.toRawHandle();
     await _platform.invokeMethod<void>('setBackgroundHandler', {
       'callbackHandle': handle,
     });
   }
 
-  ///
-  /// stream to listen on upload progress
-  ///
+  /// Stream to listen on upload progress
   Stream<UploadTaskProgress> get progress {
     return _progressStream ??= _progressChannel
         .receiveBroadcastStream()
@@ -61,9 +64,7 @@ class FlutterUploader {
     );
   }
 
-  ///
-  /// stream to listen on upload result
-  ///
+  /// Stream to listen on upload result
   Stream<UploadTaskResponse> get result {
     return _resultStream ??= _resultChannel
         .receiveBroadcastStream()
@@ -75,10 +76,11 @@ class FlutterUploader {
     String id = map['taskId'];
     String message = map['message'];
     // String code = value['code'];
-    int status = map["status"];
-    int statusCode = map["statusCode"];
-    Map<String, dynamic> headers =
-        map['headers'] != null ? Map<String, dynamic>.from(map['headers']) : {};
+    int status = map['status'];
+    int statusCode = map['statusCode'];
+    final headers = map['headers'] != null
+        ? Map<String, dynamic>.from(map['headers'])
+        : <String, dynamic>{};
 
     return UploadTaskResponse(
       taskId: id,
@@ -87,10 +89,6 @@ class FlutterUploader {
       headers: headers,
       response: message,
     );
-  }
-
-  void dispose() {
-    _platform.setMethodCallHandler(null);
   }
 
   /// Enqueues a new upload task described by [upload].
