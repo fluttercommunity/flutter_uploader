@@ -58,14 +58,6 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
     }, onError: (ex, stacktrace) {
       print('exception: $ex');
       print('stacktrace: $stacktrace' ?? 'no stacktrace');
-      final exp = ex as UploadException;
-
-      setState(() {
-        _tasks[exp.taskId] = UploadItem(
-          exp.taskId,
-          status: exp.status,
-        );
-      });
     });
   }
 
