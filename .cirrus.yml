@@ -81,6 +81,7 @@ ios_task:
   install_swiftlint_script:
     - brew install swiftlint
   test_script:
+    - flutter upgrade
     - flutter test
   build_script:
     - pod repo update
