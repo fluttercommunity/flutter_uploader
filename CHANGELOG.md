@@ -1,3 +1,7 @@
+## 2.0.0-beta.3
+
+- Update maintainer field in `pubspec.yaml`
+
 ## 2.0.0-beta.2
 
 - Moved package to Flutter Community
