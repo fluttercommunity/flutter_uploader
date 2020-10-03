@@ -1,3 +1,7 @@
+## 2.0.0-beta.1+1
+
+- Moved package to Flutter Community
+
 ## 2.0.0-beta.1
 
 - Runs a Flutter isolate in the background while a upload is running. The entry point can be set using `setBackgroundHandler`.
