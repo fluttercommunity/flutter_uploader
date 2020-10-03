@@ -2,7 +2,7 @@ name: flutter_uploader
 description: A plugin for creating and managing upload tasks with optional background exection support.
 version: 2.0.0-beta.2
 homepage: https://github.com/BlueChilli/flutter_uploader
-maintainer: Sebastian Roth <@ened>
+maintainer: Sebastian Roth (@ened)
 
 environment:
   sdk: ">=2.1.0 <3.0.0"
