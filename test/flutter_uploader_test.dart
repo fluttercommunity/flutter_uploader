@@ -13,14 +13,14 @@ void main() {
 
   FlutterUploader uploader;
 
-  const MethodChannel methodChannel = MethodChannel('flutter_uploader');
+  final methodChannel = MethodChannel('flutter_uploader');
   EventChannel progressChannel;
   EventChannel resultChannel;
 
   StreamController<Map<String, dynamic>> progressController;
   StreamController<Map<String, dynamic>> resultController;
 
-  final List<MethodCall> log = <MethodCall>[];
+  final log = <MethodCall>[];
 
   setUp(() {
     methodChannel.setMockMethodCallHandler((call) async {
@@ -163,13 +163,13 @@ void main() {
         ]);
       });
     });
-    group("progress stream", () {
-      testWidgets("supports multiple subscriptions",
+    group('progress stream', () {
+      testWidgets('supports multiple subscriptions',
           (WidgetTester tester) async {
         const fakeTaskId = '123123';
 
-        final Completer<String> c1 = Completer();
-        final Completer<String> c2 = Completer();
+        final c1 = Completer<String>();
+        final c2 = Completer<String>();
 
         uploader.progress.take(1).listen((event) => c1.complete(event.taskId));
         uploader.progress.take(1).listen((event) => c2.complete(event.taskId));
@@ -187,12 +187,12 @@ void main() {
     });
   });
 
-  group("result stream", () {
-    testWidgets("supports multiple subscriptions", (WidgetTester tester) async {
+  group('result stream', () {
+    testWidgets('supports multiple subscriptions', (WidgetTester tester) async {
       const fakeTaskId = '123123';
 
-      final Completer<String> c1 = Completer();
-      final Completer<String> c2 = Completer();
+      final c1 = Completer<String>();
+      final c2 = Completer<String>();
 
       uploader.result.take(1).listen((event) => c1.complete(event.taskId));
       uploader.result.take(1).listen((event) => c2.complete(event.taskId));

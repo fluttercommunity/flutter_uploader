@@ -1,3 +1,5 @@
+[![Flutter Community: flutter_uploader](https://fluttercommunity.dev/_github/header/flutter_uploader)](https://github.com/fluttercommunity/community)
+
 # Flutter Uploader
 
 A plugin for creating and managing upload tasks. Supports iOS and Android.
@@ -16,7 +18,7 @@ This plugin is inspired by [`flutter_downloader`][5]. Thanks to Hung Duy Ha & Fl
 
 The plugin supports a background isolate. In order for plugins to work, you need to adjust your AppDelegate as follows:
 
-``` swift
+```swift
 import flutter_uploader
 
 func registerPlugins(registry: FlutterPluginRegistry) {
@@ -103,7 +105,7 @@ import 'package:flutter_uploader/flutter_uploader.dart';
 
 First, define a top-level function:
 
-``` dart
+```dart
 void backgroundHandler() {
   // Needed so that plugin communication works.
   WidgetsFlutterBinding.ensureInitialized();
@@ -125,7 +127,7 @@ void backgroundHandler() {
 
 Once you have a function defined, configure it in your main `FlutterUploader` object like so:
 
-``` dart
+```dart
 FlutterUploader().setBackgroundHandler(backgroundHandler);
 ```
 
@@ -135,7 +137,7 @@ To see how it all works, check out the example.
 
 **multipart/form-data:**
 
-``` dart
+```dart
 final taskId = await FlutterUploader().enqueue(
   MultipartFormDataUpload(
     url: "your upload link", //required: url to upload to
@@ -150,7 +152,7 @@ final taskId = await FlutterUploader().enqueue(
 
 **binary uploads:**
 
-``` dart
+```dart
 final taskId = await FlutterUploader().enqueue(
   RawUpload(
     url: "your upload link", // required: url to upload to
@@ -184,27 +186,26 @@ final subscription = FlutterUploader().result.listen((result) {
 
 > when tasks are cancelled, it will send on onError handler as exception with status = cancelled
 
-Upload results are persisted by the plugin and will be submitted on each `.listen`. 
+Upload results are persisted by the plugin and will be submitted on each `.listen`.
 It is advised to keep a list of processed uploads in App side and call `clearUploads` on the FlutterUploader plugin once they can be removed.
 
 #### Cancel an upload task:
 
-``` dart
+```dart
 FlutterUploader().cancel(taskId: taskId);
 ```
 
 #### Cancel all upload tasks:
 
-``` dart
+```dart
 FlutterUploader().cancelAll();
 ```
 
 #### Clear Uploads
 
-``` dart
+```dart
 FlutterUploader().clearUploads()
 ```
-
 
 [1]: https://developer.android.com/topic/libraries/architecture/workmanager
 [2]: https://developer.apple.com/documentation/foundation/nsurlsessionuploadtask?language=objc
