@@ -23,5 +23,17 @@ dev_dependencies:
   flutter_uploader:
     path: ../
 
+dependency_overrides:
+  flutter_local_notifications:
+    git:
+      url: https://github.com/ened/flutter_local_notifications.git
+      path: flutter_local_notifications
+      ref: 17-notification-actions
+  flutter_local_notifications_platform_interface:
+    git:
+      url: https://github.com/ened/flutter_local_notifications.git
+      path: flutter_local_notifications_platform_interface
+      ref: 17-notification-actions
+
 flutter:
   uses-material-design: true
