@@ -94,7 +94,8 @@ public class AzureUploadWorker extends ListenableWorker {
     final CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
     final OperationContext opContext = new OperationContext();
-    opContext.setLogLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.WARN);
+//    opContext.setLogLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.WARN);
+    opContext.setLogLevel(Log.WARN);
 
     final BlobRequestOptions options = new BlobRequestOptions();
     options.setRetryPolicyFactory(new RetryNoRetry());

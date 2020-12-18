@@ -1,10 +1,12 @@
 part of flutter_uploader;
 
+abstract class Upload {}
+
 /// Abstract data structure for storing uploads.
-abstract class Upload {
+abstract class HttpUpload {
   /// Default constructor which specicies a [url] and [method].
   /// Sub classes may override the method for developer convenience.
-  const Upload({
+  const HttpUpload({
     @required this.url,
     @required this.method,
     this.headers = const <String, String>{},
@@ -28,7 +30,7 @@ abstract class Upload {
 /// Standard RFC 2388 multipart/form-data upload.
 ///
 /// The platform will generate the boundaries and accompanying information.
-class MultipartFormDataUpload extends Upload {
+class MultipartFormDataUpload extends HttpUpload {
   /// Default constructor which requires either files or data to be set.
   MultipartFormDataUpload({
     @required String url,
@@ -56,7 +58,7 @@ class MultipartFormDataUpload extends Upload {
 }
 
 /// Also called a binary upload, this represents a upload without any form-encoding applies.
-class RawUpload extends Upload {
+class RawUpload extends HttpUpload {
   /// Default constructor.
   const RawUpload({
     @required String url,

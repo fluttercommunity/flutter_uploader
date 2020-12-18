@@ -97,21 +97,23 @@ class FlutterUploader {
   Future<String> enqueue(Upload upload) async {
     if (upload is MultipartFormDataUpload) {
       return await _platform.invokeMethod<String>('enqueue', {
-        'url': upload.url,
-        'method': describeEnum(upload.method),
-        'files': (upload.files ?? []).map((e) => e.toJson()).toList(),
-        'headers': upload.headers,
-        'data': upload.data,
-        'tag': upload.tag,
+        'url': (upload as MultipartFormDataUpload).url,
+        'method': describeEnum((upload as MultipartFormDataUpload).method),
+        'files': ((upload as MultipartFormDataUpload).files ?? [])
+            .map((e) => e.toJson())
+            .toList(),
+        'headers': (upload as MultipartFormDataUpload).headers,
+        'data': (upload as MultipartFormDataUpload).data,
+        'tag': (upload as MultipartFormDataUpload).tag,
       });
     }
     if (upload is RawUpload) {
       return await _platform.invokeMethod<String>('enqueueBinary', {
-        'url': upload.url,
-        'method': describeEnum(upload.method),
-        'path': upload.path,
-        'headers': upload.headers,
-        'tag': upload.tag
+        'url': (upload as RawUpload).url,
+        'method': describeEnum((upload as RawUpload).method),
+        'path': (upload as RawUpload).path,
+        'headers': (upload as RawUpload).headers,
+        'tag': (upload as RawUpload).tag
       });
     }
 
