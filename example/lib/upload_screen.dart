@@ -1,3 +1,5 @@
+// ignore_for_file: public_member_api_docs
+
 import 'dart:async';
 import 'dart:io';
 
@@ -171,7 +173,7 @@ class _UploadScreenState extends State<UploadScreen> {
                       onPressed: () {
                         widget.uploader.clearUploads();
                       },
-                      child: Text("Clear Uploads"),
+                      child: Text('Clear Uploads'),
                     )
                   ],
                 ),
@@ -270,7 +272,7 @@ class _UploadScreenState extends State<UploadScreen> {
     } else {
       return MultipartFormDataUpload(
         url: url.toString(),
-        data: {"name": "john"},
+        data: {'name': 'john'},
         files: paths.map((e) => FileItem(path: e, field: 'file')).toList(),
         method: UploadMethod.POST,
         tag: tag,

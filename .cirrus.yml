@@ -9,9 +9,16 @@ code_style_task:
 #    - git fetch origin master
 #  activate_script: pub global activate flutter_plugin_tools
   matrix:
+    - name: publishable
+      test_script:
+        - flutter pub publish -n
     - name: test
       test_script:
         - flutter test
+    - name: dartfmt
+      test_script:
+        - dartfmt -w .
+        - git diff --quiet || (git diff && exit 1)
     - name: format
       format_script: script/format.sh
     - name: analyze
@@ -53,7 +60,6 @@ connected_check_task:
   create_device_script:
     - echo no | avdmanager create avd --force --name "api-${API_LEVEL}" --abi "${TARGET}/${ARCH}" --package "system-images;android-${API_LEVEL};${TARGET};${ARCH}"
   start_emulator_background_script:
-    - sudo chown cirrus:cirrus /dev/kvm
     - $ANDROID_HOME/emulator/emulator -avd "api-${API_LEVEL}" -no-window -gpu off -no-snapshot -noaudio -no-boot-anim -camera-back none -show-kernel -verbose -debug all
     # - $ANDROID_HOME/emulator/emulator -avd "api-${API_LEVEL}" -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -show-kernel -verbose -debug all
   wait_for_emulator_script:
@@ -73,10 +79,11 @@ ios_task:
     image: catalina-flutter
   create_simulator_script:
     - xcrun simctl list
-    - xcrun simctl create Flutter-iPhone com.apple.CoreSimulator.SimDeviceType.iPhone-X com.apple.CoreSimulator.SimRuntime.iOS-13-5 | xargs xcrun simctl boot
+    - xcrun simctl create Flutter-iPhone com.apple.CoreSimulator.SimDeviceType.iPhone-X com.apple.CoreSimulator.SimRuntime.iOS-14-0 | xargs xcrun simctl boot
   install_swiftlint_script:
     - brew install swiftlint
   test_script:
+    - flutter upgrade
     - flutter test
   build_script:
     - pod repo update

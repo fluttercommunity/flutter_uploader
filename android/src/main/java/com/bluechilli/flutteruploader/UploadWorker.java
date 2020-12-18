@@ -299,7 +299,46 @@ public abstract class UploadWorker extends ListenableWorker implements CountProg
             getStacktraceAsStringList(ex.getStackTrace())));
   }
 
-  private void sendUpdateProcessEvent(int status, int progress) {
+  private String GetMimeType(String url) {
+    String type = "application/octet-stream";
+    String extension = MimeTypeMap.getFileExtensionFromUrl(url);
+    try {
+      if (extension != null && !extension.isEmpty()) {
+        String mimeType =
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension.toLowerCase());
+        if (mimeType != null && !mimeType.isEmpty()) {
+          type = mimeType;
+        }
+      }
+    } catch (Exception ex) {
+      Log.d(TAG, "UploadWorker - GetMimeType", ex);
+    }
+
+    return type;
+  }
+
+  private MultipartBody.Builder prepareRequest(Map<String, String> parameters, String boundary) {
+
+    MultipartBody.Builder requestBodyBuilder =
+        boundary != null && !boundary.isEmpty()
+            ? new MultipartBody.Builder(boundary)
+            : new MultipartBody.Builder();
+
+    requestBodyBuilder.setType(MultipartBody.FORM);
+
+    if (parameters == null) return requestBodyBuilder;
+
+    for (String key : parameters.keySet()) {
+      String parameter = parameters.get(key);
+      if (parameter != null) {
+        requestBodyBuilder.addFormDataPart(key, parameter);
+      }
+    }
+
+    return requestBodyBuilder;
+  }
+
+  private void sendUpdateProcessEvent(Context context, int status, int progress) {
     setProgressAsync(
         new Data.Builder().putInt("status", status).putInt("progress", progress).build());
   }
