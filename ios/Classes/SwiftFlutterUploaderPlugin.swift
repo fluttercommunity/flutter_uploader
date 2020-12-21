@@ -12,11 +12,11 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     static let STEP_UPDATE = 0
     static let DEFAULT_TIMEOUT = 3600.0
 
-    let urlSessionUploader = URLSessionUploader.shared
+    var urlSessionUploader: URLSessionUploader?
 
     let channel: FlutterMethodChannel
     let progressEventChannel: FlutterEventChannel
-    let progressHandler: CachingStreamHandler<[String:Any]>
+    var progressHandler: CachingStreamHandler<[String:Any]>?
 
     let resultEventChannel: FlutterEventChannel
     let resultHandler: CachingStreamHandler<[String:Any]>
@@ -37,8 +37,9 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
     }
 
     init (_ channel: FlutterMethodChannel, progressEventChannel: FlutterEventChannel, resultEventChannel: FlutterEventChannel) {
+        self.urlSessionUploader = URLSessionUploader()
+        self.progressHandler = CachingStreamHandler<[String:Any]>()
         self.channel = channel
-
         self.progressEventChannel = progressEventChannel
         self.progressHandler = CachingStreamHandler()
         progressEventChannel.setStreamHandler(progressHandler)
@@ -57,7 +58,11 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         self.taskQueue = DispatchQueue(label: "chillisource.flutter_uploader.dispatch.queue")
         super.init()
 
-        urlSessionUploader.addDelegate(self)
+        urlSessionUploader?.addDelegate(self)
+    }
+    
+    deinit {
+        self.urlSessionUploader = nil
     }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -67,7 +72,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         case "clearUploads":
             UploadResultDatabase.shared.clear()
             resultHandler.clear()
-            progressHandler.clear()
+            progressHandler?.clear()
             
             result(nil)
         case "enqueue":
@@ -121,7 +126,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             if (error != nil) {
                 result(error!)
             } else if let uploadTask = task {
-                result(self.urlSessionUploader.identifierForTask(uploadTask))
+                result(self.urlSessionUploader?.identifierForTask(uploadTask))
             }
         })
     }
@@ -161,7 +166,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             if (error != nil) {
                 result(error!)
             } else if let uploadTask = task {
-                result(self.urlSessionUploader.identifierForTask(uploadTask))
+                result(self.urlSessionUploader?.identifierForTask(uploadTask))
             }
         })
     }
@@ -170,13 +175,13 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         let args = call.arguments as! [String: Any?]
         let taskId = args[Key.taskId] as! String
 
-        urlSessionUploader.cancelWithTaskId(taskId)
+        urlSessionUploader?.cancelWithTaskId(taskId)
 
         result(nil)
     }
 
     private func cancelAllMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
-        urlSessionUploader.cancelAllTasks()
+        urlSessionUploader?.cancelAllTasks()
 
         result(nil)
     }
@@ -197,7 +202,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             }
         }
 
-        completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, path: file.path), nil)
+        completionHandler(self.urlSessionUploader?.enqueueUploadTask(request as URLRequest, path: file.path), nil)
     }
 
     private func uploadTaskWithURLWithCompletion(url: URL,
@@ -300,7 +305,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        completionHandler(urlSessionUploader.enqueueUploadTask(request as URLRequest, path: path), nil)
+        completionHandler(urlSessionUploader?.enqueueUploadTask(request as URLRequest, path: path), nil)
     }
 }
 
@@ -309,7 +314,7 @@ extension SwiftFlutterUploaderPlugin {
     public func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) -> Bool {
         NSLog("ApplicationHandleEventsForBackgroundURLSession: \(identifier)")
         if identifier == URLSessionUploader.KEY_BACKGROUND_SESSION_IDENTIFIER {
-            urlSessionUploader.backgroundTransferCompletionHander = completionHandler
+            urlSessionUploader?.backgroundTransferCompletionHander = completionHandler
         }
 
         return true
@@ -331,7 +336,7 @@ extension SwiftFlutterUploaderPlugin: UploaderDelegate {
     }
 
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
-        progressHandler.add(taskId, [
+        progressHandler?.add(taskId, [
             Key.taskId: taskId,
             Key.status: inStatus.rawValue,
             Key.progress: progress

@@ -98,7 +98,7 @@ class URLSessionUploader: NSObject {
 
     // MARK: Private API
 
-    private override init() {
+    override init() {
         super.init()
 
         delegates.append(EngineManager())
@@ -178,36 +178,36 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
         NSLog("URLSessionTaskIsWaitingForConnectivity:")
     }
 
-    public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-        if totalBytesExpectedToSend == NSURLSessionTransferSizeUnknown {
-            NSLog("Unknown transfer size")
-        } else {
-            guard let uploadTask = task as? URLSessionUploadTask else {
-                NSLog("URLSessionDidSendBodyData: an not uplaod task")
-                return
-            }
+//    public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+//        if totalBytesExpectedToSend == NSURLSessionTransferSizeUnknown {
+//            NSLog("Unknown transfer size")
+//        } else {
+//            guard let uploadTask = task as? URLSessionUploadTask else {
+//                NSLog("URLSessionDidSendBodyData: an not uplaod task")
+//                return
+//            }
+//
+//            let taskId = identifierForTask(uploadTask)
+//            let bytesExpectedToSend = Double(integerLiteral: totalBytesExpectedToSend)
+//            let tBytesSent = Double(integerLiteral: totalBytesSent)
+//            let progress = round(Double(tBytesSent / bytesExpectedToSend * 100))
+//            let runningTask = self.runningTaskById[taskId]
+//            NSLog("URLSessionDidSendBodyData: taskId: \(taskId), byteSent: \(bytesSent), totalBytesSent: \(totalBytesSent), totalBytesExpectedToSend: \(totalBytesExpectedToSend), progress:\(progress)")
 
-            let taskId = identifierForTask(uploadTask)
-            let bytesExpectedToSend = Double(integerLiteral: totalBytesExpectedToSend)
-            let tBytesSent = Double(integerLiteral: totalBytesSent)
-            let progress = round(Double(tBytesSent / bytesExpectedToSend * 100))
-            let runningTask = self.runningTaskById[taskId]
-            NSLog("URLSessionDidSendBodyData: taskId: \(taskId), byteSent: \(bytesSent), totalBytesSent: \(totalBytesSent), totalBytesExpectedToSend: \(totalBytesExpectedToSend), progress:\(progress)")
-
-            if runningTask != nil {
-                let isRunning: (Int, Int, Int) -> Bool = {
-                    (current, previous, step) in
-                    let prev = previous + step
-                    return (current == 0 || current > prev || current >= 100) &&  current != previous
-                }
-
-                if isRunning(Int(progress), runningTask!.progress, SwiftFlutterUploaderPlugin.STEP_UPDATE) {
-                    self.delegates.uploadProgressed(taskId: taskId, inStatus: .running, progress: Int(progress))
-                    self.runningTaskById[taskId] = UploadTask(taskId: taskId, status: .running, progress: Int(progress), tag: runningTask?.tag)
-                }
-            }
-        }
-    }
+//            if runningTask != nil {
+//                let isRunning: (Int, Int, Int) -> Bool = {
+//                    (current, previous, step) in
+//                    let prev = previous + step
+//                    return (current == 0 || current > prev || current >= 100) &&  current != previous
+//                }
+//
+//                if isRunning(Int(progress), runningTask!.progress, SwiftFlutterUploaderPlugin.STEP_UPDATE) {
+//                    self.delegates.uploadProgressed(taskId: taskId, inStatus: .running, progress: Int(progress))
+//                    self.runningTaskById[taskId] = UploadTask(taskId: taskId, status: .running, progress: Int(progress), tag: runningTask?.tag)
+//                }
+//            }
+//        }
+//    }
 
     public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         NSLog("URLSessionDidFinishEvents:")
