@@ -11,6 +11,7 @@ public class EmbeddingV1Activity extends FlutterActivity {
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     FlutterUploaderPlugin.registerWith(registrarFor("com.bluechilli.flutteruploader"));
-    IntegrationTestPlugin.registerWith(registrarFor("dev.flutter.plugins.integration_test.IntegrationTestPlugin"));
+    IntegrationTestPlugin.registerWith(
+        registrarFor("dev.flutter.plugins.integration_test.IntegrationTestPlugin"));
   }
 }
