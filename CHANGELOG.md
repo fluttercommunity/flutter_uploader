@@ -1,3 +1,9 @@
+## 2.0.0-beta.5
+
+- Resolves crashes on iOS when using multiple concurrent uploads
+- Additional documentation on results stream
+- Android: Clear "progress" as well when a `clearUploads` is called
+
 ## 2.0.0-beta.4
 
 - Bump Flutter & Android dependencies, which also resolves the multi-file selection issue in the example
