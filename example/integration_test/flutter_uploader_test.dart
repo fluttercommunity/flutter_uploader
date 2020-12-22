@@ -65,6 +65,27 @@ void main() {
       expect(res.status, UploadTaskStatus.complete);
     });
 
+    testWidgets('multiple uploads stresstest', (WidgetTester tester) async {
+      final taskIds = <String>[];
+      for (var i = 0; i < 10; i++) {
+        taskIds.add(await uploader.enqueue(
+          MultipartFormDataUpload(url: url.toString(), files: [
+            FileItem(path: await _tmpFile(), field: 'file'),
+          ]),
+        ));
+      }
+
+      final res = await Future.wait(
+        taskIds.map(
+          (taskId) => uploader.result.firstWhere(isCompleted(taskId)),
+        ),
+      );
+
+      for (var i = 0; i < res.length; i++) {
+        expect(res[i].taskId, taskIds[i]);
+      }
+    });
+
     testWidgets('can submit custom data', (tester) async {
       var fileItem = FileItem(path: await _tmpFile(), field: 'file');
 
@@ -85,7 +106,6 @@ void main() {
 
       final res = await uploader.result.firstWhere(isCompleted(taskId));
       final json = jsonDecode(res.response);
-      print(json);
 
       expect(json['request']['fields']['simpleKey'], 'simpleValue');
       expect(jsonDecode(json['request']['fields']['listOf']),
@@ -190,6 +210,25 @@ void main() {
       expect(res.statusCode, 200);
       expect(json['headers']['accept'], '*/*');
       expect(res.status, UploadTaskStatus.complete);
+    });
+
+    testWidgets('multiple uploads stresstest', (WidgetTester tester) async {
+      final taskIds = <String>[];
+      for (var i = 0; i < 10; i++) {
+        taskIds.add(await uploader.enqueue(
+          RawUpload(url: url.toString(), path: await _tmpFile()),
+        ));
+      }
+
+      final res = await Future.wait(
+        taskIds.map(
+          (taskId) => uploader.result.firstWhere(isCompleted(taskId)),
+        ),
+      );
+
+      for (var i = 0; i < res.length; i++) {
+        expect(res[i].taskId, taskIds[i]);
+      }
     });
 
     testWidgets("can overwrite 'Accept' header", (WidgetTester tester) async {

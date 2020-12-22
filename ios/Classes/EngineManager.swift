@@ -10,8 +10,16 @@ import Foundation
 class EngineManager {
     private var headlessRunner: FlutterEngine?
     public var registerPlugins: FlutterPluginRegistrantCallback?
+    
+    private let semaphore = DispatchSemaphore(value: 1)
 
     private func startEngineIfNeeded() {
+        semaphore.wait()
+        
+        defer {
+            semaphore.signal()
+        }
+        
         guard let callbackHandle = UploaderDefaults.shared.callbackHandle else {
             if let runner = headlessRunner {
                 runner.destroyContext()
