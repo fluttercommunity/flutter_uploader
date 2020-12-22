@@ -180,9 +180,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     WorkManager.getInstance(context)
         .cancelWorkById(UUID.fromString(taskId))
         .getResult()
-        .addListener(
-            () -> mainExecutor.execute(() -> result.success(null)),
-            workManagerExecutor);
+        .addListener(() -> mainExecutor.execute(() -> result.success(null)), workManagerExecutor);
   }
 
   private void cancelAll(MethodCall call, MethodChannel.Result result) {
