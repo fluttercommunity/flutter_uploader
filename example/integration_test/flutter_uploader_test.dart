@@ -65,6 +65,36 @@ void main() {
       expect(res.status, UploadTaskStatus.complete);
     });
 
+    testWidgets('can submit custom data', (tester) async {
+      var fileItem = FileItem(path: await _tmpFile(), field: 'file');
+
+      final taskId = await uploader.enqueue(
+        MultipartFormDataUpload(url: url.toString(), files: [
+          fileItem
+        ], data: {
+          'simpleKey': 'simpleValue',
+          'listOf': jsonEncode(['data', 'data', 'data']),
+          'dictionaryOf': jsonEncode({
+            'key1': 'value1',
+            'key2': 'value2',
+          }),
+        }),
+      );
+
+      expect(taskId, isNotNull);
+
+      final res = await uploader.result.firstWhere(isCompleted(taskId));
+      final json = jsonDecode(res.response);
+      print(json);
+
+      expect(json['request']['fields']['simpleKey'], 'simpleValue');
+      expect(jsonDecode(json['request']['fields']['listOf']), ['data', 'data', 'data']);
+      expect(jsonDecode(json['request']['fields']['dictionaryOf']), {
+        'key1': 'value1',
+        'key2': 'value2',
+      });
+    });
+
     testWidgets("can overwrite 'Accept' header", (WidgetTester tester) async {
       var fileItem = FileItem(path: await _tmpFile(), field: 'file');
 
