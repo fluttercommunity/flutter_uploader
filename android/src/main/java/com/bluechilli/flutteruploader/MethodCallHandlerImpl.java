@@ -2,6 +2,7 @@ package com.bluechilli.flutteruploader;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.Data;
@@ -21,6 +22,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class MethodCallHandlerImpl implements MethodCallHandler {
@@ -30,13 +33,17 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
   private final Context context;
 
-  private int connectionTimeout;
+  private final int connectionTimeout;
 
   @NonNull private final StatusListener statusListener;
+
+  private final Executor workManagerExecutor = Executors.newSingleThreadExecutor();
+  private final Executor mainExecutor;
 
   private static final List<String> VALID_HTTP_METHODS = Arrays.asList("POST", "PUT", "PATCH");
 
   MethodCallHandlerImpl(Context context, int timeout, @NonNull StatusListener listener) {
+    mainExecutor = ContextCompat.getMainExecutor(context);
     this.context = context;
     this.connectionTimeout = timeout;
     this.statusListener = listener;
@@ -109,10 +116,19 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     WorkRequest request =
         buildRequest(
             new UploadTask(url, method, items, headers, parameters, connectionTimeout, false, tag));
-    WorkManager.getInstance(context).enqueue(request);
-    String taskId = request.getId().toString();
-    result.success(taskId);
-    statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+    WorkManager.getInstance(context)
+        .enqueue(request)
+        .getResult()
+        .addListener(
+            () -> {
+              String taskId = request.getId().toString();
+              mainExecutor.execute(
+                  () -> {
+                    result.success(taskId);
+                  });
+              statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+            },
+            workManagerExecutor);
   }
 
   private void enqueueBinary(MethodCall call, MethodChannel.Result result) {
@@ -147,27 +163,43 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 connectionTimeout,
                 true,
                 tag));
-    WorkManager.getInstance(context).enqueue(request);
-    String taskId = request.getId().toString();
-
-    result.success(taskId);
-    statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+    WorkManager.getInstance(context)
+        .enqueue(request)
+        .getResult()
+        .addListener(
+            () -> {
+              String taskId = request.getId().toString();
+              mainExecutor.execute(() -> result.success(taskId));
+              statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+            },
+            workManagerExecutor);
   }
 
   private void cancel(MethodCall call, MethodChannel.Result result) {
     String taskId = call.argument("taskId");
-    WorkManager.getInstance(context).cancelWorkById(UUID.fromString(taskId));
-    result.success(null);
+    WorkManager.getInstance(context)
+        .cancelWorkById(UUID.fromString(taskId))
+        .getResult()
+        .addListener(() -> mainExecutor.execute(() -> result.success(null)), workManagerExecutor);
   }
 
   private void cancelAll(MethodCall call, MethodChannel.Result result) {
-    WorkManager.getInstance(context).cancelAllWorkByTag(FLUTTER_UPLOAD_WORK_TAG);
-    result.success(null);
+    WorkManager.getInstance(context)
+        .cancelAllWorkByTag(FLUTTER_UPLOAD_WORK_TAG)
+        .getResult()
+        .addListener(() -> mainExecutor.execute(() -> result.success(null)), workManagerExecutor);
   }
 
   private void clearUploads(MethodCall call, MethodChannel.Result result) {
-    WorkManager.getInstance(context).pruneWork();
-    result.success(null);
+    WorkManager.getInstance(context)
+        .pruneWork()
+        .getResult()
+        .addListener(
+            () -> {
+              statusListener.onWorkPruned();
+              mainExecutor.execute(() -> result.success(null));
+            },
+            workManagerExecutor);
   }
 
   private WorkRequest buildRequest(UploadTask task) {

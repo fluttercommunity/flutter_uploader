@@ -22,4 +22,6 @@ public interface StatusListener {
       int statusCode,
       String response,
       @Nullable Map<String, String> headers);
+
+  void onWorkPruned();
 }

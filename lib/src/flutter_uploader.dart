@@ -65,6 +65,13 @@ class FlutterUploader {
   }
 
   /// Stream to listen on upload result
+  ///
+  /// This stream may contain duplicates and previously finished uploads.
+  /// Uploads can run in the background at any time and the platform (e.g.
+  /// Android WorkManager) will keep a record of previously completed work.
+  ///
+  /// In order to clear the list, you can use [clearUploads] following by a
+  /// re-subscription to this stream.
   Stream<UploadTaskResponse> get result {
     return _resultStream ??= _resultChannel
         .receiveBroadcastStream()
@@ -118,7 +125,6 @@ class FlutterUploader {
     throw 'Invalid upload type';
   }
 
-  ///
   /// Cancel a given upload task
   ///
   /// **parameters:**
