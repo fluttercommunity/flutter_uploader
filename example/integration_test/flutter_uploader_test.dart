@@ -88,7 +88,8 @@ void main() {
       print(json);
 
       expect(json['request']['fields']['simpleKey'], 'simpleValue');
-      expect(jsonDecode(json['request']['fields']['listOf']), ['data', 'data', 'data']);
+      expect(jsonDecode(json['request']['fields']['listOf']),
+          ['data', 'data', 'data']);
       expect(jsonDecode(json['request']['fields']['dictionaryOf']), {
         'key1': 'value1',
         'key2': 'value2',
