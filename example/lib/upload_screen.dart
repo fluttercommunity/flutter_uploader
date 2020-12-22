@@ -177,14 +177,17 @@ class _UploadScreenState extends State<UploadScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
-    final files = await FilePicker.getMultiFilePath(allowCompression: false);
-    if (files?.isNotEmpty == true) {
+    final files = await FilePicker.platform.pickFiles(
+      allowCompression: false,
+      allowMultiple: true,
+    );
+    if (files.count > 0) {
       if (binary) {
-        for (var path in files.values) {
-          _handleFileUpload([path]);
+        for (var file in files.files) {
+          _handleFileUpload([file.path]);
         }
       } else {
-        _handleFileUpload(files.values.toList());
+        _handleFileUpload(files.paths);
       }
     }
   }

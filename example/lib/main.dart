@@ -39,20 +39,20 @@ void backgroundHandler() {
           'FlutterUploader Example',
           'Upload in Progress',
           NotificationDetails(
-            AndroidNotificationDetails(
+            android: AndroidNotificationDetails(
               'FlutterUploader.Example',
               'FlutterUploader',
               'Installed when you activate the Flutter Uploader Example',
               progress: progress.progress,
               icon: 'ic_upload',
               enableVibration: false,
-              importance: Importance.Low,
+              importance: Importance.low,
               showProgress: true,
               onlyAlertOnce: true,
               maxProgress: 100,
               channelShowBadge: false,
             ),
-            IOSNotificationDetails(),
+            iOS: IOSNotificationDetails(),
           ),
         );
       });
@@ -83,17 +83,17 @@ void backgroundHandler() {
         'FlutterUploader Example',
         title,
         NotificationDetails(
-          AndroidNotificationDetails(
+          android: AndroidNotificationDetails(
             'FlutterUploader.Example',
             'FlutterUploader',
             'Installed when you activate the Flutter Uploader Example',
             icon: 'ic_upload',
             enableVibration: !successful,
             importance: result.status == UploadTaskStatus.failed
-                ? Importance.High
-                : Importance.Min,
+                ? Importance.high
+                : Importance.min,
           ),
-          IOSNotificationDetails(
+          iOS: IOSNotificationDetails(
             presentAlert: true,
           ),
         ),
@@ -136,7 +136,7 @@ class _AppState extends State<App> {
           (int id, String title, String body, String payload) async {},
     );
     var initializationSettings = InitializationSettings(
-        initializationSettingsAndroid, initializationSettingsIOS);
+        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
     flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onSelectNotification: (payload) async {},
