@@ -215,7 +215,7 @@ class _UploadScreenState extends State<UploadScreen> {
       allowCompression: false,
       allowMultiple: true,
     );
-    if (files.count > 0) {
+    if (files != null && files.count > 0) {
       switch (type) {
         case _UploadType.formData:
           _handleFileUpload(files.paths.toList());
