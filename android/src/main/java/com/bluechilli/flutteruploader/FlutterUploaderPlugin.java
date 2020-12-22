@@ -163,6 +163,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
   @Override
   public void onWorkPruned() {
+    progressStreamHandler.clear();
     resultStreamHandler.clear();
   }
 }
