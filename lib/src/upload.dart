@@ -1,9 +1,11 @@
 part of flutter_uploader;
 
-abstract class Upload {}
+abstract class Upload {
+  const Upload();
+}
 
 /// Abstract data structure for storing uploads.
-abstract class HttpUpload {
+abstract class HttpUpload extends Upload {
   /// Default constructor which specicies a [url] and [method].
   /// Sub classes may override the method for developer convenience.
   const HttpUpload({
@@ -12,7 +14,8 @@ abstract class HttpUpload {
     this.headers = const <String, String>{},
     this.tag,
   })  : assert(url != null),
-        assert(method != null);
+        assert(method != null),
+        super();
 
   /// Upload link
   final String url;

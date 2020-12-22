@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:io';
 
-import 'package:e2e/e2e.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -13,7 +13,7 @@ final baseUrl = Uri.parse(
 );
 
 void main() {
-  E2EWidgetsFlutterBinding.ensureInitialized();
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   FlutterUploader uploader;
   var tempFilePaths = <String>[];

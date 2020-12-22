@@ -211,19 +211,22 @@ class _UploadScreenState extends State<UploadScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('type', type.index);
 
-    final files = await FilePicker.getMultiFilePath(allowCompression: false);
-    if (files?.isNotEmpty == true) {
+    final files = await FilePicker.platform.pickFiles(
+      allowCompression: false,
+      allowMultiple: true,
+    );
+    if (files.count > 0) {
       switch (type) {
         case _UploadType.formData:
-          _handleFileUpload(files.values.toList());
+          _handleFileUpload(files.paths.toList());
           break;
         case _UploadType.binary:
-          for (String path in files.values) {
+          for (String path in files.paths) {
             _handleFileUpload([path]);
           }
           break;
         case _UploadType.azure:
-          for (String path in files.values) {
+          for (String path in files.paths) {
             _handleFileUpload([path]);
           }
           break;

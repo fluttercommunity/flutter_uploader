@@ -1,3 +1,11 @@
+## 2.0.0-beta.4
+
+- Bump Flutter & Android dependencies, which also resolves the multi-file selection issue in the example
+- Android: Ensure `clearUploads` also clears the cache held in memory (#119)
+- Added more documentation for the `result` stream
+- Correct homepage field in `pubspec.yaml`
+- Android: Set `compile` & `target` (for example app) SDK versions to 30
+
 ## 2.0.0-beta.3
 
 - Update maintainer field in `pubspec.yaml`
@@ -21,7 +29,7 @@
 ## 1.2.0
 
 - iOS: fix multipartform upload to be able upload large files
-- iOS: fix multipartform upload to be able upload multiple files in one uplaod task
+- iOS: fix multipartform upload to be able upload multiple files in one upload task
 
 ## 1.1.0
 

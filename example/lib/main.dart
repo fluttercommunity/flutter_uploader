@@ -107,7 +107,9 @@ void backgroundHandler() {
                 ? Importance.high
                 : Importance.min,
           ),
-          iOS: IOSNotificationDetails(presentAlert: true),
+          iOS: IOSNotificationDetails(
+            presentAlert: true,
+          ),
         ),
       )
           .catchError((e, stack) {

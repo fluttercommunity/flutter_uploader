@@ -23,7 +23,7 @@ public interface StatusListener {
       String response,
       @Nullable Map<String, String> headers);
 
-  void onCleared();
-
   void onPaused(String id);
+  
+  void onWorkPruned();
 }
