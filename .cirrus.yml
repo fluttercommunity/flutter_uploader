@@ -72,14 +72,14 @@ connected_check_task:
     - adb devices
     - cd example
     - flutter build apk --debug
-    - flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
+    - flutter drive --driver=test_driver/integration_test.dart integration_test/flutter_uploader_test.dart
 
 ios_task:
   osx_instance:
     image: catalina-flutter
   create_simulator_script:
     - xcrun simctl list
-    - xcrun simctl create Flutter-iPhone com.apple.CoreSimulator.SimDeviceType.iPhone-X com.apple.CoreSimulator.SimRuntime.iOS-14-0 | xargs xcrun simctl boot
+    - xcrun simctl create Flutter-iPhone com.apple.CoreSimulator.SimDeviceType.iPhone-X com.apple.CoreSimulator.SimRuntime.iOS-14-2 | xargs xcrun simctl boot
   install_swiftlint_script:
     - brew install swiftlint
   test_script:
@@ -90,4 +90,4 @@ ios_task:
     - cd example && flutter build ios --release --no-codesign
   run_instrumented_tests_script:
     - cd example
-    - flutter drive --driver=test_driver/flutter_uploader_e2e_test.dart test_driver/flutter_uploader_test.dart
+    - flutter drive --driver=test_driver/integration_test.dart integration_test/flutter_uploader_test.dart
