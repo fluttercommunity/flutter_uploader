@@ -18,6 +18,9 @@ class URLSessionUploader: NSObject {
 
     var session: URLSession?
     let queue = OperationQueue()
+    
+    // Accessing uploadedData & runningTaskById will require exclusive access
+    private let semaphore = DispatchSemaphore(value: 1)
 
     // Reference for uploaded data.
     var uploadedData = [String: Data]()
@@ -51,7 +54,10 @@ class URLSessionUploader: NSObject {
         delegates.uploadEnqueued(taskId: taskId)
 
         uploadTask.resume()
+        
+        semaphore.wait()
         self.runningTaskById[taskId] = UploadTask(taskId: taskId, status: .enqueue, progress: 0)
+        semaphore.signal()
 
         return uploadTask
     }
@@ -153,6 +159,11 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
     }
 
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        semaphore.wait()
+        defer {
+            semaphore.signal()
+        }
+
         NSLog("URLSessionDidReceiveData:")
 
         guard let uploadTask = dataTask as? URLSessionUploadTask else {
@@ -179,6 +190,11 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
     }
 
     public func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        semaphore.wait()
+        defer {
+            semaphore.signal()
+        }
+
         if totalBytesExpectedToSend == NSURLSessionTransferSizeUnknown {
             NSLog("Unknown transfer size")
         } else {
@@ -191,6 +207,7 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
             let bytesExpectedToSend = Double(integerLiteral: totalBytesExpectedToSend)
             let tBytesSent = Double(integerLiteral: totalBytesSent)
             let progress = round(Double(tBytesSent / bytesExpectedToSend * 100))
+            
             let runningTask = self.runningTaskById[taskId]
             NSLog("URLSessionDidSendBodyData: taskId: \(taskId), byteSent: \(bytesSent), totalBytesSent: \(totalBytesSent), totalBytesExpectedToSend: \(totalBytesExpectedToSend), progress:\(progress)")
 
@@ -211,7 +228,13 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
 
     public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
         NSLog("URLSessionDidFinishEvents:")
+        
         session.getTasksWithCompletionHandler { (_, uploadTasks, _) in
+            self.semaphore.wait()
+            defer {
+                self.semaphore.signal()
+            }
+            
             if uploadTasks.isEmpty {
                 NSLog("all upload tasks have been completed")
 
@@ -222,6 +245,11 @@ extension URLSessionUploader: URLSessionDelegate, URLSessionDataDelegate, URLSes
     }
 
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        semaphore.wait()
+        defer {
+            semaphore.signal()
+        }
+        
         guard let uploadTask = task as? URLSessionUploadTask else {
             NSLog("URLSessionDidCompleteWithError: not an uplaod task")
             return
