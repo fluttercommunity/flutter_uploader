@@ -48,7 +48,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     plugin.startListening(registrar.context(), registrar.messenger());
     registrar.addViewDestroyListener(
         view -> {
-          plugin.stopListening(registrar.context());
+          plugin.stopListening();
           return false;
         });
   }
@@ -60,7 +60,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    stopListening(binding.getApplicationContext());
+    stopListening();
   }
 
   private void startListening(Context context, BinaryMessenger messenger) {
@@ -83,7 +83,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     resultEventChannel.setStreamHandler(resultStreamHandler);
   }
 
-  private void stopListening(Context context) {
+  private void stopListening() {
     channel.setMethodCallHandler(null);
     channel = null;
 
