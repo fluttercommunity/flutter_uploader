@@ -1,3 +1,7 @@
+## 1.2.1
+
+- Android: Improve mimetype detection & submit application/octet-stream by default
+
 ## 1.2.0
 
 - iOS: fix multipartform upload to be able upload large files
