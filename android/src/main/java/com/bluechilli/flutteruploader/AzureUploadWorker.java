@@ -21,7 +21,6 @@ import com.microsoft.azure.storage.blob.BlobRequestOptions;
 import com.microsoft.azure.storage.blob.CloudAppendBlob;
 import com.microsoft.azure.storage.blob.CloudBlobClient;
 import com.microsoft.azure.storage.blob.CloudBlobContainer;
-import io.flutter.BuildConfig;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -76,7 +75,7 @@ public class AzureUploadWorker extends ListenableWorker {
     final boolean createContainer = getInputData().getBoolean("createContainer", false);
     final String blobName = getInputData().getString("blobName");
     final String path = getInputData().getString("path");
-    final int blockSize = getInputData().getInt("blockSize", 1024 * 1024) ;
+    final int blockSize = getInputData().getInt("blockSize", 1024 * 1024);
 
     final SharedPreferences preferences =
         getApplicationContext().getSharedPreferences("AzureUploadWorker", Context.MODE_PRIVATE);
@@ -94,7 +93,7 @@ public class AzureUploadWorker extends ListenableWorker {
     final CloudBlobContainer container = blobClient.getContainerReference(containerName);
 
     final OperationContext opContext = new OperationContext();
-//    opContext.setLogLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.WARN);
+    //    opContext.setLogLevel(BuildConfig.DEBUG ? Log.VERBOSE : Log.WARN);
     opContext.setLogLevel(Log.WARN);
 
     final BlobRequestOptions options = new BlobRequestOptions();

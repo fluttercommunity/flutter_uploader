@@ -24,6 +24,6 @@ public interface StatusListener {
       @Nullable Map<String, String> headers);
 
   void onPaused(String id);
-  
+
   void onWorkPruned();
 }
