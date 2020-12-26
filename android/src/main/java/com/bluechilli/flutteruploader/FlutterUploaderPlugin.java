@@ -5,6 +5,8 @@ import static com.bluechilli.flutteruploader.MethodCallHandlerImpl.FLUTTER_UPLOA
 import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.LiveData;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import com.bluechilli.flutteruploader.plugin.CachingStreamHandler;
 import com.bluechilli.flutteruploader.plugin.StatusListener;
@@ -18,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** FlutterUploaderPlugin */
@@ -38,13 +41,14 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
   private EventChannel resultEventChannel;
   private final CachingStreamHandler<Map<String, Object>> resultStreamHandler =
       new CachingStreamHandler<>();
+  private LiveData<List<WorkInfo>> workInfoLiveData;
 
   public static void registerWith(Registrar registrar) {
     final FlutterUploaderPlugin plugin = new FlutterUploaderPlugin();
     plugin.startListening(registrar.context(), registrar.messenger());
     registrar.addViewDestroyListener(
         view -> {
-          plugin.stopListening(registrar.context());
+          plugin.stopListening();
           return false;
         });
   }
@@ -56,7 +60,7 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
 
   @Override
   public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
-    stopListening(binding.getApplicationContext());
+    stopListening();
   }
 
   private void startListening(Context context, BinaryMessenger messenger) {
@@ -66,9 +70,9 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     methodCallHandler = new MethodCallHandlerImpl(context, timeout, this);
 
     uploadObserver = new UploadObserver(this);
-    WorkManager.getInstance(context)
-        .getWorkInfosByTagLiveData(FLUTTER_UPLOAD_WORK_TAG)
-        .observeForever(uploadObserver);
+    workInfoLiveData =
+        WorkManager.getInstance(context).getWorkInfosByTagLiveData(FLUTTER_UPLOAD_WORK_TAG);
+    workInfoLiveData.observeForever(uploadObserver);
 
     channel.setMethodCallHandler(methodCallHandler);
 
@@ -79,14 +83,13 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     resultEventChannel.setStreamHandler(resultStreamHandler);
   }
 
-  private void stopListening(Context context) {
+  private void stopListening() {
     channel.setMethodCallHandler(null);
     channel = null;
 
     if (uploadObserver != null) {
-      WorkManager.getInstance(context)
-          .getWorkInfosByTagLiveData(FLUTTER_UPLOAD_WORK_TAG)
-          .removeObserver(uploadObserver);
+      workInfoLiveData.removeObserver(uploadObserver);
+      workInfoLiveData = null;
       uploadObserver = null;
     }
 
