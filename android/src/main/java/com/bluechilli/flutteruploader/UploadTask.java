@@ -1,6 +1,5 @@
 package com.bluechilli.flutteruploader;
 
-import android.net.Uri;
 import java.util.List;
 import java.util.Map;
 
@@ -12,7 +11,6 @@ public class UploadTask {
   private Map<String, String> data;
   private List<FileItem> files;
   private int requestTimeoutInSeconds;
-  private boolean binaryUpload;
   private String tag;
 
   public UploadTask(
@@ -22,7 +20,6 @@ public class UploadTask {
       Map<String, String> headers,
       Map<String, String> data,
       int requestTimeoutInSeconds,
-      boolean binaryUpload,
       String tag) {
     this.url = url;
     this.method = method;
@@ -30,16 +27,11 @@ public class UploadTask {
     this.headers = headers;
     this.data = data;
     this.requestTimeoutInSeconds = requestTimeoutInSeconds;
-    this.binaryUpload = binaryUpload;
     this.tag = tag;
   }
 
   public String getURL() {
     return url;
-  }
-
-  public Uri getUri() {
-    return Uri.parse(url);
   }
 
   public String getMethod() {
@@ -60,10 +52,6 @@ public class UploadTask {
 
   public int getTimeout() {
     return requestTimeoutInSeconds;
-  }
-
-  public boolean isBinaryUpload() {
-    return binaryUpload;
   }
 
   public String getTag() {

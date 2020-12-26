@@ -70,28 +70,32 @@ func registerPlugins(registry: FlutterPluginRegistry) {
 
 ### Optional configuration:
 
-- **Configure maximum number of concurrent tasks:** the plugin depends on `WorkManager` library and `WorkManager` depends on the number of available processor to configure the maximum number of tasks running at a moment. You can setup a fixed number for this configuration by adding following codes to your `AndroidManifest.xml`:
+#### Configure maximum number of concurrent tasks
 
-```xml
- <provider
-     android:name="androidx.work.impl.WorkManagerInitializer"
-     android:authorities="${applicationId}.workmanager-init"
-     android:enabled="false"
-     android:exported="false" />
+The plugin depends on the `WorkManager` library. The configuration can be done using the instructions at [https://developer.android.com/topic/libraries/architecture/workmanager/advanced/custom-configuration](https://developer.android.com/topic/libraries/architecture/workmanager/advanced/custom-configuration).
 
- <provider
-     android:name="com.bluechilli.flutteruploader.FlutterUploaderInitializer"
-     android:authorities="${applicationId}.flutter-upload-init"
-     android:exported="false">
-     <!-- changes this number to configure the maximum number of concurrent tasks -->
-     <meta-data
-         android:name="com.bluechilli.flutterupload.MAX_CONCURRENT_TASKS"
-         android:value="3" />
+The example project shows a custom configuration of up to 10 simultaneous uploads.
 
-     <!-- changes this number to configure connection timeout for the upload http request -->
-     <meta-data android:name="com.bluechilli.flutteruploader.UPLOAD_CONNECTION_TIMEOUT_IN_SECONDS" android:value="3600" />
- </provider>
+Two steps are required:
+
+Depend on the appropriate work-runtime in your host App.
+``` gradle
+implementation "androidx.work:work-runtime:$work_version"
 ```
+
+Override the default `Application` and implement the `androidx.work.Configuration.Provider` interface:
+
+``` java
+@NonNull
+@Override
+public Configuration getWorkManagerConfiguration() {
+  return new Configuration.Builder()
+      .setMinimumLoggingLevel(android.util.Log.INFO)
+      .setExecutor(Executors.newFixedThreadPool(10))
+      .build();
+}
+```
+
 
 ## Usage
 

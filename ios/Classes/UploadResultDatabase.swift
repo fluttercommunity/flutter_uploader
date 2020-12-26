@@ -55,7 +55,7 @@ class UploadResultDatabase: UploaderDelegate {
         results.append([
             Key.taskId: taskId,
             Key.status: UploadTaskStatus.completed.rawValue,
-            Key.message: message ?? NSNull(),
+            Key.message: message ?? "",
             Key.statusCode: statusCode,
             Key.headers: headers
         ])
@@ -73,7 +73,7 @@ class UploadResultDatabase: UploaderDelegate {
             Key.status: inStatus.rawValue,
             Key.statusCode: statusCode,
             Key.code: errorCode,
-            Key.message: errorMessage ?? NSNull(),
+            Key.message: errorMessage ?? "",
             Key.details: errorStackTrace
         ])
 

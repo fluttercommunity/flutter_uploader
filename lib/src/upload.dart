@@ -1,16 +1,21 @@
 part of flutter_uploader;
 
-/// Abstract data structure for storing uploads.
 abstract class Upload {
+  const Upload();
+}
+
+/// Abstract data structure for storing uploads.
+abstract class HttpUpload extends Upload {
   /// Default constructor which specicies a [url] and [method].
   /// Sub classes may override the method for developer convenience.
-  const Upload({
+  const HttpUpload({
     @required this.url,
     @required this.method,
     this.headers = const <String, String>{},
     this.tag,
   })  : assert(url != null),
-        assert(method != null);
+        assert(method != null),
+        super();
 
   /// Upload link
   final String url;
@@ -28,7 +33,7 @@ abstract class Upload {
 /// Standard RFC 2388 multipart/form-data upload.
 ///
 /// The platform will generate the boundaries and accompanying information.
-class MultipartFormDataUpload extends Upload {
+class MultipartFormDataUpload extends HttpUpload {
   /// Default constructor which requires either files or data to be set.
   MultipartFormDataUpload({
     @required String url,
@@ -56,7 +61,7 @@ class MultipartFormDataUpload extends Upload {
 }
 
 /// Also called a binary upload, this represents a upload without any form-encoding applies.
-class RawUpload extends Upload {
+class RawUpload extends HttpUpload {
   /// Default constructor.
   const RawUpload({
     @required String url,
@@ -73,4 +78,29 @@ class RawUpload extends Upload {
 
   /// single file to upload
   final String path;
+}
+
+class AzureUpload extends Upload {
+  AzureUpload({
+    @required this.path,
+    @required this.connectionString,
+    @required this.container,
+    @required this.blobName,
+    this.blockSize = 1024 * 1024,
+  });
+
+  /// Single file to upload
+  final String path;
+
+  /// Azure connection string, following the documentation on https://docs.microsoft.com/en-us/azure/storage/common/storage-configure-connection-string?toc=/azure/storage/blobs/toc.json
+  final String connectionString;
+
+  /// A container name for this file. The container will be created if it does not exist.
+  final String container;
+
+  /// The name of the blob within the [container] specified above.
+  final String blobName;
+
+  /// The block size in bytes.
+  final int blockSize;
 }

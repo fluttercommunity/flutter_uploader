@@ -4,10 +4,12 @@ description: Demonstrates how to use the flutter_uploader plugin.
 publish_to: "none"
 
 dependencies:
+  bloc: ^6.0.3
   crypto: ^2.1.4
   flutter:
     sdk: flutter
   file_picker: ^2.1.4
+  flutter_bloc: ^6.0.5
   path_provider: ^1.6.24
   image_picker: ^0.6.7+17
   shared_preferences: ^0.5.12+4
@@ -20,6 +22,18 @@ dev_dependencies:
 
   flutter_uploader:
     path: ../
+
+dependency_overrides:
+  flutter_local_notifications:
+    git:
+      url: https://github.com/ened/flutter_local_notifications.git
+      path: flutter_local_notifications
+      ref: 17-notification-actions
+  flutter_local_notifications_platform_interface:
+    git:
+      url: https://github.com/ened/flutter_local_notifications.git
+      path: flutter_local_notifications_platform_interface
+      ref: 17-notification-actions
 
 flutter:
   uses-material-design: true

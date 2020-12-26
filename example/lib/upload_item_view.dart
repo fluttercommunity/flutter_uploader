@@ -66,7 +66,9 @@ class UploadItemView extends StatelessWidget {
             ],
           ),
         ),
-        if (item.status == UploadTaskStatus.running)
+        if (item.status == UploadTaskStatus.enqueued ||
+            item.status == UploadTaskStatus.paused ||
+            item.status == UploadTaskStatus.running)
           Container(
             height: 50,
             width: 50,

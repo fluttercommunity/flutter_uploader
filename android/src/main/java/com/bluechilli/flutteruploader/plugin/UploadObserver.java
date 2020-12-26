@@ -32,22 +32,19 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
     }
 
     for (WorkInfo info : workInfoList) {
-      String id = info.getId().toString();
+      final String id = info.getId().toString();
 
       switch (info.getState()) {
         case ENQUEUED:
-          {
-            listener.onEnqueued(info.getId().toString());
-          }
+          listener.onEnqueued(id);
+          break;
         case RUNNING:
-          {
-            Data progress = info.getProgress();
+          Data progress = info.getProgress();
 
-            listener.onUpdateProgress(
-                info.getId().toString(),
-                progress.getInt("status", -1),
-                progress.getInt("progress", -1));
-          }
+          listener.onUpdateProgress(
+              info.getId().toString(),
+              progress.getInt("status", UploadStatus.RUNNING),
+              progress.getInt("progress", -1));
           break;
         case FAILED:
           {
@@ -60,6 +57,9 @@ public class UploadObserver implements Observer<List<WorkInfo>> {
 
             listener.onFailed(id, failedStatus, statusCode, code, errorMessage, details);
           }
+          break;
+        case BLOCKED:
+          listener.onPaused(id);
           break;
         case CANCELLED:
           listener.onFailed(id, UploadStatus.CANCELED, 500, "flutter_upload_cancelled", null, null);

@@ -6,6 +6,7 @@ import androidx.core.content.ContextCompat;
 import androidx.work.BackoffPolicy;
 import androidx.work.Constraints;
 import androidx.work.Data;
+import androidx.work.Data.Builder;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
@@ -28,12 +29,12 @@ import java.util.concurrent.TimeUnit;
 
 public class MethodCallHandlerImpl implements MethodCallHandler {
 
+  private static final int DEFAULT_CONNECTION_TIMEOUT = 3600;
+
   /** The generic {@link WorkManager} tag which matches any upload. */
   public static final String FLUTTER_UPLOAD_WORK_TAG = "flutter_upload_task";
 
   private final Context context;
-
-  private final int connectionTimeout;
 
   @NonNull private final StatusListener statusListener;
 
@@ -42,10 +43,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
   private static final List<String> VALID_HTTP_METHODS = Arrays.asList("POST", "PUT", "PATCH");
 
-  MethodCallHandlerImpl(Context context, int timeout, @NonNull StatusListener listener) {
+  MethodCallHandlerImpl(Context context, @NonNull StatusListener listener) {
     mainExecutor = ContextCompat.getMainExecutor(context);
     this.context = context;
-    this.connectionTimeout = timeout;
     this.statusListener = listener;
   }
 
@@ -60,6 +60,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
         break;
       case "enqueueBinary":
         enqueueBinary(call, result);
+        break;
+      case "enqueueAzure":
+        enqueueAzure(call, result);
         break;
       case "cancel":
         cancel(call, result);
@@ -92,6 +95,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     Map<String, String> parameters = call.argument("data");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
+    Integer connectionTimeout = call.argument("timeout");
 
     if (method == null) {
       method = "POST";
@@ -107,6 +111,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       return;
     }
 
+    if (connectionTimeout == null) {
+      connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+    }
+
     List<FileItem> items = new ArrayList<>();
 
     for (Map<String, String> file : files) {
@@ -115,7 +123,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
     WorkRequest request =
         buildRequest(
-            new UploadTask(url, method, items, headers, parameters, connectionTimeout, false, tag));
+            new UploadTask(url, method, items, headers, parameters, connectionTimeout, tag), false);
     WorkManager.getInstance(context)
         .enqueue(request)
         .getResult()
@@ -137,6 +145,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     String path = call.argument("path");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
+    Integer connectionTimeout = call.argument("timeout");
 
     if (method == null) {
       method = "POST";
@@ -152,6 +161,10 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       return;
     }
 
+    if (connectionTimeout == null) {
+      connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+    }
+
     WorkRequest request =
         buildRequest(
             new UploadTask(
@@ -161,8 +174,42 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 headers,
                 Collections.emptyMap(),
                 connectionTimeout,
-                true,
-                tag));
+                tag),
+            true);
+    WorkManager.getInstance(context).enqueue(request);
+    String taskId = request.getId().toString();
+
+    result.success(taskId);
+    statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+  }
+
+  private void enqueueAzure(MethodCall call, MethodChannel.Result result) {
+    final String path = call.argument("path");
+    final String connectionString = call.argument("connectionString");
+    final String container = call.argument("container");
+    final String blobName = call.argument("blobName");
+    final Integer blockSize = call.argument("blockSize");
+
+    Builder inputBuilder =
+        new Builder()
+            .putString("path", path)
+            .putString("connectionString", connectionString)
+            .putString("container", container)
+            .putString("blobName", blobName);
+
+    if (blockSize != null) {
+      inputBuilder.putInt("blockSize", blockSize);
+    }
+
+    WorkRequest request =
+        new OneTimeWorkRequest.Builder(AzureUploadWorker.class)
+            .setConstraints(
+                new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setInputData(inputBuilder.build())
+            .addTag(FLUTTER_UPLOAD_WORK_TAG)
+            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
+            .build();
+
     WorkManager.getInstance(context)
         .enqueue(request)
         .getResult()
@@ -202,7 +249,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
             workManagerExecutor);
   }
 
-  private WorkRequest buildRequest(UploadTask task) {
+  private WorkRequest buildRequest(UploadTask task, boolean binaryUpload) {
     Gson gson = new Gson();
 
     Data.Builder dataBuilder =
@@ -210,7 +257,6 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
             .putString(UploadWorker.ARG_URL, task.getURL())
             .putString(UploadWorker.ARG_METHOD, task.getMethod())
             .putInt(UploadWorker.ARG_REQUEST_TIMEOUT, task.getTimeout())
-            .putBoolean(UploadWorker.ARG_BINARY_UPLOAD, task.isBinaryUpload())
             .putString(UploadWorker.ARG_UPLOAD_REQUEST_TAG, task.getTag());
 
     List<FileItem> files = task.getFiles();
@@ -228,7 +274,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       dataBuilder.putString(UploadWorker.ARG_DATA, parametersJson);
     }
 
-    return new OneTimeWorkRequest.Builder(UploadWorker.class)
+    return new OneTimeWorkRequest.Builder(
+            binaryUpload ? RawUploadWorker.class : MultipartFormDataUploadWorker.class)
         .setConstraints(
             new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
         .addTag(FLUTTER_UPLOAD_WORK_TAG)
