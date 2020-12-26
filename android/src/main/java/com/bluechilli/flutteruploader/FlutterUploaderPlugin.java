@@ -70,10 +70,9 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     methodCallHandler = new MethodCallHandlerImpl(context, timeout, this);
 
     uploadObserver = new UploadObserver(this);
-    workInfoLiveData = WorkManager.getInstance(context)
-        .getWorkInfosByTagLiveData(FLUTTER_UPLOAD_WORK_TAG);
-    workInfoLiveData
-        .observeForever(uploadObserver);
+    workInfoLiveData =
+        WorkManager.getInstance(context).getWorkInfosByTagLiveData(FLUTTER_UPLOAD_WORK_TAG);
+    workInfoLiveData.observeForever(uploadObserver);
 
     channel.setMethodCallHandler(methodCallHandler);
 
