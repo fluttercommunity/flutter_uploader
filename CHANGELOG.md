@@ -1,3 +1,8 @@
+## 2.0.0-beta.6
+
+- Android: Ensure to properly unregister upload observers
+- Android: Call back to UI on the main thread (#132)
+
 ## 2.0.0-beta.5
 
 - Resolves crashes on iOS when using multiple concurrent uploads
