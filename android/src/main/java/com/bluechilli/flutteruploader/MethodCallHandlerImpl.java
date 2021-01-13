@@ -169,8 +169,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
         .addListener(
             () -> {
               String taskId = request.getId().toString();
-              mainExecutor.execute(() -> result.success(taskId));
-              statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+              mainExecutor.execute(
+                  () -> {
+                    result.success(taskId);
+                    statusListener.onUpdateProgress(taskId, UploadStatus.ENQUEUED, 0);
+                  });
             },
             workManagerExecutor);
   }
