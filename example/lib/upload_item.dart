@@ -14,16 +14,16 @@ class UploadItem extends Equatable {
 
   const UploadItem(
     this.id, {
-    this.progress,
-    this.status,
-    this.response,
+    required this.progress,
+    required this.status,
+    required this.response,
   });
 
   UploadItem copyWith({
-    String id,
-    int progress,
-    UploadTaskStatus status,
-    UploadTaskResponse response,
+    String? id,
+    int? progress,
+    UploadTaskStatus? status,
+    UploadTaskResponse? response,
   }) {
     return UploadItem(
       id ?? this.id,

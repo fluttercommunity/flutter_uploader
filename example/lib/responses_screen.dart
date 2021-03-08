@@ -10,8 +10,8 @@ import 'package:flutter_uploader_example/upload_item_view.dart';
 /// Shows the statusresponses for previous uploads.
 class ResponsesScreen extends StatefulWidget {
   ResponsesScreen({
-    Key key,
-    @required this.uploader,
+    Key? key,
+    required this.uploader,
   }) : super(key: key);
 
   final FlutterUploader uploader;
@@ -21,8 +21,8 @@ class ResponsesScreen extends StatefulWidget {
 }
 
 class _ResponsesScreenState extends State<ResponsesScreen> {
-  StreamSubscription<UploadTaskProgress> _progressSubscription;
-  StreamSubscription<UploadTaskResponse> _resultSubscription;
+  late StreamSubscription<UploadTaskProgress> _progressSubscription;
+  late StreamSubscription<UploadTaskResponse> _resultSubscription;
 
   Map<String, UploadItem> _tasks = {};
 

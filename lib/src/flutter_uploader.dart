@@ -8,10 +8,10 @@ class FlutterUploader {
   final EventChannel _progressChannel;
   final EventChannel _resultChannel;
 
-  Stream<UploadTaskProgress> _progressStream;
-  Stream<UploadTaskResponse> _resultStream;
+  Stream<UploadTaskProgress>? _progressStream;
+  Stream<UploadTaskResponse>? _resultStream;
 
-  static FlutterUploader _instance;
+  static FlutterUploader? _instance;
 
   /// Default constructor which returns the same object on future calls (singleton).
   factory FlutterUploader() {
@@ -38,7 +38,7 @@ class FlutterUploader {
     final callback = PluginUtilities.getCallbackHandle(backgroundHandler);
     assert(callback != null,
         'The backgroundHandler needs to be either a static function or a top level function to be accessible as a Flutter entry point.');
-    final handle = callback.toRawHandle();
+    final handle = callback?.toRawHandle();
     await _platform.invokeMethod<void>('setBackgroundHandler', {
       'callbackHandle': handle,
     });
@@ -101,19 +101,19 @@ class FlutterUploader {
   /// Enqueues a new upload task described by [upload].
   ///
   /// See [MultipartFormDataUpload], [RawUpload] for available configuration.
-  Future<String> enqueue(Upload upload) async {
+  Future<String?> enqueue(Upload upload) {
     if (upload is MultipartFormDataUpload) {
-      return await _platform.invokeMethod<String>('enqueue', {
+      return _platform.invokeMethod<String>('enqueue', {
         'url': upload.url,
         'method': describeEnum(upload.method),
-        'files': (upload.files ?? []).map((e) => e.toJson()).toList(),
+        'files': (upload.files).map((e) => e.toJson()).toList(),
         'headers': upload.headers,
         'data': upload.data,
         'tag': upload.tag,
       });
     }
     if (upload is RawUpload) {
-      return await _platform.invokeMethod<String>('enqueueBinary', {
+      return  _platform.invokeMethod<String>('enqueueBinary', {
         'url': upload.url,
         'method': describeEnum(upload.method),
         'path': upload.path,
@@ -131,7 +131,7 @@ class FlutterUploader {
   ///
   /// * `taskId`: unique identifier of the upload task
   ///
-  Future<void> cancel({@required String taskId}) async {
+  Future<void> cancel({required String taskId}) async {
     await _platform.invokeMethod<void>('cancel', {'taskId': taskId});
   }
 

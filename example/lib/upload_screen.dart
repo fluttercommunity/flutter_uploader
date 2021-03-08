@@ -12,10 +12,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class UploadScreen extends StatefulWidget {
   UploadScreen({
-    Key key,
-    @required this.uploader,
-    @required this.uploadURL,
-    @required this.onUploadStarted,
+    Key? key,
+    required this.uploader,
+    required this.uploadURL,
+    required this.onUploadStarted,
   }) : super(key: key);
 
   final FlutterUploader uploader;

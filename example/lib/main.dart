@@ -110,7 +110,7 @@ void main() => runApp(App());
 class App extends StatefulWidget {
   final Widget child;
 
-  App({Key key, this.child}) : super(key: key);
+  App({Key? key, this.child}) : super(key: key);
 
   @override
   _AppState createState() => _AppState();

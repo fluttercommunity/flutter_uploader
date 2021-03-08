@@ -11,7 +11,6 @@ class UploadTaskStatus extends Equatable {
 
   /// User friendly description.
   String get description {
-    if (value == null) return 'Undefined';
     switch (value) {
       case 1:
         return 'Enqueued';

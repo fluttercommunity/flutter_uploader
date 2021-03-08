@@ -9,11 +9,11 @@ typedef CancelUploadCallback = Future<void> Function(String id);
 
 class UploadItemView extends StatelessWidget {
   final UploadItem item;
-  final CancelUploadCallback onCancel;
+  final CancelUploadCallback? onCancel;
 
   UploadItemView({
-    Key key,
-    this.item,
+    Key? key,
+    required this.item,
     this.onCancel,
   }) : super(key: key);
 
@@ -30,7 +30,7 @@ class UploadItemView extends StatelessWidget {
                 style: Theme.of(context)
                     .textTheme
                     .caption
-                    .copyWith(fontFamily: 'monospace'),
+                    ?.copyWith(fontFamily: 'monospace'),
               ),
               Container(
                 height: 5.0,
@@ -50,17 +50,19 @@ class UploadItemView extends StatelessWidget {
               //   }),
               Container(height: 5.0),
               if (item.status == UploadTaskStatus.running)
-                LinearProgressIndicator(value: item.progress.toDouble() / 100),
+                LinearProgressIndicator(
+                  value: item.progress.toDouble() / 100,
+                ),
               if (item.status == UploadTaskStatus.complete ||
                   item.status == UploadTaskStatus.failed) ...[
                 Text('HTTP status code: ${item.response.statusCode}'),
                 if (item.response.response != null)
                   Text(
-                    item.response.response,
+                    item.response.response!,
                     style: Theme.of(context)
                         .textTheme
                         .caption
-                        .copyWith(fontFamily: 'monospace'),
+                        ?.copyWith(fontFamily: 'monospace'),
                   ),
               ]
             ],
@@ -72,7 +74,7 @@ class UploadItemView extends StatelessWidget {
             width: 50,
             child: IconButton(
               icon: Icon(Icons.cancel),
-              onPressed: () => onCancel(item.id),
+              onPressed: onCancel == null ? null : () => onCancel!(item.id),
             ),
           )
       ],
