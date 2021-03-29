@@ -11,14 +11,14 @@ void tmpBackgroundHandler() {}
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  FlutterUploader uploader;
+  late FlutterUploader uploader;
 
   final methodChannel = MethodChannel('flutter_uploader');
   EventChannel progressChannel;
   EventChannel resultChannel;
 
-  StreamController<Map<String, dynamic>> progressController;
-  StreamController<Map<String, dynamic>> resultController;
+  late StreamController<Map<String, dynamic>> progressController;
+  late StreamController<Map<String, dynamic>> resultController;
 
   final log = <MethodCall>[];
 
@@ -58,7 +58,7 @@ void main() {
         expect(log, <Matcher>[
           isMethodCall('setBackgroundHandler', arguments: <String, dynamic>{
             'callbackHandle':
-                PluginUtilities.getCallbackHandle(tmpBackgroundHandler)
+                PluginUtilities.getCallbackHandle(tmpBackgroundHandler)!
                     .toRawHandle(),
           }),
         ]);

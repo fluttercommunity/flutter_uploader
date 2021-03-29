@@ -11,11 +11,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UploadScreen extends StatefulWidget {
-  UploadScreen({
-    Key key,
-    @required this.uploader,
-    @required this.uploadURL,
-    @required this.onUploadStarted,
+  const UploadScreen({
+    Key? key,
+    required this.uploader,
+    required this.uploadURL,
+    required this.onUploadStarted,
   }) : super(key: key);
 
   final FlutterUploader uploader;
@@ -37,15 +37,15 @@ class _UploadScreenState extends State<UploadScreen> {
 
     if (Platform.isAndroid) {
       imagePicker.getLostData().then((lostData) {
-        if (lostData == null) {
+        if (lostData.isEmpty) {
           return;
         }
 
         if (lostData.type == RetrieveType.image) {
-          _handleFileUpload([lostData.file.path]);
+          _handleFileUpload([lostData.file!.path]);
         }
         if (lostData.type == RetrieveType.video) {
-          _handleFileUpload([lostData.file.path]);
+          _handleFileUpload([lostData.file!.path]);
         }
       });
     }
@@ -71,10 +71,14 @@ class _UploadScreenState extends State<UploadScreen> {
                 DropdownButton<ServerBehavior>(
                   items: ServerBehavior.all.map((e) {
                     return DropdownMenuItem(
-                        child: Text('${e.title}'), value: e);
+                      value: e,
+                      child: Text('${e.title}'),
+                    );
                   }).toList(),
                   onChanged: (newBehavior) {
-                    setState(() => _serverBehavior = newBehavior);
+                    if (newBehavior != null) {
+                      setState(() => _serverBehavior = newBehavior);
+                    }
                   },
                   value: _serverBehavior,
                 ),
@@ -87,15 +91,15 @@ class _UploadScreenState extends State<UploadScreen> {
                   alignment: WrapAlignment.center,
                   spacing: 10,
                   children: <Widget>[
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () => getImage(binary: false),
                       child: Text('upload image'),
                     ),
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () => getVideo(binary: false),
                       child: Text('upload video'),
                     ),
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () => getMultiple(binary: false),
                       child: Text('upload multi'),
                     ),
@@ -111,15 +115,15 @@ class _UploadScreenState extends State<UploadScreen> {
                   alignment: WrapAlignment.center,
                   spacing: 10,
                   children: <Widget>[
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () => getImage(binary: true),
                       child: Text('upload image'),
                     ),
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () => getVideo(binary: true),
                       child: Text('upload video'),
                     ),
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () => getMultiple(binary: true),
                       child: Text('upload multi'),
                     ),
@@ -130,12 +134,12 @@ class _UploadScreenState extends State<UploadScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () => widget.uploader.cancelAll(),
                       child: Text('Cancel All'),
                     ),
                     Container(width: 20.0),
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () {
                         widget.uploader.clearUploads();
                       },
@@ -151,7 +155,7 @@ class _UploadScreenState extends State<UploadScreen> {
     );
   }
 
-  Future getImage({@required bool binary}) async {
+  Future getImage({required bool binary}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
@@ -162,7 +166,7 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future getVideo({@required bool binary}) async {
+  Future getVideo({required bool binary}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
@@ -173,7 +177,7 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future getMultiple({@required bool binary}) async {
+  Future getMultiple({required bool binary}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
@@ -192,11 +196,14 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  void _handleFileUpload(List<String> paths) async {
+  void _handleFileUpload(List<String?> paths) async {
     final prefs = await SharedPreferences.getInstance();
     final binary = prefs.getBool('binary') ?? false;
 
-    await widget.uploader.enqueue(_buildUpload(binary, paths));
+    await widget.uploader.enqueue(_buildUpload(
+      binary,
+      paths.whereType<String>().toList(),
+    ));
 
     widget.onUploadStarted();
   }

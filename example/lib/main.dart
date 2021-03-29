@@ -108,9 +108,7 @@ void backgroundHandler() {
 void main() => runApp(App());
 
 class App extends StatefulWidget {
-  final Widget child;
-
-  App({Key key, this.child}) : super(key: key);
+  App({Key? key}) : super(key: key);
 
   @override
   _AppState createState() => _AppState();
@@ -133,7 +131,7 @@ class _AppState extends State<App> {
       requestBadgePermission: false,
       requestAlertPermission: true,
       onDidReceiveLocalNotification:
-          (int id, String title, String body, String payload) async {},
+          (int id, String? title, String? body, String? payload) async {},
     );
     var initializationSettings = InitializationSettings(
         android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
