@@ -3,6 +3,9 @@ version: 2.0.0-beta.6
 description: Demonstrates how to use the flutter_uploader plugin.
 publish_to: "none"
 
+environment:
+  sdk: '>=2.10.0 <3.0.0'
+
 dependencies:
   crypto: ^2.1.4
   flutter:
