@@ -1,5 +1,5 @@
 # https://github.com/cirruslabs/docker-images-flutter/blob/master/.cirrus.yml
-FROM cirrusci/flutter:1.22.5
+FROM cirrusci/flutter:2.0.3
 
 RUN yes | sdkmanager \
     "platforms;android-29" \
