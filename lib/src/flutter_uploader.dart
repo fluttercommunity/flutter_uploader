@@ -53,7 +53,7 @@ class FlutterUploader {
   UploadTaskProgress _parseProgress(Map<String, dynamic> map) {
     String id = map['taskId'];
     int status = map['status'];
-    int uploadProgress = map['progress'];
+    int? uploadProgress = map['progress'];
 
     return UploadTaskProgress(
       id,

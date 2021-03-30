@@ -43,7 +43,7 @@ void backgroundHandler() {
               'FlutterUploader.Example',
               'FlutterUploader',
               'Installed when you activate the Flutter Uploader Example',
-              progress: progress.progress,
+              progress: progress.progress ?? 0,
               icon: 'ic_upload',
               enableVibration: false,
               importance: Importance.low,

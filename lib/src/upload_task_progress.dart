@@ -7,7 +7,7 @@ class UploadTaskProgress extends Equatable {
   final String taskId;
 
   /// Upload progress, range from 0 to 100 (complete).
-  final int progress;
+  final int? progress;
 
   /// Status of the upload itself.
   final UploadTaskStatus status;
@@ -23,5 +23,5 @@ class UploadTaskProgress extends Equatable {
   bool get stringify => true;
 
   @override
-  List<Object> get props => [taskId, progress, status];
+  List<Object?> get props => [taskId, progress, status];
 }
