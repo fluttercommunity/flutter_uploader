@@ -79,7 +79,7 @@ class FlutterUploader {
 
   UploadTaskResponse _parseResult(Map<String, dynamic> map) {
     String id = map['taskId'];
-    String message = map['message'];
+    String? message = map['message'];
     int? status = map['status'];
     int? statusCode = map['statusCode'];
     final headers = map['headers'] != null

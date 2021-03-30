@@ -34,9 +34,11 @@ void main() {
   });
 
   bool Function(UploadTaskResponse) isCompleted(String taskId) {
-    return (response) =>
-        response.taskId == taskId &&
-        response.status == UploadTaskStatus.complete;
+    return (response) {
+      print('response: $response, looking for $taskId, => ${response.status}');
+      return response.taskId == taskId &&
+          response.status == UploadTaskStatus.complete;
+    };
   }
 
   bool Function(UploadTaskResponse) isFailed(String taskId) {
