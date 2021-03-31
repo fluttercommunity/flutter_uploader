@@ -4,27 +4,41 @@ import 'dart:ui';
 import 'package:flutter/services.dart';
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
+
+import 'flutter_uploader_test.mocks.dart';
 
 void tmpBackgroundHandler() {}
 
+@GenerateMocks([EventChannel, MethodChannel])
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  FlutterUploader uploader;
+  late FlutterUploader uploader;
 
   final methodChannel = MethodChannel('flutter_uploader');
+
+  dynamic? mockResponse;
+
   EventChannel progressChannel;
   EventChannel resultChannel;
 
-  StreamController<Map<String, dynamic>> progressController;
-  StreamController<Map<String, dynamic>> resultController;
+  late StreamController<dynamic> progressController;
+  late StreamController<dynamic> resultController;
 
   final log = <MethodCall>[];
 
   setUp(() {
     methodChannel.setMockMethodCallHandler((call) async {
       log.add(call);
+
+      if (mockResponse != null) {
+        final tmp = mockResponse;
+        mockResponse = null;
+        return tmp;
+      }
+
       return;
     });
 
@@ -58,7 +72,7 @@ void main() {
         expect(log, <Matcher>[
           isMethodCall('setBackgroundHandler', arguments: <String, dynamic>{
             'callbackHandle':
-                PluginUtilities.getCallbackHandle(tmpBackgroundHandler)
+                PluginUtilities.getCallbackHandle(tmpBackgroundHandler)!
                     .toRawHandle(),
           }),
         ]);
@@ -66,20 +80,27 @@ void main() {
     });
 
     group('enqueue', () {
+      final sampleUpload = MultipartFormDataUpload(
+        url: 'http://www.somewhere.com',
+        files: [
+          FileItem(path: '/path/to/file1'),
+          FileItem(path: '/path/to/file2', field: 'field2'),
+        ],
+        method: UploadMethod.PATCH,
+        headers: {'header1': 'value1'},
+        data: {'data1': 'value1'},
+        tag: 'tag1',
+      );
+
+      test('returns the task id', () async {
+        mockResponse = 'TASK123';
+
+        expect(await uploader.enqueue(sampleUpload), 'TASK123');
+      });
       test('passes the arguments correctly', () async {
-        await uploader.enqueue(
-          MultipartFormDataUpload(
-            url: 'http://www.somewhere.com',
-            files: [
-              FileItem(path: '/path/to/file1'),
-              FileItem(path: '/path/to/file2', field: 'field2'),
-            ],
-            method: UploadMethod.PATCH,
-            headers: {'header1': 'value1'},
-            data: {'data1': 'value1'},
-            tag: 'tag1',
-          ),
-        );
+        mockResponse = 'TASK123';
+
+        await uploader.enqueue(sampleUpload);
 
         expect(log, <Matcher>[
           isMethodCall('enqueue', arguments: <String, dynamic>{
@@ -108,16 +129,24 @@ void main() {
     });
 
     group('enqueueBinary', () {
+      final sampleUpload = RawUpload(
+        url: 'http://www.somewhere.com',
+        path: '/path/to/file1',
+        method: UploadMethod.PATCH,
+        headers: {'header1': 'value1'},
+        tag: 'tag1',
+      );
+
+      test('returns the task id', () async {
+        mockResponse = 'TASK123';
+
+        expect(await uploader.enqueue(sampleUpload), 'TASK123');
+      });
+
       test('passes the arguments correctly', () async {
-        await uploader.enqueue(
-          RawUpload(
-            url: 'http://www.somewhere.com',
-            path: '/path/to/file1',
-            method: UploadMethod.PATCH,
-            headers: {'header1': 'value1'},
-            tag: 'tag1',
-          ),
-        );
+        mockResponse = 'TASK123';
+
+        await uploader.enqueue(sampleUpload);
 
         expect(log, <Matcher>[
           isMethodCall('enqueueBinary', arguments: <String, dynamic>{
@@ -209,7 +238,3 @@ void main() {
     });
   });
 }
-
-class MockMethodChannel extends Mock implements MethodChannel {}
-
-class MockEventChannel extends Mock implements EventChannel {}

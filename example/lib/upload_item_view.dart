@@ -12,9 +12,9 @@ class UploadItemView extends StatelessWidget {
   final CancelUploadCallback onCancel;
 
   UploadItemView({
-    Key key,
-    this.item,
-    this.onCancel,
+    Key? key,
+    required this.item,
+    required this.onCancel,
   }) : super(key: key);
 
   @override
@@ -29,13 +29,13 @@ class UploadItemView extends StatelessWidget {
                 item.id,
                 style: Theme.of(context)
                     .textTheme
-                    .caption
+                    .caption!
                     .copyWith(fontFamily: 'monospace'),
               ),
               Container(
                 height: 5.0,
               ),
-              Text(item.status.description),
+              Text(item.status!.description),
               // if (item.status == UploadTaskStatus.complete &&
               //     item.remoteHash != null)
               //   Builder(builder: (context) {
@@ -50,16 +50,16 @@ class UploadItemView extends StatelessWidget {
               //   }),
               Container(height: 5.0),
               if (item.status == UploadTaskStatus.running)
-                LinearProgressIndicator(value: item.progress.toDouble() / 100),
+                LinearProgressIndicator(value: item.progress!.toDouble() / 100),
               if (item.status == UploadTaskStatus.complete ||
                   item.status == UploadTaskStatus.failed) ...[
-                Text('HTTP status code: ${item.response.statusCode}'),
-                if (item.response.response != null)
+                Text('HTTP status code: ${item.response!.statusCode}'),
+                if (item.response!.response != null)
                   Text(
-                    item.response.response,
+                    item.response!.response!,
                     style: Theme.of(context)
                         .textTheme
-                        .caption
+                        .caption!
                         .copyWith(fontFamily: 'monospace'),
                   ),
               ]

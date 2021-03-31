@@ -2,12 +2,12 @@ part of flutter_uploader;
 
 /// A class defines a set of possible statuses of a upload task
 class UploadTaskStatus extends Equatable {
-  final int _value;
+  final int? _value;
 
   const UploadTaskStatus._internal(this._value);
 
   /// Raw value getter.
-  int get value => _value;
+  int? get value => _value;
 
   /// User friendly description.
   String get description {
@@ -31,10 +31,10 @@ class UploadTaskStatus extends Equatable {
   }
 
   /// Convert a raw integer value to [UploadTaskStatus].
-  static UploadTaskStatus from(int value) => UploadTaskStatus._internal(value);
+  static UploadTaskStatus from(int? value) => UploadTaskStatus._internal(value);
 
   @override
-  List<Object> get props => [_value];
+  List<Object?> get props => [_value];
 
   /// Status is not determined yet.
   static const undefined = UploadTaskStatus._internal(0);

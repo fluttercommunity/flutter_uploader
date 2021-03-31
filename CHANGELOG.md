@@ -1,3 +1,7 @@
+## 3.0.0-beta.1
+
+- Migrate to nullsafety
+
 ## 2.0.0-beta.6
 
 - Android: Ensure to properly unregister upload observers

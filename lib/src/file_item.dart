@@ -12,9 +12,9 @@ class FileItem {
 
   /// Default constructor. The [field] property is set to `file` by default.
   FileItem({
-    @required this.path,
+    required this.path,
     this.field = 'file',
-  }) : assert(path != null);
+  });
 
   @override
   String toString() => 'FileItem(path: $path fieldname:$field)';

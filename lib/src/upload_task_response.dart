@@ -8,20 +8,20 @@ class UploadTaskResponse extends Equatable {
 
   /// If the server responded with a body, it will be available here.
   /// No automatic conversion (e.g. JSON / XML) will be done.
-  final String response;
+  final String? response;
 
   /// The status code of the finished upload.
-  final int statusCode;
+  final int? statusCode;
 
   /// The final status, refer to the enum for details.
-  final UploadTaskStatus status;
+  final UploadTaskStatus? status;
 
   /// Response headers.
-  final Map<String, dynamic> headers;
+  final Map<String, dynamic>? headers;
 
   /// Default constructor.
   UploadTaskResponse({
-    @required this.taskId,
+    required this.taskId,
     this.response,
     this.statusCode,
     this.status,
@@ -32,7 +32,7 @@ class UploadTaskResponse extends Equatable {
   bool get stringify => true;
 
   @override
-  List<Object> get props {
+  List<Object?> get props {
     return [
       taskId,
       response,

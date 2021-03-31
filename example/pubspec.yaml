@@ -1,20 +1,23 @@
 name: flutter_uploader_example
-version: 2.0.0-beta.6
+version: 3.0.0-beta.1
 description: Demonstrates how to use the flutter_uploader plugin.
 publish_to: "none"
 
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+
 dependencies:
-  crypto: ^2.1.4
   flutter:
     sdk: flutter
-  file_picker: ^2.1.4
-  path_provider: ^1.6.24
-  image_picker: ^0.6.7+17
-  shared_preferences: ^0.5.12+4
-  flutter_local_notifications: ^3.0.2
+  file_picker: ^3.0.0
+  path_provider: ^2.0.1
+  image_picker: ^0.7.3
+  shared_preferences: ^2.0.5
+  flutter_local_notifications: ^5.0.0
 
 dev_dependencies:
-  integration_test: ^1.0.1
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
 

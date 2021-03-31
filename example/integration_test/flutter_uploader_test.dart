@@ -15,7 +15,7 @@ final baseUrl = Uri.parse(
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  FlutterUploader uploader;
+  late FlutterUploader uploader;
   var tempFilePaths = <String>[];
 
   setUp(() {
@@ -33,13 +33,14 @@ void main() {
     tempFilePaths.clear();
   });
 
-  Function(UploadTaskResponse) isCompleted(String taskId) {
-    return (response) =>
-        response.taskId == taskId &&
-        response.status == UploadTaskStatus.complete;
+  bool Function(UploadTaskResponse) isCompleted(String taskId) {
+    return (response) {
+      return response.taskId == taskId &&
+          response.status == UploadTaskStatus.complete;
+    };
   }
 
-  Function(UploadTaskResponse) isFailed(String taskId) {
+  bool Function(UploadTaskResponse) isFailed(String taskId) {
     return (response) =>
         response.taskId == taskId && response.status == UploadTaskStatus.failed;
   }
@@ -57,7 +58,7 @@ void main() {
       expect(taskId, isNotNull);
 
       final res = await uploader.result.firstWhere(isCompleted(taskId));
-      final json = jsonDecode(res.response);
+      final json = jsonDecode(res.response!);
 
       expect(json['message'], 'Successfully uploaded');
       expect(res.statusCode, 200);
@@ -105,7 +106,7 @@ void main() {
       expect(taskId, isNotNull);
 
       final res = await uploader.result.firstWhere(isCompleted(taskId));
-      final json = jsonDecode(res.response);
+      final json = jsonDecode(res.response!);
 
       expect(json['request']['fields']['simpleKey'], 'simpleValue');
       expect(jsonDecode(json['request']['fields']['listOf']),
@@ -125,7 +126,7 @@ void main() {
         headers: {'Accept': 'application/json, charset=utf-8'},
       ));
       final res = await uploader.result.firstWhere(isCompleted(taskId));
-      final json = jsonDecode(res.response);
+      final json = jsonDecode(res.response!);
 
       expect(json['request']['headers']['accept'],
           'application/json, charset=utf-8');
@@ -142,7 +143,7 @@ void main() {
       expect(taskId, isNotNull);
 
       final res = await uploader.result.firstWhere(isCompleted(taskId));
-      final json = jsonDecode(res.response);
+      final json = jsonDecode(res.response!);
 
       expect(json['message'], 'Successfully uploaded');
       expect(res.statusCode, 200);
@@ -203,8 +204,7 @@ void main() {
       expect(taskId, isNotNull);
 
       final res = await uploader.result.firstWhere(isCompleted(taskId));
-
-      final json = jsonDecode(res.response);
+      final json = jsonDecode(res.response!);
 
       expect(json['message'], 'Successfully uploaded');
       expect(res.statusCode, 200);
@@ -238,7 +238,7 @@ void main() {
         headers: {'Accept': 'application/json, charset=utf-8'},
       ));
       final res = await uploader.result.firstWhere(isCompleted(taskId));
-      final json = jsonDecode(res.response);
+      final json = jsonDecode(res.response!);
 
       expect(json['headers']['accept'], 'application/json, charset=utf-8');
     });

@@ -8,10 +8,10 @@ class FlutterUploader {
   final EventChannel _progressChannel;
   final EventChannel _resultChannel;
 
-  Stream<UploadTaskProgress> _progressStream;
-  Stream<UploadTaskResponse> _resultStream;
+  Stream<UploadTaskProgress>? _progressStream;
+  Stream<UploadTaskResponse>? _resultStream;
 
-  static FlutterUploader _instance;
+  static FlutterUploader? _instance;
 
   /// Default constructor which returns the same object on future calls (singleton).
   factory FlutterUploader() {
@@ -35,9 +35,7 @@ class FlutterUploader {
   /// This call is required to receive background notifications.
   /// [backgroundHandler] is a top level function which will be invoked by Android
   Future<void> setBackgroundHandler(final Function backgroundHandler) async {
-    final callback = PluginUtilities.getCallbackHandle(backgroundHandler);
-    assert(callback != null,
-        'The backgroundHandler needs to be either a static function or a top level function to be accessible as a Flutter entry point.');
+    final callback = PluginUtilities.getCallbackHandle(backgroundHandler)!;
     final handle = callback.toRawHandle();
     await _platform.invokeMethod<void>('setBackgroundHandler', {
       'callbackHandle': handle,
@@ -55,7 +53,7 @@ class FlutterUploader {
   UploadTaskProgress _parseProgress(Map<String, dynamic> map) {
     String id = map['taskId'];
     int status = map['status'];
-    int uploadProgress = map['progress'];
+    int? uploadProgress = map['progress'];
 
     return UploadTaskProgress(
       id,
@@ -81,10 +79,9 @@ class FlutterUploader {
 
   UploadTaskResponse _parseResult(Map<String, dynamic> map) {
     String id = map['taskId'];
-    String message = map['message'];
-    // String code = value['code'];
-    int status = map['status'];
-    int statusCode = map['statusCode'];
+    String? message = map['message'];
+    int? status = map['status'];
+    int? statusCode = map['statusCode'];
     final headers = map['headers'] != null
         ? Map<String, dynamic>.from(map['headers'])
         : <String, dynamic>{};
@@ -103,23 +100,23 @@ class FlutterUploader {
   /// See [MultipartFormDataUpload], [RawUpload] for available configuration.
   Future<String> enqueue(Upload upload) async {
     if (upload is MultipartFormDataUpload) {
-      return await _platform.invokeMethod<String>('enqueue', {
+      return (await _platform.invokeMethod<String>('enqueue', {
         'url': upload.url,
         'method': describeEnum(upload.method),
         'files': (upload.files ?? []).map((e) => e.toJson()).toList(),
         'headers': upload.headers,
         'data': upload.data,
         'tag': upload.tag,
-      });
+      }))!;
     }
     if (upload is RawUpload) {
-      return await _platform.invokeMethod<String>('enqueueBinary', {
+      return (await _platform.invokeMethod<String>('enqueueBinary', {
         'url': upload.url,
         'method': describeEnum(upload.method),
         'path': upload.path,
         'headers': upload.headers,
         'tag': upload.tag
-      });
+      }))!;
     }
 
     throw 'Invalid upload type';
@@ -131,7 +128,7 @@ class FlutterUploader {
   ///
   /// * `taskId`: unique identifier of the upload task
   ///
-  Future<void> cancel({@required String taskId}) async {
+  Future<void> cancel({required String taskId}) async {
     await _platform.invokeMethod<void>('cancel', {'taskId': taskId});
   }
 
