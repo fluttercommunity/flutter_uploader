@@ -33,6 +33,8 @@ class UploadTaskStatus extends Equatable {
   /// Convert a raw integer value to [UploadTaskStatus].
   static UploadTaskStatus from(int? value) => UploadTaskStatus._internal(value);
 
+  bool get isFinite => this == failed || this == complete || this == canceled;
+
   @override
   List<Object?> get props => [_value];
 

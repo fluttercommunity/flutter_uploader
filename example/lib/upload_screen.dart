@@ -10,17 +10,27 @@ import 'package:flutter_uploader_example/server_behavior.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+enum _UploadType {
+  formData,
+  binary,
+  azure,
+}
+
 class UploadScreen extends StatefulWidget {
   const UploadScreen({
     Key? key,
     required this.uploader,
     required this.uploadURL,
     required this.onUploadStarted,
+    required this.azureConnectionString,
+    required this.azureContainer,
   }) : super(key: key);
 
   final FlutterUploader uploader;
   final Uri uploadURL;
   final VoidCallback onUploadStarted;
+  final String azureConnectionString;
+  final String azureContainer;
 
   @override
   _UploadScreenState createState() => _UploadScreenState();
@@ -92,15 +102,15 @@ class _UploadScreenState extends State<UploadScreen> {
                   spacing: 10,
                   children: <Widget>[
                     ElevatedButton(
-                      onPressed: () => getImage(binary: false),
+                      onPressed: () => getImage(_UploadType.formData),
                       child: Text('upload image'),
                     ),
                     ElevatedButton(
-                      onPressed: () => getVideo(binary: false),
+                      onPressed: () => getVideo(_UploadType.formData),
                       child: Text('upload video'),
                     ),
                     ElevatedButton(
-                      onPressed: () => getMultiple(binary: false),
+                      onPressed: () => getMultiple(_UploadType.formData),
                       child: Text('upload multi'),
                     ),
                   ],
@@ -116,15 +126,39 @@ class _UploadScreenState extends State<UploadScreen> {
                   spacing: 10,
                   children: <Widget>[
                     ElevatedButton(
-                      onPressed: () => getImage(binary: true),
+                      onPressed: () => getImage(_UploadType.binary),
                       child: Text('upload image'),
                     ),
                     ElevatedButton(
-                      onPressed: () => getVideo(binary: true),
+                      onPressed: () => getVideo(_UploadType.binary),
                       child: Text('upload video'),
                     ),
                     ElevatedButton(
-                      onPressed: () => getMultiple(binary: true),
+                      onPressed: () => getMultiple(_UploadType.binary),
+                      child: Text('upload multi'),
+                    ),
+                  ],
+                ),
+                Divider(height: 40),
+                Text(
+                  'azure',
+                  style: Theme.of(context).textTheme.subtitle1,
+                ),
+                Text('this will upload selected files to azure'),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 10,
+                  children: <Widget>[
+                    ElevatedButton(
+                      onPressed: () => getImage(_UploadType.azure),
+                      child: Text('upload image'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => getVideo(_UploadType.azure),
+                      child: Text('upload video'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => getMultiple(_UploadType.azure),
                       child: Text('upload multi'),
                     ),
                   ],
@@ -155,9 +189,9 @@ class _UploadScreenState extends State<UploadScreen> {
     );
   }
 
-  Future getImage({required bool binary}) async {
+  Future getImage(_UploadType type) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('binary', binary);
+    await prefs.setInt('type', type.index);
 
     var image = await imagePicker.getImage(source: ImageSource.gallery);
 
@@ -166,9 +200,9 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future getVideo({required bool binary}) async {
+  Future getVideo(_UploadType type) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('binary', binary);
+    await prefs.setInt('type', type.index);
 
     var video = await imagePicker.getVideo(source: ImageSource.gallery);
 
@@ -177,39 +211,64 @@ class _UploadScreenState extends State<UploadScreen> {
     }
   }
 
-  Future getMultiple({required bool binary}) async {
+  Future getMultiple(_UploadType type) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('binary', binary);
+    await prefs.setInt('type', type.index);
 
     final files = await FilePicker.platform.pickFiles(
       allowCompression: false,
       allowMultiple: true,
     );
     if (files != null && files.count > 0) {
-      if (binary) {
-        for (var file in files.files) {
-          _handleFileUpload([file.path]);
-        }
-      } else {
-        _handleFileUpload(files.paths);
+      switch (type) {
+        case _UploadType.formData:
+          _handleFileUpload(files.paths.toList());
+          break;
+        case _UploadType.binary:
+          for (final path in files.paths) {
+            _handleFileUpload([path]);
+          }
+          break;
+        case _UploadType.azure:
+          for (final path in files.paths) {
+            _handleFileUpload([path]);
+          }
+          break;
       }
     }
   }
 
   void _handleFileUpload(List<String?> paths) async {
     final prefs = await SharedPreferences.getInstance();
-    final binary = prefs.getBool('binary') ?? false;
+    var typeIndex = prefs.getInt('type');
+
+    if (typeIndex == null) {
+      return;
+    }
+
+    final type = _UploadType.values[typeIndex];
 
     await widget.uploader.enqueue(_buildUpload(
-      binary,
+      type,
       paths.whereType<String>().toList(),
     ));
 
     widget.onUploadStarted();
   }
 
-  Upload _buildUpload(bool binary, List<String> paths) {
+  Upload _buildUpload(_UploadType type, List<String> paths) {
     final tag = 'upload';
+
+    if (type == _UploadType.azure) {
+      return AzureUpload(
+        path: paths.first,
+        blobName: paths.first.split('/').last,
+        container: widget.azureContainer,
+        connectionString: widget.azureConnectionString,
+      );
+    }
+
+    final binary = type == _UploadType.binary;
 
     var url = binary
         ? widget.uploadURL.replace(path: widget.uploadURL.path + 'Binary')

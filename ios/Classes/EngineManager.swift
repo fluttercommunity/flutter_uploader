@@ -11,6 +11,11 @@ class EngineManager {
     private var headlessRunner: FlutterEngine?
     public var registerPlugins: FlutterPluginRegistrantCallback?
     
+    static let shared = EngineManager()
+
+    private init() {
+    }
+    
     private let semaphore = DispatchSemaphore(value: 1)
 
     private func startEngineIfNeeded() {

@@ -14,6 +14,9 @@ final Uri uploadURL = Uri.parse(
   'https://us-central1-flutteruploadertest.cloudfunctions.net/upload',
 );
 
+final azureConnectionString = '';
+final azureContainer = '';
+
 FlutterUploader _uploader = FlutterUploader();
 
 void backgroundHandler() {
@@ -27,10 +30,15 @@ void backgroundHandler() {
   // Only show notifications for unprocessed uploads.
   SharedPreferences.getInstance().then((preferences) {
     var processed = preferences.getStringList('processed') ?? <String>[];
+    var inProgressMap = <String, bool>{};
 
     if (Platform.isAndroid) {
       uploader.progress.listen((progress) {
-        if (processed.contains(progress.taskId)) {
+        if (progress.status != UploadTaskStatus.running) {
+          return;
+        }
+
+        if ((inProgressMap[progress.taskId] ?? true) != true) {
           return;
         }
 
@@ -59,19 +67,27 @@ void backgroundHandler() {
     }
 
     uploader.result.listen((result) {
-      if (processed.contains(result.taskId)) {
+      final taskNotificationId = '${result.taskId}';
+
+      if (processed.contains(taskNotificationId)) {
         return;
       }
 
-      processed.add(result.taskId);
-      preferences.setStringList('processed', processed);
+      final isFinite = result.status?.isFinite ?? false;
+
+      inProgressMap[result.taskId] = !isFinite;
+
+      if (isFinite) {
+        processed.add(taskNotificationId);
+        preferences.setStringList('processed', processed);
+      }
 
       notifications.cancel(result.taskId.hashCode);
 
-      final successful = result.status == UploadTaskStatus.complete;
-
       var title = 'Upload Complete';
-      if (result.status == UploadTaskStatus.failed) {
+      if (result.status == UploadTaskStatus.enqueued) {
+        title = 'Upload Enqueued';
+      } else if (result.status == UploadTaskStatus.failed) {
         title = 'Upload Failed';
       } else if (result.status == UploadTaskStatus.canceled) {
         title = 'Upload Canceled';
@@ -88,7 +104,7 @@ void backgroundHandler() {
             'FlutterUploader',
             'Installed when you activate the Flutter Uploader Example',
             icon: 'ic_upload',
-            enableVibration: !successful,
+            enableVibration: result.status == UploadTaskStatus.complete,
             importance: result.status == UploadTaskStatus.failed
                 ? Importance.high
                 : Importance.min,
@@ -105,10 +121,10 @@ void backgroundHandler() {
   });
 }
 
-void main() => runApp(App());
+void main() => runApp(const App());
 
 class App extends StatefulWidget {
-  App({Key? key}) : super(key: key);
+  const App({Key? key}) : super(key: key);
 
   @override
   _AppState createState() => _AppState();
@@ -134,7 +150,9 @@ class _AppState extends State<App> {
           (int id, String? title, String? body, String? payload) async {},
     );
     var initializationSettings = InitializationSettings(
-        android: initializationSettingsAndroid, iOS: initializationSettingsIOS);
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
     flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
       onSelectNotification: (payload) async {},
@@ -145,21 +163,17 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: title,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData(primarySwatch: Colors.blue),
       home: Scaffold(
         body: _currentIndex == 0
             ? UploadScreen(
                 uploader: _uploader,
                 uploadURL: uploadURL,
-                onUploadStarted: () {
-                  setState(() => _currentIndex = 1);
-                },
+                onUploadStarted: () => setState(() => _currentIndex = 1),
+                azureConnectionString: azureConnectionString,
+                azureContainer: azureContainer,
               )
-            : ResponsesScreen(
-                uploader: _uploader,
-              ),
+            : ResponsesScreen(uploader: _uploader),
         bottomNavigationBar: BottomNavigationBar(
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(

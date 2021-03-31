@@ -64,10 +64,8 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
   }
 
   private void startListening(Context context, BinaryMessenger messenger) {
-    final int timeout = FlutterUploaderInitializer.getConnectionTimeout(context);
-
     channel = new MethodChannel(messenger, CHANNEL_NAME);
-    methodCallHandler = new MethodCallHandlerImpl(context, timeout, this);
+    methodCallHandler = new MethodCallHandlerImpl(context, this);
 
     uploadObserver = new UploadObserver(this);
     workInfoLiveData =
@@ -160,6 +158,15 @@ public class FlutterUploaderPlugin implements FlutterPlugin, StatusListener {
     args.put("statusCode", statusCode);
     args.put("message", response);
     args.put("headers", headers != null ? headers : Collections.<String, Object>emptyMap());
+
+    resultStreamHandler.add(id, args);
+  }
+
+  @Override
+  public void onPaused(String id) {
+    Map<String, Object> args = new HashMap<>();
+    args.put("taskId", id);
+    args.put("status", UploadStatus.PAUSED);
 
     resultStreamHandler.add(id, args);
   }
