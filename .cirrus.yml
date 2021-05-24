@@ -1,32 +1,3 @@
-code_style_task:
-  container:
-    dockerfile: .ci/Dockerfile
-    cpu: 1
-    memory: 2G
-#  upgrade_script:
-#    - flutter channel master
-#    - flutter upgrade
-#    - git fetch origin master
-#  activate_script: pub global activate flutter_plugin_tools
-  matrix:
-    - name: publishable
-      test_script:
-        - flutter pub publish -n
-    - name: test
-      test_script:
-        - flutter test
-    - name: dartfmt
-      test_script:
-        - dartfmt -w .
-        - git diff --quiet || (git diff && exit 1)
-    - name: format
-      format_script: script/format.sh
-    - name: analyze
-      script:
-        - pub global activate tuneup
-        - flutter packages get
-        - pub global run tuneup check
-
 android_task:
   container:
     dockerfile: .ci/Dockerfile
