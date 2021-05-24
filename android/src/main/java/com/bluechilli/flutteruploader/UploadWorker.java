@@ -297,7 +297,8 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
 
         Log.d(
             TAG,
-            "IllegalStateException while building a outputData object. Replace response with on-disk reference.");
+            "IllegalStateException while building a outputData object. Replace response with"
+                + " on-disk reference.");
         builder.putString(EXTRA_RESPONSE, null);
 
         File responseFile = writeResponseToTemporaryFile(context, responseString);
