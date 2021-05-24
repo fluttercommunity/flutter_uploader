@@ -308,7 +308,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
 extension SwiftFlutterUploaderPlugin {
     public func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) -> Bool {
         NSLog("ApplicationHandleEventsForBackgroundURLSession: \(identifier)")
-        if identifier == URLSessionUploader.KEY_BACKGROUND_SESSION_IDENTIFIER {
+        if identifier == Keys.backgroundSessionIdentifier {
             urlSessionUploader.backgroundTransferCompletionHander = completionHandler
         }
 

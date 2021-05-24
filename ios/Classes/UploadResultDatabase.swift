@@ -13,9 +13,9 @@ class UploadResultDatabase: UploaderDelegate {
     static let shared = UploadResultDatabase()
 
     private init() {
-        if let plist = try? loadPropertyList(resultsPListURL) {
-            for c in plist {
-                if let map = c as? [String: Any] {
+        if let url = resultsPListURL, let plist = try? loadPropertyList(url) {
+            for result in plist {
+                if let map = result as? [String: Any] {
                     self.results.append(map)
                 }
             }
@@ -25,8 +25,10 @@ class UploadResultDatabase: UploaderDelegate {
     public func clear() {
         results.removeAll()
 
+        guard let url = resultsPListURL else { return }
+        
         do {
-            try savePropertyList(resultsPListURL, [])
+            try savePropertyList(url, [])
         } catch {
             print("error write \(error)")
         }
@@ -40,8 +42,10 @@ class UploadResultDatabase: UploaderDelegate {
             Key.status: UploadTaskStatus.enqueue.rawValue
         ])
 
+        guard let url = resultsPListURL else { return }
+
         do {
-            try savePropertyList(resultsPListURL, results)
+            try savePropertyList(url, results)
         } catch {
             print("error write \(error)")
         }
@@ -60,8 +64,10 @@ class UploadResultDatabase: UploaderDelegate {
             Key.headers: headers
         ])
 
+        guard let url = resultsPListURL else { return }
+
         do {
-            try savePropertyList(resultsPListURL, results)
+            try savePropertyList(url, results)
         } catch {
             print("error write \(error)")
         }
@@ -77,8 +83,10 @@ class UploadResultDatabase: UploaderDelegate {
             Key.details: errorStackTrace
         ])
 
+        guard let url = resultsPListURL else { return }
+
         do {
-            try savePropertyList(resultsPListURL, results)
+            try savePropertyList(url, results)
         } catch {
             print("error write \(error)")
         }
@@ -97,8 +105,8 @@ class UploadResultDatabase: UploaderDelegate {
         return plist
     }
 
-    private var resultsPListURL: URL {
-        let documentDirectoryURL = try! FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-        return documentDirectoryURL.appendingPathComponent("flutter_uploader-results.plist")
+    private var resultsPListURL: URL? {
+        let documentDirectoryURL = try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+        return documentDirectoryURL?.appendingPathComponent("flutter_uploader-results.plist")
     }
 }

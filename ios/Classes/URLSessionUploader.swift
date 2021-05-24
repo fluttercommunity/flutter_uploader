@@ -7,13 +7,16 @@
 
 import Foundation
 
+struct Keys {
+    static let backgroundSessionIdentifier = "chillisource.flutter_uploader.upload.background"
+    fileprivate static let maximumConcurrentTask = "FUMaximumConnectionsPerHost"
+    fileprivate static let maximumConcurrentUploadOperation = "FUMaximumUploadOperation"
+    
+    /// In seconds
+    fileprivate static let timeout = "FUTimeoutInSeconds"
+}
+
 class URLSessionUploader: NSObject {
-    public static let KEY_BACKGROUND_SESSION_IDENTIFIER = "chillisource.flutter_uploader.upload.background"
-
-    fileprivate static let KEY_MAXIMUM_CONCURRENT_TASK = "FUMaximumConnectionsPerHost"
-    fileprivate static let KEY_MAXIMUM_CONCURRENT_UPLOAD_OPERATION = "FUMaximumUploadOperation"
-    fileprivate static let KEY_TIMEOUT_IN_SECOND = "FUTimeoutInSeconds"
-
     static let shared = URLSessionUploader()
 
     var session: URLSession?
@@ -115,7 +118,7 @@ class URLSessionUploader: NSObject {
 
         let mainBundle = Bundle.main
         var maxConcurrentTasks: NSNumber
-        if let concurrentTasks = mainBundle.object(forInfoDictionaryKey: URLSessionUploader.KEY_MAXIMUM_CONCURRENT_TASK) {
+        if let concurrentTasks = mainBundle.object(forInfoDictionaryKey: Keys.maximumConcurrentTask) {
             maxConcurrentTasks = concurrentTasks as! NSNumber
         } else {
             maxConcurrentTasks = NSNumber(integerLiteral: 3)
@@ -124,7 +127,7 @@ class URLSessionUploader: NSObject {
         NSLog("MAXIMUM_CONCURRENT_TASKS = \(maxConcurrentTasks)")
 
         var maxUploadOperation: NSNumber
-        if let operationTask = mainBundle.object(forInfoDictionaryKey: URLSessionUploader.KEY_MAXIMUM_CONCURRENT_UPLOAD_OPERATION) {
+        if let operationTask = mainBundle.object(forInfoDictionaryKey: Keys.maximumConcurrentUploadOperation) {
             maxUploadOperation = operationTask as! NSNumber
         } else {
             maxUploadOperation = NSNumber(integerLiteral: 2)
@@ -134,14 +137,14 @@ class URLSessionUploader: NSObject {
 
         self.queue.maxConcurrentOperationCount = maxUploadOperation.intValue
 
-        let sessionConfiguration = URLSessionConfiguration.background(withIdentifier: URLSessionUploader.KEY_BACKGROUND_SESSION_IDENTIFIER)
+        let sessionConfiguration = URLSessionConfiguration.background(withIdentifier: Keys.backgroundSessionIdentifier)
         sessionConfiguration.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
         sessionConfiguration.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
         self.session = URLSession(configuration: sessionConfiguration, delegate: self, delegateQueue: queue)
     }
 
     private static func determineTimeout() -> Double {
-        if let timeoutSetting = Bundle.main.object(forInfoDictionaryKey: URLSessionUploader.KEY_TIMEOUT_IN_SECOND) {
+        if let timeoutSetting = Bundle.main.object(forInfoDictionaryKey: Keys.timeout) {
             return (timeoutSetting as! NSNumber).doubleValue
         } else {
             return SwiftFlutterUploaderPlugin.DEFAULT_TIMEOUT

@@ -44,8 +44,8 @@ class EngineManager {
 
         DispatchQueue.main.async {
             self.headlessRunner?.run(withEntrypoint: entryPoint, libraryURI: uri)
-            if let rp = SwiftFlutterUploaderPlugin.registerPlugins, let runner = self.headlessRunner {
-                rp(runner)
+            if let registerPlugins = SwiftFlutterUploaderPlugin.registerPlugins, let runner = self.headlessRunner {
+                registerPlugins(runner)
             } else {
                 self.headlessRunner = nil
             }
