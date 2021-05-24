@@ -17,15 +17,12 @@ jobs:
           flutter pub get
           flutter test
 
-      - name: Format
-        run: |
-          flutter format --set-exit-if-changed .
-
   format:
     runs-on: ubuntu-18.04
     needs: test
     steps:
       - uses: actions/checkout@v2
+      - uses: axel-op/googlejavaformat-action@v3
       - uses: subosito/flutter-action@v1
         with:
           channel: 'stable'
@@ -38,8 +35,8 @@ jobs:
     strategy:
       matrix:
         device:
-          - "iPhone 8 (13.3)"
-          - "iPhone 11 Pro (13.3)"
+          - "iPhone 8 (14.4)"
+          - "iPhone 11 Pro (14.4)"
       fail-fast: false
     runs-on: macos-latest
     needs: test
@@ -57,7 +54,7 @@ jobs:
               '$1 == device { print $2 }'
           )
           xcrun simctl boot "${UDID:?No Simulator with this name found}"
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: subosito/flutter-action@v1
         with:
           channel: 'stable'
@@ -76,12 +73,12 @@ jobs:
         target: [default]
     needs: test
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - uses: subosito/flutter-action@v1
         with:
           channel: 'stable'
       - name: Run Flutter Driver tests
-        uses: reactivecircus/android-emulator-runner@v1
+        uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api-level }}
           target: ${{ matrix.target }}
