@@ -47,16 +47,16 @@ backend_task:
 
 connected_check_task:
   name: Flutter driver test on Android
-  only_if: $CIRRUS_BRANCH == "master" || CIRRUS_PR != ""
+  only_if: $CIRRUS_BRANCH == "main" || $CIRRUS_PR != ""
   env:
-    API_LEVEL: 29
+    API_LEVEL: "29"
     TARGET: default
     ARCH: x86_64
   container:
     dockerfile: .ci/Dockerfile
     cpu: 4
     memory: 8G
-    kvm: true
+    kvm: "true"
   create_device_script:
     - echo no | avdmanager create avd --force --name "api-${API_LEVEL}" --abi "${TARGET}/${ARCH}" --package "system-images;android-${API_LEVEL};${TARGET};${ARCH}"
   start_emulator_background_script:
