@@ -26,7 +26,7 @@ class UploadResultDatabase: UploaderDelegate {
         results.removeAll()
 
         guard let url = resultsPListURL else { return }
-        
+
         do {
             try savePropertyList(url, [])
         } catch {

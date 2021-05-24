@@ -14,9 +14,9 @@ class CachingStreamHandler<T>: NSObject, FlutterStreamHandler {
 
     private let cacheSemaphore = DispatchSemaphore(value: 1)
 
-    func add(_ id: String, _ value: T) {
+    func add(_ taskId: String, _ value: T) {
         cacheSemaphore.wait()
-        cache[id] = value
+        cache[taskId] = value
         cacheSemaphore.signal()
 
         if let sink = eventSink {
