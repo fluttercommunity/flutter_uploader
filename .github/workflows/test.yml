@@ -3,7 +3,7 @@ name: test
 on: push
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
