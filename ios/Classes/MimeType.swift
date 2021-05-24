@@ -1,6 +1,6 @@
 import Foundation
 
-let DEFAULT_MIME_TYPE = "application/octet-stream"
+let defaultMimeType = "application/octet-stream"
 let mimeTypes = [
     "html": "text/html",
     "htm": "text/html",
@@ -111,11 +111,11 @@ public struct MimeType {
     let ext: String?
     public var value: String {
         guard let fileExtension: String = ext else {
-            return DEFAULT_MIME_TYPE
+            return defaultMimeType
         }
 
         let fext = fileExtension.lowercased()
-        return mimeTypes.keys.contains(fext) ? mimeTypes[fext]! : DEFAULT_MIME_TYPE
+        return mimeTypes.keys.contains(fext) ? mimeTypes[fext]! : defaultMimeType
     }
 
     public init(path: String) {
