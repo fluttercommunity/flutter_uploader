@@ -28,7 +28,7 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Test
+      - name: publish checks
         run: |
           flutter pub get
           flutter pub publish -n
