@@ -8,22 +8,22 @@
 import Foundation
 
 class CachingStreamHandler<T>: NSObject, FlutterStreamHandler {
-    var cache: [String:T] = [:]
+    var cache: [String: T] = [:]
 
     var eventSink: FlutterEventSink?
-    
+
     private let cacheSemaphore = DispatchSemaphore(value: 1)
 
-    func add(_ id: String, _ value: T) {
+    func add(_ taskId: String, _ value: T) {
         cacheSemaphore.wait()
-        cache[id] = value
+        cache[taskId] = value
         cacheSemaphore.signal()
 
         if let sink = eventSink {
             sink(value)
         }
     }
-    
+
     func clear() {
         cacheSemaphore.wait()
         cache.removeAll()

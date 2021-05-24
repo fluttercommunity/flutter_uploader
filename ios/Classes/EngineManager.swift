@@ -10,16 +10,16 @@ import Foundation
 class EngineManager {
     private var headlessRunner: FlutterEngine?
     public var registerPlugins: FlutterPluginRegistrantCallback?
-    
+
     private let semaphore = DispatchSemaphore(value: 1)
 
     private func startEngineIfNeeded() {
         semaphore.wait()
-        
+
         defer {
             semaphore.signal()
         }
-        
+
         guard let callbackHandle = UploaderDefaults.shared.callbackHandle else {
             if let runner = headlessRunner {
                 runner.destroyContext()
@@ -44,8 +44,8 @@ class EngineManager {
 
         DispatchQueue.main.async {
             self.headlessRunner?.run(withEntrypoint: entryPoint, libraryURI: uri)
-            if let rp = SwiftFlutterUploaderPlugin.registerPlugins, let runner = self.headlessRunner {
-                rp(runner)
+            if let registerPlugins = SwiftFlutterUploaderPlugin.registerPlugins, let runner = self.headlessRunner {
+                registerPlugins(runner)
             } else {
                 self.headlessRunner = nil
             }
@@ -56,7 +56,7 @@ class EngineManager {
 extension EngineManager: UploaderDelegate {
     func uploadEnqueued(taskId: String) {
     }
-    
+
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {
         startEngineIfNeeded()
     }
