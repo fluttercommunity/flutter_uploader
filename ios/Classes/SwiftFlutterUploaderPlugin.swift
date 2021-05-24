@@ -16,10 +16,10 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
 
     let channel: FlutterMethodChannel
     let progressEventChannel: FlutterEventChannel
-    let progressHandler: CachingStreamHandler<[String:Any]>
+    let progressHandler: CachingStreamHandler<[String: Any]>
 
     let resultEventChannel: FlutterEventChannel
-    let resultHandler: CachingStreamHandler<[String:Any]>
+    let resultHandler: CachingStreamHandler<[String: Any]>
 
     public static var registerPlugins: FlutterPluginRegistrantCallback?
 
@@ -46,7 +46,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         self.resultEventChannel = resultEventChannel
         self.resultHandler = CachingStreamHandler()
         resultEventChannel.setStreamHandler(resultHandler)
-        
+
         // load entries from database into StreamHandlers, which cache the values.
         let resultDatabase = UploadResultDatabase.shared
         for map in resultDatabase.results {
@@ -68,7 +68,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             UploadResultDatabase.shared.clear()
             resultHandler.clear()
             progressHandler.clear()
-            
+
             result(nil)
         case "enqueue":
             enqueueMethodCall(call, result)
@@ -102,7 +102,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
 
         let httpMethod = method.uppercased()
 
-        if (!validHttpMethods.contains(httpMethod)) {
+        if !validHttpMethods.contains(httpMethod) {
             result(FlutterError(code: "invalid_method", message: "Method must be either POST | PUT | PATCH", details: nil))
             return
         }
@@ -118,7 +118,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         }
 
         uploadTaskWithURLWithCompletion(url: url, files: files!, method: method, headers: headers, parameters: data, tag: tag, completion: { (task, error) in
-            if (error != nil) {
+            if error != nil {
                 result(error!)
             } else if let uploadTask = task {
                 result(self.urlSessionUploader.identifierForTask(uploadTask))
@@ -135,16 +135,16 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
 
         let httpMethod = method.uppercased()
 
-        if (!validHttpMethods.contains(httpMethod)) {
+        if !validHttpMethods.contains(httpMethod) {
             result(FlutterError(code: "invalid_method", message: "Method must be either POST | PUT | PATCH", details: nil))
             return
         }
-        
+
         guard let url = URL(string: urlString) else {
             result(FlutterError(code: "invalid_url", message: "url is not a valid url", details: nil))
             return
         }
-        
+
         guard let path = args["path"] as? String else {
             result(FlutterError(code: "invalid_path", message: "path is not set", details: nil))
             return
@@ -158,7 +158,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         }
 
         binaryUploadTaskWithURLWithCompletion(url: url, file: fileUrl, method: method, headers: headers, tag: tag, completion: { (task, error) in
-            if (error != nil) {
+            if error != nil {
                 result(error!)
             } else if let uploadTask = task {
                 result(self.urlSessionUploader.identifierForTask(uploadTask))
@@ -326,8 +326,8 @@ extension SwiftFlutterUploaderPlugin: UploaderDelegate {
     func uploadEnqueued(taskId: String) {
         resultHandler.add(taskId, [
             Key.taskId: taskId,
-            Key.status: UploadTaskStatus.enqueue.rawValue,
-        ]);
+            Key.status: UploadTaskStatus.enqueue.rawValue
+        ])
     }
 
     func uploadProgressed(taskId: String, inStatus: UploadTaskStatus, progress: Int) {

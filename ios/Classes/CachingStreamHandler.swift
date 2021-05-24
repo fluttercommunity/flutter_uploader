@@ -8,10 +8,10 @@
 import Foundation
 
 class CachingStreamHandler<T>: NSObject, FlutterStreamHandler {
-    var cache: [String:T] = [:]
+    var cache: [String: T] = [:]
 
     var eventSink: FlutterEventSink?
-    
+
     private let cacheSemaphore = DispatchSemaphore(value: 1)
 
     func add(_ id: String, _ value: T) {
@@ -23,7 +23,7 @@ class CachingStreamHandler<T>: NSObject, FlutterStreamHandler {
             sink(value)
         }
     }
-    
+
     func clear() {
         cacheSemaphore.wait()
         cache.removeAll()

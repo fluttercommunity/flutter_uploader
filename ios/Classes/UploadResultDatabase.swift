@@ -33,11 +33,11 @@ class UploadResultDatabase: UploaderDelegate {
     }
 
     var results: [[String: Any]] = []
-    
+
     func uploadEnqueued(taskId: String) {
         results.append([
             Key.taskId: taskId,
-            Key.status: UploadTaskStatus.enqueue.rawValue,
+            Key.status: UploadTaskStatus.enqueue.rawValue
         ])
 
         do {
