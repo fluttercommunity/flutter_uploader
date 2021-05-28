@@ -19,7 +19,7 @@ void main() {
 
   final methodChannel = MethodChannel('flutter_uploader');
 
-  dynamic? mockResponse;
+  dynamic mockResponse;
 
   EventChannel progressChannel;
   EventChannel resultChannel;

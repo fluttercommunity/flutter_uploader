@@ -15,8 +15,8 @@ extension Promise {
   /// - Returns: returns an array of results from all promises
   public static func chainSerially<T>(_ promisesToExecuteSerially:[() -> Promise<T>]) -> Promise<[T]> {
     // Create an array of closures that return `Promise<T>`
-    var promises = promisesToExecuteSerially.map { p -> () -> Promise<T> in
-      return { p() }
+    var promises = promisesToExecuteSerially.map { promise -> () -> Promise<T> in
+      return { promise() }
     }
 
     // Return a single promise that is fullfilled when
@@ -28,7 +28,7 @@ extension Promise {
         seal.fulfill(outResults)
       } else {
         let initial = promises.removeFirst()
-        let finalPromise:Promise<T> = promises.reduce(initial()) { (result: Promise<T>, next: @escaping ()->Promise<T>) in
+        let finalPromise: Promise<T> = promises.reduce(initial()) { (result: Promise<T>, next: @escaping ()->Promise<T>) in
           return result.then { result -> Promise<T> in
             outResults.append(result)
 

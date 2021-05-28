@@ -1,4 +1,6 @@
-excluded: # paths to ignore during linting. Takes precedence over `included`.
-  - Pods/flutter_uploader
+excluded:
+  - example/ios/Pods
+  - Pods
 included:
   - .symlinks/plugins/flutter_uploader/ios
+
