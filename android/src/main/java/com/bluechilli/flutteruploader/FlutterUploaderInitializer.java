@@ -89,8 +89,6 @@ public class FlutterUploaderInitializer extends ContentProvider {
       Log.e(TAG, "Failed to load meta-data, NameNotFound: " + e.getMessage());
     } catch (NullPointerException e) {
       Log.e(TAG, "Failed to load meta-data, NullPointer: " + e.getMessage());
-    } catch (Exception e) {
-     Log.e(TAG, "ERRORRRRRRRR" + e.getMessage()); 
     }
     return DEFAULT_MAX_CONCURRENT_TASKS;
   }
