@@ -41,6 +41,7 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
+import com.bluechilli.flutteruploader.UploadExecutorService;
 
 public class UploadWorker extends ListenableWorker implements CountProgressListener {
   public static final String ARG_URL = "url";
@@ -73,13 +74,13 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
 
   public UploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
-
+    this.backgroundExecutor = UploadExecutorService.getExecutorService(context); 
     this.context = context;
   }
 
   @Nullable private static FlutterEngine engine;
 
-  private Executor backgroundExecutor = Executors.newSingleThreadExecutor();
+  private Executor backgroundExecutor;
 
   @NonNull
   @Override
