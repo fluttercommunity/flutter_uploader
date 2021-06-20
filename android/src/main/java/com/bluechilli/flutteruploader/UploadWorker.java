@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Call;
 import okhttp3.Headers;
@@ -73,13 +72,13 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
 
   public UploadWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
     super(context, workerParams);
-
+    this.backgroundExecutor = UploadExecutorService.getExecutorService(context);
     this.context = context;
   }
 
   @Nullable private static FlutterEngine engine;
 
-  private Executor backgroundExecutor = Executors.newSingleThreadExecutor();
+  private Executor backgroundExecutor;
 
   @NonNull
   @Override

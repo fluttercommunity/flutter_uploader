@@ -70,7 +70,7 @@ public class FlutterUploaderInitializer extends ContentProvider {
     return 0;
   }
 
-  private static int getMaxConcurrentTaskMetadata(Context context) {
+  public static int getMaxConcurrentTaskMetadata(Context context) {
     try {
       ProviderInfo pi =
           context
