@@ -199,16 +199,19 @@ class _UploadScreenState extends State<UploadScreen> {
   void _handleFileUpload(List<String?> paths) async {
     final prefs = await SharedPreferences.getInstance();
     final binary = prefs.getBool('binary') ?? false;
+    final allowCellular = prefs.getBool('allowCellular') ?? true;
 
     await widget.uploader.enqueue(_buildUpload(
       binary,
       paths.whereType<String>().toList(),
+      allowCellular,
     ));
 
     widget.onUploadStarted();
   }
 
-  Upload _buildUpload(bool binary, List<String> paths) {
+  Upload _buildUpload(bool binary, List<String> paths,
+      [bool allowCellular = true]) {
     final tag = 'upload';
 
     var url = binary
@@ -225,6 +228,7 @@ class _UploadScreenState extends State<UploadScreen> {
         path: paths.first,
         method: UploadMethod.POST,
         tag: tag,
+        allowCellular: allowCellular,
       );
     } else {
       return MultipartFormDataUpload(
@@ -233,6 +237,7 @@ class _UploadScreenState extends State<UploadScreen> {
         files: paths.map((e) => FileItem(path: e, field: 'file')).toList(),
         method: UploadMethod.POST,
         tag: tag,
+        allowCellular: allowCellular,
       );
     }
   }
