@@ -107,6 +107,7 @@ class FlutterUploader {
         'headers': upload.headers,
         'data': upload.data,
         'tag': upload.tag,
+        'allowCellular': upload.allowCellular,
       }))!;
     }
     if (upload is RawUpload) {
@@ -115,7 +116,8 @@ class FlutterUploader {
         'method': describeEnum(upload.method),
         'path': upload.path,
         'headers': upload.headers,
-        'tag': upload.tag
+        'tag': upload.tag,
+        'allowCellular': upload.allowCellular,
       }))!;
     }
 
