@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
@@ -123,6 +123,7 @@ void main() {
               'data1': 'value1',
             },
             'tag': 'tag1',
+            'allowCellular': true,
           }),
         ]);
       });
@@ -157,6 +158,7 @@ void main() {
               'header1': 'value1',
             },
             'tag': 'tag1',
+            'allowCellular': true,
           }),
         ]);
       });
