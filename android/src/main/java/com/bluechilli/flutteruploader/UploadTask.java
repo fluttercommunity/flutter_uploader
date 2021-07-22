@@ -25,8 +25,7 @@ public class UploadTask {
       int requestTimeoutInSeconds,
       boolean binaryUpload,
       String tag,
-      boolean allowCellular
-      ) {
+      boolean allowCellular) {
     this.url = url;
     this.method = method;
     this.files = files;
