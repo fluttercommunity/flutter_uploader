@@ -123,7 +123,10 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        let allowCellular = args["allowCellular"] as? Bool ?? true
+        guard let allowCellular = args["allowCellular"] as? Bool else {
+            result(FlutterError(code: "invalid_flag", message: "allowCellular must be set", details: nil))
+            return
+        }
 
         uploadTaskWithURLWithCompletion(
             url: url,
@@ -177,7 +180,10 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        let allowCellular: Bool = args["allowCellular"] as? Bool ?? true
+        guard let allowCellular = args["allowCellular"] as? Bool else {
+            result(FlutterError(code: "invalid_flag", message: "allowCellular must be set", details: nil))
+            return
+        }
 
         binaryUploadTaskWithURLWithCompletion(url: url, file: fileUrl, method: method, headers: headers, tag: tag, allowCellular: allowCellular, completion: { (task, error) in
             if error != nil {

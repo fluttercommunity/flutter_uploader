@@ -92,7 +92,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     Map<String, String> parameters = call.argument("data");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
-    Boolean allowCellular = call.<Boolean>argument("allowCellular");
+    Boolean allowCellular = call.argument("allowCellular");
+    if (allowCellular == null) {
+      result.error("invalid_flag", "allowCellular must be set", null);
+      return;
+    }
 
     if (method == null) {
       method = "POST";
@@ -113,6 +117,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     for (Map<String, String> file : files) {
       items.add(FileItem.fromJson(file));
     }
+
     WorkRequest request =
         buildRequest(
             new UploadTask(
@@ -124,7 +129,7 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 connectionTimeout,
                 false,
                 tag,
-                allowCellular != null ? allowCellular : true));
+                allowCellular));
 
     WorkManager.getInstance(context)
         .enqueue(request)
@@ -147,7 +152,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     String path = call.argument("path");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
-    Boolean allowCellular = call.<Boolean>argument("allowCellular");
+    Boolean allowCellular = call.argument("allowCellular");
+
+    if (allowCellular == null) {
+      result.error("invalid_flag", "allowCellular must be set", null);
+      return;
+    }
 
     if (method == null) {
       method = "POST";
@@ -174,7 +184,8 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 connectionTimeout,
                 true,
                 tag,
-                allowCellular != null ? allowCellular : true));
+                allowCellular));
+
     WorkManager.getInstance(context)
         .enqueue(request)
         .getResult()

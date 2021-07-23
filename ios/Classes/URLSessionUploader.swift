@@ -51,7 +51,11 @@ class URLSessionUploader: NSObject {
             return nil
         }
 
-        let uploadTask = (wifiOnly ? wifiSession : session).uploadTask(with: request as URLRequest, fromFile: URL(fileURLWithPath: path))
+        let activeSession = wifiOnly ? wifiSession : session
+        let uploadTask = activeSession.uploadTask(
+                with: request as URLRequest,
+                fromFile: URL(fileURLWithPath: path)
+        )
 
         // Create a random UUID as task description (& ID).
         uploadTask.taskDescription = UUID().uuidString

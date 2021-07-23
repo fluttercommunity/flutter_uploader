@@ -73,7 +73,7 @@ void main() {
           isMethodCall('setBackgroundHandler', arguments: <String, dynamic>{
             'callbackHandle':
                 PluginUtilities.getCallbackHandle(tmpBackgroundHandler)!
-                    .toRawHandle(),
+                    .toRawHandle()
           }),
         ]);
       });
@@ -92,6 +92,13 @@ void main() {
         tag: 'tag1',
       );
 
+      test('allowCellular has default value of true', () async {
+        methodChannel.setMockMethodCallHandler((call) async {
+          expect(call.arguments['allowCellular'] as bool?, isTrue);
+          return 'allowCellular';
+        });
+        expect(await uploader.enqueue(sampleUpload), 'allowCellular');
+      });
       test('returns the task id', () async {
         mockResponse = 'TASK123';
 
