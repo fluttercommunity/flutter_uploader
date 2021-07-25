@@ -1,3 +1,7 @@
+## Unreleased
+
+- Add flag to restrict uploads to wifi only
+
 ## 3.0.0-beta.2
 
 - Android: Restore concurrency setting for uploads (#174).
