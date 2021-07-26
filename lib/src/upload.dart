@@ -9,6 +9,7 @@ abstract class Upload {
     required this.method,
     this.headers = const <String, String>{},
     this.tag,
+    this.allowCellular = true,
   });
 
   /// Upload link
@@ -22,6 +23,10 @@ abstract class Upload {
 
   /// Name of the upload request (only used on Android)
   final String? tag;
+
+  /// If uploads are allowed to use cellular connections
+  /// Defaults to true. If false, uploads will only use wifi connections
+  final bool allowCellular;
 }
 
 /// Standard RFC 2388 multipart/form-data upload.
@@ -36,12 +41,14 @@ class MultipartFormDataUpload extends Upload {
     String? tag,
     this.files,
     this.data,
+    bool allowCellular = true,
   })  : assert(files != null || data != null),
         super(
           url: url,
           method: method,
           headers: headers,
           tag: tag,
+          allowCellular: allowCellular,
         ) {
     // Need to specify either files or data.
     assert(files!.isNotEmpty || data!.isNotEmpty);
@@ -63,11 +70,13 @@ class RawUpload extends Upload {
     Map<String, String>? headers,
     String? tag,
     this.path,
+    bool allowCellular = true,
   }) : super(
           url: url,
           method: method,
           headers: headers,
           tag: tag,
+          allowCellular: allowCellular,
         );
 
   /// single file to upload

@@ -9,6 +9,7 @@ import Foundation
 
 struct Keys {
     static let backgroundSessionIdentifier = "chillisource.flutter_uploader.upload.background"
+    static let wifiBackgroundSessionIdentifier = "chillisource.flutter_uploader.upload.background.wifi"
     fileprivate static let maximumConcurrentTask = "FUMaximumConnectionsPerHost"
     fileprivate static let maximumConcurrentUploadOperation = "FUMaximumUploadOperation"
 
@@ -20,6 +21,7 @@ class URLSessionUploader: NSObject {
     static let shared = URLSessionUploader()
 
     var session: URLSession?
+    var wifiSession: URLSession?
     let queue = OperationQueue()
 
     // Accessing uploadedData & runningTaskById will require exclusive access
@@ -43,12 +45,17 @@ class URLSessionUploader: NSObject {
         delegates.append(delegate)
     }
 
-    func enqueueUploadTask(_ request: URLRequest, path: String) -> URLSessionUploadTask? {
-        guard let session = self.session else {
+    func enqueueUploadTask(_ request: URLRequest, path: String, wifiOnly: Bool) -> URLSessionUploadTask? {
+        guard let session = self.session,
+              let wifiSession = self.wifiSession else {
             return nil
         }
 
-        let uploadTask = session.uploadTask(with: request as URLRequest, fromFile: URL(fileURLWithPath: path))
+        let activeSession = wifiOnly ? wifiSession : session
+        let uploadTask = activeSession.uploadTask(
+                with: request as URLRequest,
+                fromFile: URL(fileURLWithPath: path)
+        )
 
         // Create a random UUID as task description (& ID).
         uploadTask.taskDescription = UUID().uuidString
@@ -138,6 +145,14 @@ class URLSessionUploader: NSObject {
 
         self.queue.maxConcurrentOperationCount = maxUploadOperation.intValue
 
+        // configure session for wifi only uploads
+        let wifiConfiguration = URLSessionConfiguration.background(withIdentifier: Keys.wifiBackgroundSessionIdentifier)
+        wifiConfiguration.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
+        wifiConfiguration.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
+        wifiConfiguration.allowsCellularAccess = false
+        self.wifiSession = URLSession(configuration: wifiConfiguration, delegate: self, delegateQueue: queue)
+
+        // configure regular session
         let sessionConfiguration = URLSessionConfiguration.background(withIdentifier: Keys.backgroundSessionIdentifier)
         sessionConfiguration.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
         sessionConfiguration.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()

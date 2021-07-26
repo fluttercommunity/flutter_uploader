@@ -14,6 +14,7 @@ public class UploadTask {
   private int requestTimeoutInSeconds;
   private boolean binaryUpload;
   private String tag;
+  private boolean allowCellular;
 
   public UploadTask(
       String url,
@@ -23,7 +24,8 @@ public class UploadTask {
       Map<String, String> data,
       int requestTimeoutInSeconds,
       boolean binaryUpload,
-      String tag) {
+      String tag,
+      boolean allowCellular) {
     this.url = url;
     this.method = method;
     this.files = files;
@@ -32,6 +34,7 @@ public class UploadTask {
     this.requestTimeoutInSeconds = requestTimeoutInSeconds;
     this.binaryUpload = binaryUpload;
     this.tag = tag;
+    this.allowCellular = allowCellular;
   }
 
   public String getURL() {
@@ -68,5 +71,9 @@ public class UploadTask {
 
   public String getTag() {
     return tag;
+  }
+
+  public boolean isAllowCellular() {
+    return allowCellular;
   }
 }

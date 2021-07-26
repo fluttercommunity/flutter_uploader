@@ -117,6 +117,8 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   int _currentIndex = 0;
 
+  bool allowCellular = true;
+
   @override
   void initState() {
     super.initState();
@@ -139,6 +141,16 @@ class _AppState extends State<App> {
       initializationSettings,
       onSelectNotification: (payload) async {},
     );
+
+    SharedPreferences.getInstance()
+        .then((sp) => sp.getBool('allowCellular') ?? true)
+        .then((result) {
+      if (mounted) {
+        setState(() {
+          allowCellular = result;
+        });
+      }
+    });
   }
 
   @override
@@ -149,6 +161,24 @@ class _AppState extends State<App> {
         primarySwatch: Colors.blue,
       ),
       home: Scaffold(
+        appBar: AppBar(
+          actions: [
+            IconButton(
+              icon: Icon(allowCellular
+                  ? Icons.signal_cellular_connected_no_internet_4_bar
+                  : Icons.wifi_outlined),
+              onPressed: () async {
+                final sp = await SharedPreferences.getInstance();
+                await sp.setBool('allowCellular', !allowCellular);
+                if (mounted) {
+                  setState(() {
+                    allowCellular = !allowCellular;
+                  });
+                }
+              },
+            ),
+          ],
+        ),
         body: _currentIndex == 0
             ? UploadScreen(
                 uploader: _uploader,

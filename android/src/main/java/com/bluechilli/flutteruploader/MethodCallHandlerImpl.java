@@ -92,6 +92,11 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     Map<String, String> parameters = call.argument("data");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
+    Boolean allowCellular = call.argument("allowCellular");
+    if (allowCellular == null) {
+      result.error("invalid_flag", "allowCellular must be set", null);
+      return;
+    }
 
     if (method == null) {
       method = "POST";
@@ -115,7 +120,17 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
 
     WorkRequest request =
         buildRequest(
-            new UploadTask(url, method, items, headers, parameters, connectionTimeout, false, tag));
+            new UploadTask(
+                url,
+                method,
+                items,
+                headers,
+                parameters,
+                connectionTimeout,
+                false,
+                tag,
+                allowCellular));
+
     WorkManager.getInstance(context)
         .enqueue(request)
         .getResult()
@@ -137,6 +152,12 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
     String path = call.argument("path");
     Map<String, String> headers = call.argument("headers");
     String tag = call.argument("tag");
+    Boolean allowCellular = call.argument("allowCellular");
+
+    if (allowCellular == null) {
+      result.error("invalid_flag", "allowCellular must be set", null);
+      return;
+    }
 
     if (method == null) {
       method = "POST";
@@ -162,7 +183,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
                 Collections.emptyMap(),
                 connectionTimeout,
                 true,
-                tag));
+                tag,
+                allowCellular));
+
     WorkManager.getInstance(context)
         .enqueue(request)
         .getResult()
@@ -231,9 +254,13 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
       dataBuilder.putString(UploadWorker.ARG_DATA, parametersJson);
     }
 
+    Constraints constraints =
+        new Constraints.Builder()
+            .setRequiredNetworkType(
+                task.isAllowCellular() ? NetworkType.CONNECTED : NetworkType.UNMETERED)
+            .build();
     return new OneTimeWorkRequest.Builder(UploadWorker.class)
-        .setConstraints(
-            new Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        .setConstraints(constraints)
         .addTag(FLUTTER_UPLOAD_WORK_TAG)
         .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 5, TimeUnit.SECONDS)
         .setInputData(dataBuilder.build())
