@@ -1,6 +1,8 @@
-## Unreleased
+## 3.0.0-beta.3
 
-- Add flag to restrict uploads to wifi only
+- Add flag to restrict uploads to wifi only (#188)
+- Fix ClassCastException on Android (#196)
+- Do not persist nil values in result database (#190)
 
 ## 3.0.0-beta.2
 
