@@ -77,9 +77,9 @@ public class MethodCallHandlerImpl implements MethodCallHandler {
   }
 
   void setBackgroundHandler(MethodCall call, MethodChannel.Result result) {
-    Long callbackHandle = call.argument("callbackHandle");
+    Number callbackHandle = call.argument("callbackHandle");
     if (callbackHandle != null) {
-      SharedPreferenceHelper.saveCallbackDispatcherHandleKey(context, callbackHandle);
+      SharedPreferenceHelper.saveCallbackDispatcherHandleKey(context, callbackHandle.longValue());
     }
 
     result.success(null);
