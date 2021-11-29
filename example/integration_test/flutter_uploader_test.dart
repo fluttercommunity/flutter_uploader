@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider/path_provider.dart';
@@ -48,23 +49,30 @@ void main() {
   group('multipart/form-data uploads', () {
     final url = baseUrl;
 
-    testWidgets('single file', (WidgetTester tester) async {
-      var fileItem = FileItem(path: await _tmpFile(), field: 'file');
+    for (final method in UploadMethod.values) {
+      testWidgets('single file via ${describeEnum(method)}', (_) async {
+        var fileItem = FileItem(path: await _tmpFile(), field: 'file');
 
-      final taskId = await uploader.enqueue(
-        MultipartFormDataUpload(url: url.toString(), files: [fileItem]),
-      );
+        final taskId = await uploader.enqueue(
+          MultipartFormDataUpload(
+            url: url.toString(),
+            files: [fileItem],
+            method: method,
+          ),
+        );
 
-      expect(taskId, isNotNull);
+        expect(taskId, isNotNull);
 
-      final res = await uploader.result.firstWhere(isCompleted(taskId));
-      final json = jsonDecode(res.response!);
+        final res = await uploader.result.firstWhere(isCompleted(taskId));
+        final json = jsonDecode(res.response!);
 
-      expect(json['message'], 'Successfully uploaded');
-      expect(res.statusCode, 200);
-      expect(json['request']['headers']['accept'], '*/*');
-      expect(res.status, UploadTaskStatus.complete);
-    });
+        expect(json['message'], 'Successfully uploaded');
+        expect(res.statusCode, 200);
+        expect(json['request']['method'], describeEnum(method));
+        expect(json['request']['headers']['accept'], '*/*');
+        expect(res.status, UploadTaskStatus.complete);
+      });
+    }
 
     testWidgets('multiple uploads stresstest', (WidgetTester tester) async {
       final taskIds = <String>[];
@@ -193,24 +201,29 @@ void main() {
   group('binary uploads', () {
     final url = baseUrl.replace(path: baseUrl.path + 'Binary');
 
-    testWidgets('single file', (WidgetTester tester) async {
-      final taskId = await uploader.enqueue(
-        RawUpload(
-          url: url.toString(),
-          path: await _tmpFile(),
-        ),
-      );
+    for (final method in UploadMethod.values) {
+      testWidgets('single file via ${describeEnum(method)}',
+          (WidgetTester tester) async {
+        final taskId = await uploader.enqueue(
+          RawUpload(
+            url: url.toString(),
+            path: await _tmpFile(),
+            method: method,
+          ),
+        );
 
-      expect(taskId, isNotNull);
+        expect(taskId, isNotNull);
 
-      final res = await uploader.result.firstWhere(isCompleted(taskId));
-      final json = jsonDecode(res.response!);
+        final res = await uploader.result.firstWhere(isCompleted(taskId));
+        final json = jsonDecode(res.response!);
 
-      expect(json['message'], 'Successfully uploaded');
-      expect(res.statusCode, 200);
-      expect(json['headers']['accept'], '*/*');
-      expect(res.status, UploadTaskStatus.complete);
-    });
+        expect(json['message'], 'Successfully uploaded');
+        expect(res.statusCode, 200);
+        expect(json['method'], describeEnum(method));
+        expect(json['headers']['accept'], '*/*');
+        expect(res.status, UploadTaskStatus.complete);
+      });
+    }
 
     testWidgets('multiple uploads stresstest', (WidgetTester tester) async {
       final taskIds = <String>[];
