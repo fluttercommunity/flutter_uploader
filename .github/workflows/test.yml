@@ -76,3 +76,13 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           script: cd example && flutter drive --driver=test_driver/integration_test.dart integration_test/flutter_uploader_test.dart
+
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/gradle-jdk11@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
