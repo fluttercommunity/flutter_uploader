@@ -10,6 +10,7 @@ pubspec.lock
 flutter_export_environment.sh
 
 examples/all_plugins/pubspec.yaml
+Flutter.podspec
 
 Podfile
 Podfile.lock
