@@ -13,7 +13,7 @@ class UploadResultDatabase: UploaderDelegate {
     static let shared = UploadResultDatabase()
 
     private init() {
-        if let url = resultsPListURL, let plist = try? loadPropertyList(url) {
+        if let url = resultsPListURL, let plist = loadPropertyList(url) {
             for result in plist {
                 if let map = result as? [String: Any] {
                     self.results.append(map)
@@ -97,9 +97,8 @@ class UploadResultDatabase: UploaderDelegate {
         try plistData.write(to: plistURL)
     }
 
-    private func loadPropertyList(_ plistURL: URL) throws -> [Any] {
-        let data = try Data(contentsOf: plistURL)
-        guard let plist = try PropertyListSerialization.propertyList(from: data, format: nil) as? [Any] else {
+    private func loadPropertyList(_ plistURL: URL) -> [Any] {
+        guard let data = try? Data(contentsOf: plistURL), let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [Any] else {
             return []
         }
         return plist
