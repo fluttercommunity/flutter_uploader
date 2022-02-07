@@ -10,7 +10,12 @@ jobs:
   format_java:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - if: github.event_name != 'pull_request'
+        uses: actions/checkout@v2
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions/setup-java@v1
         with:
           java-version: 11

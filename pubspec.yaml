@@ -28,3 +28,6 @@ flutter:
         pluginClass: FlutterUploaderPlugin
       ios:
         pluginClass: FlutterUploaderPlugin
+
+false_secrets:
+  - example/ios/Runner/GoogleService-Info.plist
