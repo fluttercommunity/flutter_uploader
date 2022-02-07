@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    implementation "androidx.work:work-runtime:2.5.0"
+    implementation "androidx.work:work-runtime:2.7.1"
     implementation "androidx.concurrent:concurrent-futures:1.1.0"
     implementation "androidx.annotation:annotation:1.2.0"
     implementation "androidx.lifecycle:lifecycle-livedata:2.3.1"
