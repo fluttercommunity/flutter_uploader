@@ -42,7 +42,8 @@ void backgroundHandler() {
             android: AndroidNotificationDetails(
               'FlutterUploader.Example',
               'FlutterUploader',
-              'Installed when you activate the Flutter Uploader Example',
+              channelDescription:
+                  'Installed when you activate the Flutter Uploader Example',
               progress: progress.progress ?? 0,
               icon: 'ic_upload',
               enableVibration: false,
@@ -86,7 +87,8 @@ void backgroundHandler() {
           android: AndroidNotificationDetails(
             'FlutterUploader.Example',
             'FlutterUploader',
-            'Installed when you activate the Flutter Uploader Example',
+            channelDescription:
+                'Installed when you activate the Flutter Uploader Example',
             icon: 'ic_upload',
             enableVibration: !successful,
             importance: result.status == UploadTaskStatus.failed
