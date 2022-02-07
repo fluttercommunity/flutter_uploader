@@ -11,7 +11,7 @@ class UploadItemView extends StatelessWidget {
   final UploadItem item;
   final CancelUploadCallback onCancel;
 
-  UploadItemView({
+  const UploadItemView({
     Key? key,
     required this.item,
     required this.onCancel,
@@ -67,11 +67,11 @@ class UploadItemView extends StatelessWidget {
           ),
         ),
         if (item.status == UploadTaskStatus.running)
-          Container(
+          SizedBox(
             height: 50,
             width: 50,
             child: IconButton(
-              icon: Icon(Icons.cancel),
+              icon: const Icon(Icons.cancel),
               onPressed: () => onCancel(item.id),
             ),
           )

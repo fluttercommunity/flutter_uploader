@@ -16,6 +16,7 @@ dependencies:
   flutter_local_notifications: ^9.2.0
 
 dev_dependencies:
+  flutter_lints: ^1.0.4
   integration_test:
     sdk: flutter
   flutter_test:

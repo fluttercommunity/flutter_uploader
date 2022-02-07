@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs
+// ignore_for_file: avoid_print
 
 import 'dart:async';
 
@@ -9,7 +10,7 @@ import 'package:flutter_uploader_example/upload_item_view.dart';
 
 /// Shows the statusresponses for previous uploads.
 class ResponsesScreen extends StatefulWidget {
-  ResponsesScreen({
+  const ResponsesScreen({
     Key? key,
     required this.uploader,
   }) : super(key: key);
@@ -74,10 +75,10 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Responses'),
+        title: const Text('Responses'),
       ),
       body: ListView.separated(
-        padding: EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(20.0),
         itemCount: _tasks.length,
         itemBuilder: (context, index) {
           final item = _tasks.values.elementAt(index);
@@ -87,7 +88,7 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
           );
         },
         separatorBuilder: (context, index) {
-          return Divider(
+          return const Divider(
             color: Colors.black,
           );
         },
