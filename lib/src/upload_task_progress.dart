@@ -13,7 +13,7 @@ class UploadTaskProgress extends Equatable {
   final UploadTaskStatus status;
 
   /// Default constructor.
-  UploadTaskProgress(
+  const UploadTaskProgress(
     this.taskId,
     this.progress,
     this.status,

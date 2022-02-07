@@ -36,7 +36,7 @@ class _UploadScreenState extends State<UploadScreen> {
     super.initState();
 
     if (Platform.isAndroid) {
-      imagePicker.getLostData().then((lostData) {
+      imagePicker.retrieveLostData().then((lostData) {
         if (lostData.isEmpty) {
           return;
         }
@@ -159,7 +159,7 @@ class _UploadScreenState extends State<UploadScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
-    var image = await imagePicker.getImage(source: ImageSource.gallery);
+    var image = await imagePicker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       _handleFileUpload([image.path]);
@@ -170,7 +170,7 @@ class _UploadScreenState extends State<UploadScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
-    var video = await imagePicker.getVideo(source: ImageSource.gallery);
+    var video = await imagePicker.pickVideo(source: ImageSource.gallery);
 
     if (video != null) {
       _handleFileUpload([video.path]);
