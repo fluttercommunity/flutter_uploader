@@ -17,7 +17,7 @@ void main() {
 
   late FlutterUploader uploader;
 
-  final methodChannel = MethodChannel('flutter_uploader');
+  const methodChannel = MethodChannel('flutter_uploader');
 
   dynamic mockResponse;
 
@@ -137,7 +137,7 @@ void main() {
     });
 
     group('enqueueBinary', () {
-      final sampleUpload = RawUpload(
+      const sampleUpload = RawUpload(
         url: 'http://www.somewhere.com',
         path: '/path/to/file1',
         method: UploadMethod.PATCH,

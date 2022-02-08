@@ -1,4 +1,5 @@
 // ignore_for_file: public_member_api_docs
+// ignore_for_file: avoid_print
 
 import 'dart:io';
 
@@ -42,7 +43,8 @@ void backgroundHandler() {
             android: AndroidNotificationDetails(
               'FlutterUploader.Example',
               'FlutterUploader',
-              'Installed when you activate the Flutter Uploader Example',
+              channelDescription:
+                  'Installed when you activate the Flutter Uploader Example',
               progress: progress.progress ?? 0,
               icon: 'ic_upload',
               enableVibration: false,
@@ -52,7 +54,7 @@ void backgroundHandler() {
               maxProgress: 100,
               channelShowBadge: false,
             ),
-            iOS: IOSNotificationDetails(),
+            iOS: const IOSNotificationDetails(),
           ),
         );
       });
@@ -86,14 +88,15 @@ void backgroundHandler() {
           android: AndroidNotificationDetails(
             'FlutterUploader.Example',
             'FlutterUploader',
-            'Installed when you activate the Flutter Uploader Example',
+            channelDescription:
+                'Installed when you activate the Flutter Uploader Example',
             icon: 'ic_upload',
             enableVibration: !successful,
             importance: result.status == UploadTaskStatus.failed
                 ? Importance.high
                 : Importance.min,
           ),
-          iOS: IOSNotificationDetails(
+          iOS: const IOSNotificationDetails(
             presentAlert: true,
           ),
         ),
@@ -105,10 +108,10 @@ void backgroundHandler() {
   });
 }
 
-void main() => runApp(App());
+void main() => runApp(const App());
 
 class App extends StatefulWidget {
-  App({Key? key}) : super(key: key);
+  const App({Key? key}) : super(key: key);
 
   @override
   _AppState createState() => _AppState();
@@ -127,7 +130,7 @@ class _AppState extends State<App> {
 
     var flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
     var initializationSettingsAndroid =
-        AndroidInitializationSettings('ic_upload');
+        const AndroidInitializationSettings('ic_upload');
     var initializationSettingsIOS = IOSInitializationSettings(
       requestSoundPermission: false,
       requestBadgePermission: false,
