@@ -36,7 +36,7 @@ class _UploadScreenState extends State<UploadScreen> {
     super.initState();
 
     if (Platform.isAndroid) {
-      imagePicker.getLostData().then((lostData) {
+      imagePicker.retrieveLostData().then((lostData) {
         if (lostData.isEmpty) {
           return;
         }
@@ -72,7 +72,7 @@ class _UploadScreenState extends State<UploadScreen> {
                   items: ServerBehavior.all.map((e) {
                     return DropdownMenuItem(
                       value: e,
-                      child: Text('${e.title}'),
+                      child: Text(e.title),
                     );
                   }).toList(),
                   onChanged: (newBehavior) {
@@ -82,7 +82,7 @@ class _UploadScreenState extends State<UploadScreen> {
                   },
                   value: _serverBehavior,
                 ),
-                Divider(),
+                const Divider(),
                 Text(
                   'multipart/form-data uploads',
                   style: Theme.of(context).textTheme.subtitle1,
@@ -93,57 +93,57 @@ class _UploadScreenState extends State<UploadScreen> {
                   children: <Widget>[
                     ElevatedButton(
                       onPressed: () => getImage(binary: false),
-                      child: Text('upload image'),
+                      child: const Text('upload image'),
                     ),
                     ElevatedButton(
                       onPressed: () => getVideo(binary: false),
-                      child: Text('upload video'),
+                      child: const Text('upload video'),
                     ),
                     ElevatedButton(
                       onPressed: () => getMultiple(binary: false),
-                      child: Text('upload multi'),
+                      child: const Text('upload multi'),
                     ),
                   ],
                 ),
-                Divider(height: 40),
+                const Divider(height: 40),
                 Text(
                   'binary uploads',
                   style: Theme.of(context).textTheme.subtitle1,
                 ),
-                Text('this will upload selected files as binary'),
+                const Text('this will upload selected files as binary'),
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 10,
                   children: <Widget>[
                     ElevatedButton(
                       onPressed: () => getImage(binary: true),
-                      child: Text('upload image'),
+                      child: const Text('upload image'),
                     ),
                     ElevatedButton(
                       onPressed: () => getVideo(binary: true),
-                      child: Text('upload video'),
+                      child: const Text('upload video'),
                     ),
                     ElevatedButton(
                       onPressed: () => getMultiple(binary: true),
-                      child: Text('upload multi'),
+                      child: const Text('upload multi'),
                     ),
                   ],
                 ),
-                Divider(height: 40),
-                Text('Cancellation'),
+                const Divider(height: 40),
+                const Text('Cancellation'),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     ElevatedButton(
                       onPressed: () => widget.uploader.cancelAll(),
-                      child: Text('Cancel All'),
+                      child: const Text('Cancel All'),
                     ),
                     Container(width: 20.0),
                     ElevatedButton(
                       onPressed: () {
                         widget.uploader.clearUploads();
                       },
-                      child: Text('Clear Uploads'),
+                      child: const Text('Clear Uploads'),
                     )
                   ],
                 ),
@@ -159,7 +159,7 @@ class _UploadScreenState extends State<UploadScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
-    var image = await imagePicker.getImage(source: ImageSource.gallery);
+    var image = await imagePicker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
       _handleFileUpload([image.path]);
@@ -170,7 +170,7 @@ class _UploadScreenState extends State<UploadScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('binary', binary);
 
-    var video = await imagePicker.getVideo(source: ImageSource.gallery);
+    var video = await imagePicker.pickVideo(source: ImageSource.gallery);
 
     if (video != null) {
       _handleFileUpload([video.path]);
@@ -212,7 +212,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
   Upload _buildUpload(bool binary, List<String> paths,
       [bool allowCellular = true]) {
-    final tag = 'upload';
+    const tag = 'upload';
 
     var url = binary
         ? widget.uploadURL.replace(path: widget.uploadURL.path + 'Binary')

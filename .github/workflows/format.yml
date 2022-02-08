@@ -10,7 +10,12 @@ jobs:
   format_java:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v2
+      - if: github.event_name != 'pull_request'
+        uses: actions/checkout@v2
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions/setup-java@v1
         with:
           java-version: 11
@@ -43,5 +48,5 @@ jobs:
         run: |
           flutter pub get
           flutter pub publish -n
-          pub global activate tuneup
-          pub global run tuneup check
+          dart pub global activate tuneup
+          dart pub global run tuneup check

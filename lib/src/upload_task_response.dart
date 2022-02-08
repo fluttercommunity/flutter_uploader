@@ -20,7 +20,7 @@ class UploadTaskResponse extends Equatable {
   final Map<String, dynamic>? headers;
 
   /// Default constructor.
-  UploadTaskResponse({
+  const UploadTaskResponse({
     required this.taskId,
     this.response,
     this.statusCode,
