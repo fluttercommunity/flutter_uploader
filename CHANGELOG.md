@@ -1,3 +1,8 @@
+## 3.0.0-beta.4
+
+- Restore compatibility with Android 12
+- Ensure plugin is compatible with Flutter 2.10
+
 ## 3.0.0-beta.3
 
 - Add flag to restrict uploads to wifi only (#188)
