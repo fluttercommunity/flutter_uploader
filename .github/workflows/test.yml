@@ -63,4 +63,4 @@ jobs:
           target: ${{ matrix.target }}
           arch: x86_64
           profile: Nexus 6
-          script: cd example && flutter test --mutidex integration_test/flutter_uploader_integration_test.dart
+          script: cd example && flutter test --multidex integration_test/flutter_uploader_integration_test.dart
