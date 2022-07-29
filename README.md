@@ -73,11 +73,18 @@ func registerPlugins(registry: FlutterPluginRegistry) {
 - **Configure maximum number of concurrent tasks:** the plugin depends on `WorkManager` library and `WorkManager` depends on the number of available processor to configure the maximum number of tasks running at a moment. You can setup a fixed number for this configuration by adding following codes to your `AndroidManifest.xml`:
 
 ```xml
- <provider
-     android:name="androidx.work.impl.WorkManagerInitializer"
-     android:authorities="${applicationId}.workmanager-init"
-     android:enabled="false"
-     android:exported="false" />
+<provider
+android:name="androidx.startup.InitializationProvider"
+android:authorities="${applicationId}.androidx-startup"
+android:exported="false"
+android:enabled="false"
+tools:node="merge">
+<meta-data
+    android:name="androidx.work.WorkManagerInitializer"
+    android:value="androidx.startup"
+    android:enabled="false"
+    android:exported="false"/>
+</provider>
 
  <provider
      android:name="com.bluechilli.flutteruploader.FlutterUploaderInitializer"
