@@ -45,7 +45,7 @@ class URLSessionUploader: NSObject {
         delegates.append(delegate)
     }
 
-    func enqueueUploadTask(_ request: URLRequest, path: String, wifiOnly: Bool) -> URLSessionUploadTask? {
+    func enqueueUploadTask(_ request: URLRequest, taskId: String, path: String, wifiOnly: Bool) -> URLSessionUploadTask? {
         guard let session = self.session,
               let wifiSession = self.wifiSession else {
             return nil
@@ -57,17 +57,16 @@ class URLSessionUploader: NSObject {
                 fromFile: URL(fileURLWithPath: path)
         )
 
-        // Create a random UUID as task description (& ID).
-        uploadTask.taskDescription = UUID().uuidString
+        uploadTask.taskDescription = taskId
 
-        let taskId = identifierForTask(uploadTask)
+        let uploadTaskId = identifierForTask(uploadTask)
 
-        delegates.uploadEnqueued(taskId: taskId)
+        delegates.uploadEnqueued(taskId: uploadTaskId)
 
         uploadTask.resume()
 
         semaphore.wait()
-        self.runningTaskById[taskId] = UploadTask(taskId: taskId, status: .enqueue, progress: 0)
+        self.runningTaskById[uploadTaskId] = UploadTask(taskId: uploadTaskId, status: .enqueue, progress: 0)
         semaphore.signal()
 
         return uploadTask

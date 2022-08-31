@@ -225,8 +225,20 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
                 request.setValue(value, forHTTPHeaderField: key)
             }
         }
+        
+        let taskId = UUID().uuidString
 
-        completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, path: file.path, wifiOnly: !allowCellular), nil)
+        completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, taskId: taskId, path: file.path, wifiOnly: !allowCellular), nil)
+    }
+
+    public func generateRequestFilePath(requestFile: String) -> URL {
+        let tempDirectory = NSURL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+        return tempDirectory.appendingPathComponent(requestFile, isDirectory: false)!
+    }
+
+    public func generateRequestFileName(taskId: String) -> String {
+        let requestId = taskId.replacingOccurrences(of: "-", with: "_")
+        return "uploader_task_\(requestId).req"
     }
 
     private func uploadTaskWithURLWithCompletion(
@@ -242,7 +254,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         let fileManager = FileManager.default
         var fileCount: Int = 0
         let formData = MultipartFormData()
-        let tempDirectory = NSURL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
 
         if data != nil {
             data?.forEach({ (key, value) in
@@ -281,20 +292,20 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        let requestId = UUID().uuidString.replacingOccurrences(of: "-", with: "_")
-        let requestFile = "\(requestId).req"
-        let tempPath = tempDirectory.appendingPathComponent(requestFile, isDirectory: false)
+        let taskId = UUID().uuidString
+        let requestFile = self.generateRequestFileName(taskId: taskId)
+        let tempPath = self.generateRequestFilePath(requestFile: requestFile)
 
-        if fileManager.fileExists(atPath: tempPath!.path) {
+        if fileManager.fileExists(atPath: tempPath.path) {
             do {
-                try fileManager.removeItem(at: tempPath!)
+                try fileManager.removeItem(at: tempPath)
             } catch {
                 completionHandler(nil, FlutterError(code: "io_error", message: "failed to delete file \(requestFile)", details: nil))
                 return
             }
         }
 
-        let path = tempPath!.path
+        let path = tempPath.path
         do {
             let requestfileURL = URL(fileURLWithPath: path)
             try formData.writeEncodedData(to: requestfileURL)
@@ -303,7 +314,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        self.makeRequest(path, url, method, headers, formData.contentType, formData.contentLength, allowCellular: allowCellular, completion: { (task, error) in
+        self.makeRequest(path, url, method, headers, formData.contentType, formData.contentLength, taskId, allowCellular: allowCellular, completion: { (task, error) in
             completionHandler(task, error)
         })
     }
@@ -315,6 +326,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         _ headers: [String: Any?]? = [:],
         _ contentType: String,
         _ contentLength: UInt64,
+        _ taskId: String,
         allowCellular: Bool,
         completion completionHandler: (URLSessionUploadTask?, FlutterError?) -> Void) {
         let request = NSMutableURLRequest(url: url)
@@ -338,7 +350,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        completionHandler(urlSessionUploader.enqueueUploadTask(request as URLRequest, path: path, wifiOnly: !allowCellular), nil)
+        completionHandler(urlSessionUploader.enqueueUploadTask(request as URLRequest, taskId: taskId, path: path, wifiOnly: !allowCellular), nil)
     }
 }
 
@@ -384,7 +396,6 @@ extension SwiftFlutterUploaderPlugin: UploaderDelegate {
             Key.statusCode: statusCode,
             Key.headers: headers
         ])
-
     }
 
     func uploadFailed(taskId: String, inStatus: UploadTaskStatus, statusCode: Int, errorCode: String, errorMessage: String?, errorStackTrace: [String]) {
