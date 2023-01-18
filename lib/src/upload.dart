@@ -10,6 +10,7 @@ abstract class Upload {
     this.headers = const <String, String>{},
     this.tag,
     this.allowCellular = true,
+    this.useBackgroundUrSession = true,
   });
 
   /// Upload link
@@ -27,6 +28,11 @@ abstract class Upload {
   /// If uploads are allowed to use cellular connections
   /// Defaults to true. If false, uploads will only use wifi connections
   final bool allowCellular;
+
+  /// iOS Only
+  /// If uploads are done using UrlSessionConfig set to background mode.
+  /// Defaults to true. If false, default UrlSessionConfig is used
+  final bool useBackgroundUrSession;
 }
 
 /// Standard RFC 2388 multipart/form-data upload.
@@ -42,6 +48,7 @@ class MultipartFormDataUpload extends Upload {
     this.files,
     this.data,
     bool allowCellular = true,
+    bool useBackgroundUrSession = true,
   })  : assert(files != null || data != null),
         super(
           url: url,
@@ -49,6 +56,7 @@ class MultipartFormDataUpload extends Upload {
           headers: headers,
           tag: tag,
           allowCellular: allowCellular,
+          useBackgroundUrSession: useBackgroundUrSession,
         ) {
     // Need to specify either files or data.
     assert(files!.isNotEmpty || data!.isNotEmpty);
@@ -71,12 +79,14 @@ class RawUpload extends Upload {
     String? tag,
     this.path,
     bool allowCellular = true,
+    bool useBackgroundUrSession = true,
   }) : super(
           url: url,
           method: method,
           headers: headers,
           tag: tag,
           allowCellular: allowCellular,
+          useBackgroundUrSession: useBackgroundUrSession,
         );
 
   /// single file to upload

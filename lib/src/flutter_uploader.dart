@@ -108,6 +108,7 @@ class FlutterUploader {
         'data': upload.data,
         'tag': upload.tag,
         'allowCellular': upload.allowCellular,
+        'useBackgroundUrSession': upload.useBackgroundUrSession,
       }))!;
     }
     if (upload is RawUpload) {
@@ -118,6 +119,7 @@ class FlutterUploader {
         'headers': upload.headers,
         'tag': upload.tag,
         'allowCellular': upload.allowCellular,
+        'useBackgroundUrSession': upload.useBackgroundUrSession,
       }))!;
     }
 
