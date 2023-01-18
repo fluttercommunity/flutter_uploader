@@ -155,21 +155,21 @@ class URLSessionUploader: NSObject {
         self.wifiSessionBackground = URLSession(configuration: wifiConfigurationBackground, delegate: self, delegateQueue: queue)
 
         // configure default session for wifi only uploads
-        let wifiConfigurationDefault = URLSessionConfiguration.background(withIdentifier: Keys.wifiBackgroundSessionIdentifier)
+        let wifiConfigurationDefault = URLSessionConfiguration.default
         wifiConfigurationDefault.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
         wifiConfigurationDefault.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
         wifiConfigurationDefault.allowsCellularAccess = false
         wifiConfigurationDefault.waitsForConnectivity = true
-        self.wifiSessionBackground = URLSession(configuration: wifiConfigurationDefault, delegate: self, delegateQueue: queue)
+        self.wifiSessionDefault = URLSession(configuration: wifiConfigurationDefault, delegate: self, delegateQueue: queue)
 
         // configure background regular session
         let sessionConfigurationBackground = URLSessionConfiguration.background(withIdentifier: Keys.backgroundSessionIdentifier)
         sessionConfigurationBackground.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
         sessionConfigurationBackground.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
-        self.sessionDefault = URLSession(configuration: sessionConfigurationBackground, delegate: self, delegateQueue: queue)
+        self.sessionBackground = URLSession(configuration: sessionConfigurationBackground, delegate: self, delegateQueue: queue)
 
         // configure default regular session
-        let sessionConfigurationDefault = URLSessionConfiguration.background(withIdentifier: Keys.backgroundSessionIdentifier)
+        let sessionConfigurationDefault = URLSessionConfiguration.default
         sessionConfigurationDefault.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
         sessionConfigurationDefault.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
         sessionConfigurationDefault.waitsForConnectivity = true

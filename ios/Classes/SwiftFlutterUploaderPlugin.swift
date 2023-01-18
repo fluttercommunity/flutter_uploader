@@ -238,7 +238,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             }
         }
 
-        completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, path: file.path, wifiOnly: !allowCellular, backgroundConfigOnly: !useBackgroundUrSession), nil)
+        completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, path: file.path, wifiOnly: !allowCellular, backgroundConfigOnly: useBackgroundUrSession), nil)
     }
 
     private func uploadTaskWithURLWithCompletion(
@@ -352,7 +352,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        completionHandler(urlSessionUploader.enqueueUploadTask(request as URLRequest, path: path, wifiOnly: !allowCellular, backgroundConfigOnly: !useBackgroundUrSession), nil)
+        completionHandler(urlSessionUploader.enqueueUploadTask(request as URLRequest, path: path, wifiOnly: !allowCellular, backgroundConfigOnly: useBackgroundUrSession), nil)
     }
 }
 
