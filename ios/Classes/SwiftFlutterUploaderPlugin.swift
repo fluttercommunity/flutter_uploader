@@ -126,10 +126,11 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         guard let allowCellular = args["allowCellular"] as? Bool else {
             result(FlutterError(code: "invalid_flag", message: "allowCellular must be set", details: nil))
             return
+        }
 
         guard let useBackgroundUrSession = args["useBackgroundUrSession"] as? Bool else {
-                    result(FlutterError(code: "invalid_flag", message: "useBackgroundUrSession must be set", details: nil))
-                    return
+            result(FlutterError(code: "invalid_flag", message: "useBackgroundUrSession must be set", details: nil))
+            return
         }
 
         uploadTaskWithURLWithCompletion(
