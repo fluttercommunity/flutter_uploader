@@ -133,22 +133,27 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        uploadTaskWithURLWithCompletion(
-            url: url,
-            files: files,
-            method: method,
-            headers: headers,
-            parameters: data,
-            tag: tag,
-            allowCellular: allowCellular,
-            useBackgroundUrSession: useBackgroundUrSession,
-            completion: { (task, error) in
-                if error != nil {
-                    result(error!)
-                } else if let uploadTask = task {
-                    result(self.urlSessionUploader.identifierForTask(uploadTask))
-                }
-            })
+        let application = UIApplication.shared
+        BackgroundTask.run(application: application) { backgroundTask in
+            uploadTaskWithURLWithCompletion(
+                url: url,
+                files: files,
+                method: method,
+                headers: headers,
+                parameters: data,
+                tag: tag,
+                allowCellular: allowCellular,
+                useBackgroundUrSession: useBackgroundUrSession,
+                completion: { (task, error) in
+                    if error != nil {
+                        NSLog("Background task ended self")
+                        backgroundTask.end()
+                        result(error!)
+                    } else if let uploadTask = task {
+                        result(self.urlSessionUploader.identifierForTask(uploadTask))
+                    }
+                })
+        }
     }
 
     private func enqueueBinaryMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
@@ -196,13 +201,19 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        binaryUploadTaskWithURLWithCompletion(url: url, file: fileUrl, method: method, headers: headers, tag: tag, allowCellular: allowCellular, useBackgroundUrSession: useBackgroundUrSession, completion: { (task, error) in
-            if error != nil {
-                result(error!)
-            } else if let uploadTask = task {
-                result(self.urlSessionUploader.identifierForTask(uploadTask))
-            }
-        })
+        let application = UIApplication.shared
+        BackgroundTask.run(application: application) { backgroundTask in
+            binaryUploadTaskWithURLWithCompletion(url: url, file: fileUrl, method: method, headers: headers, tag: tag, allowCellular: allowCellular, useBackgroundUrSession: useBackgroundUrSession, completion: { (task, error) in
+                if error != nil {
+                    NSLog("Background task ended self")
+                    backgroundTask.end()
+                    result(error!)
+                } else if let uploadTask = task {
+                    result(self.urlSessionUploader.identifierForTask(uploadTask))
+                }
+            })
+
+        }
     }
 
     private func cancelMethodCall(_ call: FlutterMethodCall, _ result: @escaping FlutterResult) {
