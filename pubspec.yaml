@@ -5,8 +5,8 @@ homepage: https://github.com/fluttercommunity/flutter_uploader
 maintainer: Sebastian Roth (@ened)
 
 environment:
-  sdk: '>=2.12.0 <3.0.0'
-  flutter: ">=1.20.0"
+  sdk: ">=2.18.2 <3.0.0"
+  flutter: ">=1.17.0"
 
 dependencies:
   equatable: ^2.0.0
@@ -16,7 +16,7 @@ dependencies:
 dev_dependencies:
   build_runner: ^2.1.7
   mockito: ^5.0.17
-  flutter_lints: ^1.0.4
+  flutter_lints: ^2.0.1
   flutter_test:
     sdk: flutter
 
