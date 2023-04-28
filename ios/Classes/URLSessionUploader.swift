@@ -20,8 +20,10 @@ struct Keys {
 class URLSessionUploader: NSObject {
     static let shared = URLSessionUploader()
 
-    var session: URLSession?
-    var wifiSession: URLSession?
+    var sessionBackground: URLSession?
+    var sessionDefault: URLSession?
+    var wifiSessionBackground: URLSession?
+    var wifiSessionDefault: URLSession?
     let queue = OperationQueue()
 
     // Accessing uploadedData & runningTaskById will require exclusive access
@@ -45,9 +47,9 @@ class URLSessionUploader: NSObject {
         delegates.append(delegate)
     }
 
-    func enqueueUploadTask(_ request: URLRequest, path: String, wifiOnly: Bool) -> URLSessionUploadTask? {
-        guard let session = self.session,
-              let wifiSession = self.wifiSession else {
+    func enqueueUploadTask(_ request: URLRequest, path: String, wifiOnly: Bool, backgroundConfigOnly: Bool) -> URLSessionUploadTask? {
+        guard let session = backgroundConfigOnly ? self.sessionBackground : self.sessionDefault,
+              let wifiSession = backgroundConfigOnly ? self.wifiSessionBackground : self.wifiSessionDefault else {
             return nil
         }
 
@@ -76,12 +78,12 @@ class URLSessionUploader: NSObject {
     ///
     /// The description on URLSessionTask.taskIdentifier explains how the task is only unique within a session.
     public func identifierForTask(_ task: URLSessionUploadTask) -> String {
-        return  "\(self.session?.configuration.identifier ?? "chillisoure.flutter_uploader").\(task.taskDescription!)"
+        return  "\(self.sessionDefault?.configuration.identifier ?? "chillisoure.flutter_uploader").\(task.taskDescription!)"
     }
 
     /// Cancel a task by ID. Complete with `true`/`false` depending on whether the task was running.
     func cancelWithTaskId(_ taskId: String) {
-        guard let session = session else {
+        guard let session = sessionDefault else {
             return
         }
 
@@ -100,7 +102,7 @@ class URLSessionUploader: NSObject {
 
     /// Cancel all running tasks & return the list of canceled tasks.
     func cancelAllTasks() {
-        session?.getTasksWithCompletionHandler { (_, uploadTasks, _) in
+        sessionDefault?.getTasksWithCompletionHandler { (_, uploadTasks, _) in
             for uploadTask in uploadTasks {
                 let state = uploadTask.state
                 let taskId = self.identifierForTask(uploadTask)
@@ -145,18 +147,33 @@ class URLSessionUploader: NSObject {
 
         self.queue.maxConcurrentOperationCount = maxUploadOperation.intValue
 
-        // configure session for wifi only uploads
-        let wifiConfiguration = URLSessionConfiguration.background(withIdentifier: Keys.wifiBackgroundSessionIdentifier)
-        wifiConfiguration.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
-        wifiConfiguration.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
-        wifiConfiguration.allowsCellularAccess = false
-        self.wifiSession = URLSession(configuration: wifiConfiguration, delegate: self, delegateQueue: queue)
+        // configure background session for wifi only uploads
+        let wifiConfigurationBackground = URLSessionConfiguration.background(withIdentifier: Keys.wifiBackgroundSessionIdentifier)
+        wifiConfigurationBackground.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
+        wifiConfigurationBackground.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
+        wifiConfigurationBackground.allowsCellularAccess = false
+        self.wifiSessionBackground = URLSession(configuration: wifiConfigurationBackground, delegate: self, delegateQueue: queue)
 
-        // configure regular session
-        let sessionConfiguration = URLSessionConfiguration.background(withIdentifier: Keys.backgroundSessionIdentifier)
-        sessionConfiguration.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
-        sessionConfiguration.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
-        self.session = URLSession(configuration: sessionConfiguration, delegate: self, delegateQueue: queue)
+        // configure default session for wifi only uploads
+        let wifiConfigurationDefault = URLSessionConfiguration.default
+        wifiConfigurationDefault.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
+        wifiConfigurationDefault.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
+        wifiConfigurationDefault.allowsCellularAccess = false
+        wifiConfigurationDefault.waitsForConnectivity = true
+        self.wifiSessionDefault = URLSession(configuration: wifiConfigurationDefault, delegate: self, delegateQueue: queue)
+
+        // configure background regular session
+        let sessionConfigurationBackground = URLSessionConfiguration.background(withIdentifier: Keys.backgroundSessionIdentifier)
+        sessionConfigurationBackground.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
+        sessionConfigurationBackground.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
+        self.sessionBackground = URLSession(configuration: sessionConfigurationBackground, delegate: self, delegateQueue: queue)
+
+        // configure default regular session
+        let sessionConfigurationDefault = URLSessionConfiguration.default
+        sessionConfigurationDefault.httpMaximumConnectionsPerHost = maxConcurrentTasks.intValue
+        sessionConfigurationDefault.timeoutIntervalForRequest = URLSessionUploader.determineTimeout()
+        sessionConfigurationDefault.waitsForConnectivity = true
+        self.sessionDefault = URLSession(configuration: sessionConfigurationDefault, delegate: self, delegateQueue: queue)
     }
 
     private static func determineTimeout() -> Double {

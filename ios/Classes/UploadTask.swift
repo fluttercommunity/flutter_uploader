@@ -17,12 +17,14 @@ struct UploadTask {
     let progress: Int
     let tag: String?
     let allowCellular: Bool
+    let useBackgroundUrSession: Bool
 
-    init(taskId: String, status: UploadTaskStatus, progress: Int, tag: String? = nil, allowCellular: Bool = true) {
+    init(taskId: String, status: UploadTaskStatus, progress: Int, tag: String? = nil, allowCellular: Bool = true, useBackgroundUrSession: Bool = true) {
         self.taskId = taskId
         self.status = status
         self.progress = progress
         self.tag = tag
         self.allowCellular = allowCellular
+        self.useBackgroundUrSession = useBackgroundUrSession
     }
 }

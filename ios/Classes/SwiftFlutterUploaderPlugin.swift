@@ -128,6 +128,11 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
+        guard let useBackgroundUrSession = args["useBackgroundUrSession"] as? Bool else {
+            result(FlutterError(code: "invalid_flag", message: "useBackgroundUrSession must be set", details: nil))
+            return
+        }
+
         uploadTaskWithURLWithCompletion(
             url: url,
             files: files,
@@ -136,6 +141,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             parameters: data,
             tag: tag,
             allowCellular: allowCellular,
+            useBackgroundUrSession: useBackgroundUrSession,
             completion: { (task, error) in
                 if error != nil {
                     result(error!)
@@ -185,7 +191,12 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        binaryUploadTaskWithURLWithCompletion(url: url, file: fileUrl, method: method, headers: headers, tag: tag, allowCellular: allowCellular, completion: { (task, error) in
+        guard let useBackgroundUrSession = args["useBackgroundUrSession"] as? Bool else {
+            result(FlutterError(code: "invalid_flag", message: "useBackgroundUrSession must be set", details: nil))
+            return
+        }
+
+        binaryUploadTaskWithURLWithCompletion(url: url, file: fileUrl, method: method, headers: headers, tag: tag, allowCellular: allowCellular, useBackgroundUrSession: useBackgroundUrSession, completion: { (task, error) in
             if error != nil {
                 result(error!)
             } else if let uploadTask = task {
@@ -215,6 +226,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
                                                        headers: [String: Any?]?,
                                                        tag: String?,
                                                        allowCellular: Bool,
+                                                       useBackgroundUrSession: Bool,
                                                        completion completionHandler:@escaping (URLSessionUploadTask?, FlutterError?) -> Void) {
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = method
@@ -226,7 +238,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             }
         }
 
-        completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, path: file.path, wifiOnly: !allowCellular), nil)
+        completionHandler(self.urlSessionUploader.enqueueUploadTask(request as URLRequest, path: file.path, wifiOnly: !allowCellular, backgroundConfigOnly: useBackgroundUrSession), nil)
     }
 
     private func uploadTaskWithURLWithCompletion(
@@ -237,6 +249,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         parameters data: [String: Any?]?,
         tag: String?,
         allowCellular: Bool,
+        useBackgroundUrSession: Bool,
         completion completionHandler:@escaping (URLSessionUploadTask?, FlutterError?) -> Void) {
         var flutterError: FlutterError?
         let fileManager = FileManager.default
@@ -303,7 +316,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        self.makeRequest(path, url, method, headers, formData.contentType, formData.contentLength, allowCellular: allowCellular, completion: { (task, error) in
+        self.makeRequest(path, url, method, headers, formData.contentType, formData.contentLength, allowCellular: allowCellular, useBackgroundUrSession: useBackgroundUrSession, completion: { (task, error) in
             completionHandler(task, error)
         })
     }
@@ -316,6 +329,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         _ contentType: String,
         _ contentLength: UInt64,
         allowCellular: Bool,
+        useBackgroundUrSession: Bool,
         completion completionHandler: (URLSessionUploadTask?, FlutterError?) -> Void) {
         let request = NSMutableURLRequest(url: url)
         request.httpMethod = method
@@ -338,7 +352,7 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        completionHandler(urlSessionUploader.enqueueUploadTask(request as URLRequest, path: path, wifiOnly: !allowCellular), nil)
+        completionHandler(urlSessionUploader.enqueueUploadTask(request as URLRequest, path: path, wifiOnly: !allowCellular, backgroundConfigOnly: useBackgroundUrSession), nil)
     }
 }
 
