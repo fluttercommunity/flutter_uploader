@@ -47,14 +47,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         self.resultHandler = CachingStreamHandler()
         resultEventChannel.setStreamHandler(resultHandler)
 
-        // load entries from database into StreamHandlers, which cache the values.
-        let resultDatabase = UploadResultDatabase.shared
-        for map in resultDatabase.results {
-            if let taskId = map[Key.taskId] as? String {
-                resultHandler.add(taskId, map)
-            }
-        }
-
         self.taskQueue = DispatchQueue(label: "chillisource.flutter_uploader.dispatch.queue")
         super.init()
 
@@ -66,7 +58,6 @@ public class SwiftFlutterUploaderPlugin: NSObject, FlutterPlugin {
         case "setBackgroundHandler":
             setBackgroundHandler(call, result)
         case "clearUploads":
-            UploadResultDatabase.shared.clear()
             resultHandler.clear()
             progressHandler.clear()
 

@@ -120,8 +120,6 @@ class URLSessionUploader: NSObject {
 
         delegates.append(EngineManager())
 
-        delegates.append(UploadResultDatabase.shared)
-
         self.queue.name = "chillisource.flutter_uploader.queue"
 
         let mainBundle = Bundle.main
