@@ -1,4 +1,4 @@
-part of flutter_uploader;
+part of '../flutter_uploader.dart';
 
 /// A class defines a set of possible statuses of a upload task
 class UploadTaskStatus extends Equatable {

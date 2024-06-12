@@ -1,4 +1,4 @@
-part of flutter_uploader;
+part of '../flutter_uploader.dart';
 
 // ignore_for_file: constant_identifier_names
 

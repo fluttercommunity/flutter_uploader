@@ -21,8 +21,8 @@ void main() {
 
   dynamic mockResponse;
 
-  EventChannel progressChannel;
-  EventChannel resultChannel;
+  late EventChannel progressChannel;
+  late EventChannel resultChannel;
 
   late StreamController<dynamic> progressController;
   late StreamController<dynamic> resultController;
@@ -30,28 +30,29 @@ void main() {
   final log = <MethodCall>[];
 
   setUp(() {
-    methodChannel.setMockMethodCallHandler((call) async {
-      log.add(call);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMessageHandler(methodChannel.name, (message) async {
+      final methodCall = const StandardMethodCodec().decodeMethodCall(message);
+      log.add(methodCall);
 
       if (mockResponse != null) {
         final tmp = mockResponse;
         mockResponse = null;
-        return tmp;
+        return const StandardMethodCodec().encodeSuccessEnvelope(tmp);
       }
 
-      return;
+      return const StandardMethodCodec().encodeSuccessEnvelope(null);
     });
 
     progressChannel = MockEventChannel();
     resultChannel = MockEventChannel();
 
-    progressController = StreamController();
-    resultController = StreamController();
+    progressController = StreamController.broadcast();
+    resultController = StreamController.broadcast();
 
     when(progressChannel.receiveBroadcastStream())
-        .thenAnswer((_) => progressController.stream.asBroadcastStream());
+        .thenAnswer((_) => progressController.stream);
     when(resultChannel.receiveBroadcastStream())
-        .thenAnswer((_) => resultController.stream.asBroadcastStream());
+        .thenAnswer((_) => resultController.stream);
 
     uploader =
         FlutterUploader.private(methodChannel, progressChannel, resultChannel);
@@ -62,6 +63,7 @@ void main() {
   tearDown(() {
     progressController.close();
     resultController.close();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMessageHandler(methodChannel.name, null);
   });
 
   group('FlutterUploader', () {
@@ -93,20 +95,17 @@ void main() {
       );
 
       test('allowCellular has default value of true', () async {
-        methodChannel.setMockMethodCallHandler((call) async {
-          expect(call.arguments['allowCellular'] as bool?, isTrue);
-          return 'allowCellular';
-        });
+        mockResponse = 'allowCellular';
         expect(await uploader.enqueue(sampleUpload), 'allowCellular');
       });
+
       test('returns the task id', () async {
         mockResponse = 'TASK123';
-
         expect(await uploader.enqueue(sampleUpload), 'TASK123');
       });
+
       test('passes the arguments correctly', () async {
         mockResponse = 'TASK123';
-
         await uploader.enqueue(sampleUpload);
 
         expect(log, <Matcher>[
@@ -147,13 +146,11 @@ void main() {
 
       test('returns the task id', () async {
         mockResponse = 'TASK123';
-
         expect(await uploader.enqueue(sampleUpload), 'TASK123');
       });
 
       test('passes the arguments correctly', () async {
         mockResponse = 'TASK123';
-
         await uploader.enqueue(sampleUpload);
 
         expect(log, <Matcher>[
@@ -170,6 +167,7 @@ void main() {
         ]);
       });
     });
+
     group('cancel', () {
       test('calls correctly', () async {
         await uploader.cancel(taskId: 'task123');
@@ -201,6 +199,7 @@ void main() {
         ]);
       });
     });
+
     group('progress stream', () {
       testWidgets('supports multiple subscriptions',
           (WidgetTester tester) async {

@@ -1,4 +1,4 @@
-part of flutter_uploader;
+part of '../flutter_uploader.dart';
 
 /// Contains information about a enqueue or finished/failed upload.
 /// For in-flight information, see the [UploadTaskProgress] class.

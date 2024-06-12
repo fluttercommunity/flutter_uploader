@@ -1,4 +1,4 @@
-part of flutter_uploader;
+part of '../flutter_uploader.dart';
 
 /// Represents a single file in a multipart/form-data upload
 class FileItem {

@@ -1,4 +1,4 @@
-part of flutter_uploader;
+part of '../flutter_uploader.dart';
 
 /// Contains in-flight progress information. For finished uploads, refer to the
 /// [UploadTaskResponse] class.

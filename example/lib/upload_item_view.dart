@@ -1,7 +1,6 @@
 // ignore_for_file: public_member_api_docs
 
 import 'package:flutter/material.dart';
-
 import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:flutter_uploader_example/upload_item.dart';
 
@@ -12,10 +11,10 @@ class UploadItemView extends StatelessWidget {
   final CancelUploadCallback onCancel;
 
   const UploadItemView({
-    Key? key,
+    super.key,
     required this.item,
     required this.onCancel,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +26,7 @@ class UploadItemView extends StatelessWidget {
             children: <Widget>[
               Text(
                 item.id,
-                style: Theme.of(context)
-                    .textTheme
-                    .caption!
-                    .copyWith(fontFamily: 'monospace'),
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: 'monospace'),
               ),
               Container(
                 height: 5.0,
@@ -51,16 +47,12 @@ class UploadItemView extends StatelessWidget {
               Container(height: 5.0),
               if (item.status == UploadTaskStatus.running)
                 LinearProgressIndicator(value: item.progress!.toDouble() / 100),
-              if (item.status == UploadTaskStatus.complete ||
-                  item.status == UploadTaskStatus.failed) ...[
+              if (item.status == UploadTaskStatus.complete || item.status == UploadTaskStatus.failed) ...[
                 Text('HTTP status code: ${item.response!.statusCode}'),
                 if (item.response!.response != null)
                   Text(
                     item.response!.response!,
-                    style: Theme.of(context)
-                        .textTheme
-                        .caption!
-                        .copyWith(fontFamily: 'monospace'),
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(fontFamily: 'monospace'),
                   ),
               ]
             ],

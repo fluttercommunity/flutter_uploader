@@ -191,7 +191,7 @@ void main() {
   });
 
   group('binary uploads', () {
-    final url = baseUrl.replace(path: baseUrl.path + 'Binary');
+    final url = baseUrl.replace(path: '${baseUrl.path}Binary');
 
     testWidgets('single file', (WidgetTester tester) async {
       final taskId = await uploader.enqueue(

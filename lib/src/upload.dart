@@ -1,4 +1,4 @@
-part of flutter_uploader;
+part of '../flutter_uploader.dart';
 
 /// Abstract data structure for storing uploads.
 abstract class Upload {
@@ -35,21 +35,14 @@ abstract class Upload {
 class MultipartFormDataUpload extends Upload {
   /// Default constructor which requires either files or data to be set.
   MultipartFormDataUpload({
-    required String url,
-    UploadMethod method = UploadMethod.POST,
-    Map<String, String>? headers,
-    String? tag,
+    required super.url,
+    super.method = UploadMethod.POST,
+    super.headers = null,
+    super.tag,
     this.files,
     this.data,
-    bool allowCellular = true,
-  })  : assert(files != null || data != null),
-        super(
-          url: url,
-          method: method,
-          headers: headers,
-          tag: tag,
-          allowCellular: allowCellular,
-        ) {
+    super.allowCellular,
+  }) : assert(files != null || data != null) {
     // Need to specify either files or data.
     assert(files!.isNotEmpty || data!.isNotEmpty);
   }
@@ -65,19 +58,13 @@ class MultipartFormDataUpload extends Upload {
 class RawUpload extends Upload {
   /// Default constructor.
   const RawUpload({
-    required String url,
-    UploadMethod method = UploadMethod.POST,
-    Map<String, String>? headers,
-    String? tag,
+    required super.url,
+    super.method = UploadMethod.POST,
+    super.headers = null,
+    super.tag,
     this.path,
-    bool allowCellular = true,
-  }) : super(
-          url: url,
-          method: method,
-          headers: headers,
-          tag: tag,
-          allowCellular: allowCellular,
-        );
+    super.allowCellular,
+  });
 
   /// single file to upload
   final String? path;

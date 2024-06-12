@@ -1,6 +1,5 @@
-part of flutter_uploader;
+part of '../flutter_uploader.dart';
 
-/// Controls task scheduling and allows developers to observe the status.
 /// The class is designed as a singleton and can therefore be instantiated as
 /// often as needed.
 class FlutterUploader {
@@ -82,9 +81,7 @@ class FlutterUploader {
     String? message = map['message'];
     int? status = map['status'];
     int? statusCode = map['statusCode'];
-    final headers = map['headers'] != null
-        ? Map<String, dynamic>.from(map['headers'])
-        : <String, dynamic>{};
+    final headers = map['headers'] != null ? Map<String, dynamic>.from(map['headers']) : <String, dynamic>{};
 
     return UploadTaskResponse(
       taskId: id,
@@ -102,7 +99,7 @@ class FlutterUploader {
     if (upload is MultipartFormDataUpload) {
       return (await _platform.invokeMethod<String>('enqueue', {
         'url': upload.url,
-        'method': describeEnum(upload.method),
+        'method': (upload.method.name),
         'files': (upload.files ?? []).map((e) => e.toJson()).toList(),
         'headers': upload.headers,
         'data': upload.data,
@@ -113,7 +110,7 @@ class FlutterUploader {
     if (upload is RawUpload) {
       return (await _platform.invokeMethod<String>('enqueueBinary', {
         'url': upload.url,
-        'method': describeEnum(upload.method),
+        'method': (upload.method.name),
         'path': upload.path,
         'headers': upload.headers,
         'tag': upload.tag,
