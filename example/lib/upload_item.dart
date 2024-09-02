@@ -1,5 +1,3 @@
-// ignore_for_file: public_member_api_docs
-
 import 'package:equatable/equatable.dart';
 
 import 'package:flutter_uploader/flutter_uploader.dart';

@@ -1,3 +1,13 @@
+## 3.0.0-beta.5
+
+- Migrate to Dart 3, update version constraints to require Flutter >=3.3.0 and SDK >=3.0.0
+- Migrate Android project to AGP8, set target and compile SDK to 34
+- Updated gitignore to keep lock files and Podfile in example app
+- Updated analysis_options.yaml
+- Cosmetic updates to example app
+- Set iOS deployment target to iOS 14
+- Set Android min SDK to 21
+
 ## 3.0.0-beta.4
 
 - Restore compatibility with Android 12

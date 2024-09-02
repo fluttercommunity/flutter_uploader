@@ -1,6 +1,3 @@
-// ignore_for_file: public_member_api_docs
-// ignore_for_file: avoid_print
-
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -8,17 +5,17 @@ import 'package:flutter_uploader/flutter_uploader.dart';
 import 'package:flutter_uploader_example/upload_item.dart';
 import 'package:flutter_uploader_example/upload_item_view.dart';
 
-/// Shows the statusresponses for previous uploads.
+/// Shows the status responses for previous uploads.
 class ResponsesScreen extends StatefulWidget {
   const ResponsesScreen({
-    Key? key,
+    super.key,
     required this.uploader,
-  }) : super(key: key);
+  });
 
   final FlutterUploader uploader;
 
   @override
-  _ResponsesScreenState createState() => _ResponsesScreenState();
+  State<ResponsesScreen> createState() => _ResponsesScreenState();
 }
 
 class _ResponsesScreenState extends State<ResponsesScreen> {
@@ -39,9 +36,14 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
       if (task.isCompleted()) return;
 
       var tmp = <String, UploadItem>{}..addAll(_tasks);
-      tmp.putIfAbsent(progress.taskId, () => UploadItem(progress.taskId));
-      tmp[progress.taskId] =
-          task.copyWith(progress: progress.progress, status: progress.status);
+      tmp.putIfAbsent(
+        progress.taskId,
+        () => UploadItem(progress.taskId),
+      );
+      tmp[progress.taskId] = task.copyWith(
+        progress: progress.progress,
+        status: progress.status,
+      );
       setState(() => _tasks = tmp);
     }, onError: (ex, stacktrace) {
       print('exception: $ex');
@@ -53,9 +55,14 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
           'IN MAIN APP: ${result.taskId}, status: ${result.status}, statusCode: ${result.statusCode}, headers: ${result.headers}');
 
       var tmp = <String, UploadItem>{}..addAll(_tasks);
-      tmp.putIfAbsent(result.taskId, () => UploadItem(result.taskId));
-      tmp[result.taskId] =
-          tmp[result.taskId]!.copyWith(status: result.status, response: result);
+      tmp.putIfAbsent(
+        result.taskId,
+        () => UploadItem(result.taskId),
+      );
+      tmp[result.taskId] = tmp[result.taskId]!.copyWith(
+        status: result.status,
+        response: result,
+      );
 
       setState(() => _tasks = tmp);
     }, onError: (ex, stacktrace) {
@@ -78,7 +85,7 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
         title: const Text('Responses'),
       ),
       body: ListView.separated(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16),
         itemCount: _tasks.length,
         itemBuilder: (context, index) {
           final item = _tasks.values.elementAt(index);
@@ -89,7 +96,8 @@ class _ResponsesScreenState extends State<ResponsesScreen> {
         },
         separatorBuilder: (context, index) {
           return const Divider(
-            color: Colors.black,
+            color: Colors.black38,
+            thickness: 0.5,
           );
         },
       ),

@@ -1,5 +1,3 @@
-// ignore_for_file: public_member_api_docs
-
 import 'dart:async';
 import 'dart:io';
 
@@ -12,11 +10,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({
-    Key? key,
+    super.key,
     required this.uploader,
     required this.uploadURL,
     required this.onUploadStarted,
-  }) : super(key: key);
+  });
 
   final FlutterUploader uploader;
   final Uri uploadURL;
@@ -66,7 +64,7 @@ class _UploadScreenState extends State<UploadScreen> {
               children: <Widget>[
                 Text(
                   'Configure test Server Behavior',
-                  style: Theme.of(context).textTheme.subtitle1,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 DropdownButton<ServerBehavior>(
                   items: ServerBehavior.all.map((e) {
@@ -85,7 +83,7 @@ class _UploadScreenState extends State<UploadScreen> {
                 const Divider(),
                 Text(
                   'multipart/form-data uploads',
-                  style: Theme.of(context).textTheme.subtitle1,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 Wrap(
                   alignment: WrapAlignment.center,
@@ -108,7 +106,7 @@ class _UploadScreenState extends State<UploadScreen> {
                 const Divider(height: 40),
                 Text(
                   'binary uploads',
-                  style: Theme.of(context).textTheme.subtitle1,
+                  style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const Text('this will upload selected files as binary'),
                 Wrap(
@@ -215,7 +213,7 @@ class _UploadScreenState extends State<UploadScreen> {
     const tag = 'upload';
 
     var url = binary
-        ? widget.uploadURL.replace(path: widget.uploadURL.path + 'Binary')
+        ? widget.uploadURL.replace(path: '${widget.uploadURL.path}Binary')
         : widget.uploadURL;
 
     url = url.replace(queryParameters: {

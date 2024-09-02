@@ -438,7 +438,7 @@ public class UploadWorker extends ListenableWorker implements CountProgressListe
 
   private void sendUpdateProcessEvent(Context context, int status, int progress) {
     setProgressAsync(
-        new Data.Builder().putInt("status", status).putInt("progress", progress).build());
+        new Data.Builder().putInt(UploadWorker.EXTRA_STATUS, status).putInt("progress", progress).build());
   }
 
   private Data createOutputErrorData(

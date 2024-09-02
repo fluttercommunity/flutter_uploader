@@ -23,13 +23,16 @@ exports.upload = functions.https.onRequest(async (req, res) => {
     console.log("File [" + fieldname + "]: filename: " + filename);
 
     let length = 0;
+    let totalLength = 0; // Track total data length for this file
 
     file.on("data", data => {
       console.log("File [" + fieldname + "] got " + data.length + " bytes");
       length = data.length;
+      totalLength += data.length; // Accumulate data length
+
     });
     file.on("end", () => {
-      console.log("File [" + fieldname + "] Finished");
+      console.log(`File [${fieldname}] Finished. Total size: ${totalLength} bytes`);
     });
 
     const filepath = path.join(os.tmpdir(), filename);

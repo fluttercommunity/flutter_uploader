@@ -6,13 +6,10 @@
 .packages
 .pub/
 .dart_tool/
-pubspec.lock
 flutter_export_environment.sh
 
 examples/all_plugins/pubspec.yaml
 
-Podfile
-Podfile.lock
 Pods/
 .symlinks/
 **/Flutter/App.framework/
@@ -46,4 +43,6 @@ build/
 .classpath
 .settings
 .last_build_id
-.fvm/flutter_sdk
+
+# FVM Version Cache
+.fvm/

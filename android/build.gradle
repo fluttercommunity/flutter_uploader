@@ -8,7 +8,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.1'
+        classpath 'com.android.tools.build:gradle:8.0.2'
     }
 }
 
@@ -22,16 +22,19 @@ rootProject.allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 31
+    if (project.android.hasProperty("namespace")) {
+        namespace = "com.bluechilli.flutteruploader"
+    }
+    compileSdk 34
 
     defaultConfig {
-        minSdkVersion 16
+        minSdk 21
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     lintOptions {
@@ -40,11 +43,12 @@ android {
 }
 
 dependencies {
-    implementation "androidx.work:work-runtime:2.7.1"
-    implementation "androidx.concurrent:concurrent-futures:1.1.0"
-    implementation "androidx.annotation:annotation:1.2.0"
-    implementation "androidx.lifecycle:lifecycle-livedata:2.3.1"
-    implementation "androidx.core:core:1.5.0"
-    implementation "com.squareup.okhttp3:okhttp:4.9.0"
-    implementation "com.google.code.gson:gson:2.8.6"
+    implementation "androidx.work:work-runtime:2.9.0"
+    implementation "androidx.startup:startup-runtime:1.1.1"
+    implementation "androidx.concurrent:concurrent-futures:1.2.0"
+    implementation "androidx.annotation:annotation:1.8.0"
+    implementation "androidx.lifecycle:lifecycle-livedata:2.8.2"
+    implementation "androidx.core:core:1.13.1"
+    implementation "com.squareup.okhttp3:okhttp:4.12.0"
+    implementation "com.google.code.gson:gson:2.10.1"
 }
